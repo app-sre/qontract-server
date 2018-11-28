@@ -1,5 +1,4 @@
 const db = require('../models/db');
-const hash = require('object-hash');
 const _ = require('lodash');
 
 var defaultResolver = function (root, args, context, info) {
