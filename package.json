@@ -1,5 +1,5 @@
 {
-  "name": "component-server",
+  "name": "qontract-server",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
