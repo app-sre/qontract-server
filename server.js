@@ -5,7 +5,7 @@ const express = require("express");
 const merge = require('lodash/merge');
 
 const db = require('./models/db');
-const base = require('./schemas/base');
+const base = require('./graphql-schemas/base');
 
 db.load();
 
@@ -22,7 +22,7 @@ var typeDefs = [];
 var resolvers = {};
 
 for (schema of schemaFiles) {
-    var schemaItem = require(`./schemas/${schema}`);
+    var schemaItem = require(`./graphql-schemas/${schema}`);
     typeDefs.push(schemaItem.typeDefs);
     resolvers = merge(resolvers, schemaItem.resolvers);
 }

@@ -1,0 +1,85 @@
+---
+"$schema": metaschema-1.json
+version: '1.0'
+type: object
+
+additionalProperties: false
+properties:
+  "$schema":
+    type: string
+  labels:
+    "$ref": "common-1.json#/definitions/labels"
+
+  title:
+    type: string
+
+  serviceOwner:
+    description: Team or individual who is/are responsible for the running instance of the software.
+    type: object
+    additionalProperties: false
+    properties:
+      name:
+        type: string
+      email:
+        type: string
+        format: email
+    required:
+    - name
+    - email
+
+  performanceParameters:
+    type: object
+    additionalProperties: false
+    properties:
+      SLO:
+        "$ref": "common-1.json#/definitions/serviceLevel"
+      SLA:
+        "$ref": "common-1.json#/definitions/serviceLevel"
+      statusPage:
+        type: string
+        format: uri-reference
+    required:
+    - SLO
+
+  dependencies:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        statefulness:
+          type: string
+          enum:
+          - Durable
+          - Cache
+          - Stateless
+        opsModel:
+          type: string
+          enum:
+          - Hosted
+        statusPage:
+          type: string
+          format: uri
+        SLA:
+          "$ref": "common-1.json#/definitions/serviceLevel"
+        dependencyFailureImpact:
+          type: string
+          enum:
+          - No Impact
+          - Partial Outage
+          - Major Outage
+          - Complete Outage
+      required:
+      - name
+      - statefulness
+      - opsModel
+      - SLA
+      - dependencyFailureImpact
+
+required:
+- title
+- serviceOwner
+- "$schema"
+- "labels"

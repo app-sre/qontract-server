@@ -1,0 +1,27 @@
+---
+"$schema": metaschema-1.json
+version: "1.0"
+type: object
+properties:
+  "$schema":
+    type: string
+  labels:
+    "$ref": "common-1.json#/definitions/labels"
+  name:
+    type: string
+  description:
+    type: string
+  service:
+    type: string
+    enum:
+    - aws-analytics
+    - github-org
+    - github-org-team
+    - openshift-rolebinding
+    - quay-org
+required:
+- $schema
+- labels
+- name
+- description
+- service

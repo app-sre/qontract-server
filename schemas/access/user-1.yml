@@ -1,0 +1,26 @@
+---
+"$schema": metaschema-1.json
+version: "1.0"
+type: object
+properties:
+  "$schema":
+    type: string
+  labels:
+    "$ref": "common-1.json#/definitions/labels"
+  name:
+    type: string
+  redhat_username:
+    "$ref": "common-1.json#/definitions/identifier"
+  github_username:
+    "$ref": "common-1.json#/definitions/identifier"
+  roles:
+    type: array
+    items:
+      "$ref": "common-1.json#/definitions/crossref"
+
+required:
+- $schema
+- labels
+- name
+- redhat_username
+- github_username
