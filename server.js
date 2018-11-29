@@ -39,5 +39,7 @@ server.applyMiddleware({ app });
 
 app.get('/reload', (req, res) => { db.load(); res.send() });
 
+app.get('/health-check', (req, res) => { res.send() });
+
 app.listen({ port: 4000 }, () =>
     console.log(`Running at http://localhost:4000${server.graphqlPath}`));
