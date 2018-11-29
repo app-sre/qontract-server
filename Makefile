@@ -8,5 +8,5 @@ build:
 	@docker tag $(IMAGE_NAME):latest $(IMAGE_NAME):$(IMAGE_TAG)
 
 push:
-	@docker push --config=$(DOCKER_CONF) $(IMAGE_NAME):latest
-	@docker push --config=$(DOCKER_CONF) $(IMAGE_NAME):$(IMAGE_TAG)
+	@docker --config=$(DOCKER_CONF) push $(IMAGE_NAME):latest
+	@docker --config=$(DOCKER_CONF) push $(IMAGE_NAME):$(IMAGE_TAG)
