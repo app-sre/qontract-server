@@ -39,6 +39,31 @@ objects:
                 secretKeyRef:
                     key: htpasswd
                     name: app-interface
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                    key: aws.access.key.id
+                    name: app-interface
+            - name: AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                    key: aws.region
+                    name: app-interface
+            - name: AWS_S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                    key: aws.s3.bucket
+                    name: app-interface
+            - name: AWS_S3_KEY
+              valueFrom:
+                secretKeyRef:
+                    key: aws.s3.key
+                    name: app-interface
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                    key: aws.secret.access.key
+                    name: app-interface
             - name: FORWARD_HOST
               valueFrom:
                 configMapKeyRef:
