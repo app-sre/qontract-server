@@ -110,10 +110,10 @@ parameters:
   description: Maximum amount of memory the container can use. Defaults 512Mi
 - name: IMAGE_GATE
   value: quay.io/app-sre/app-interface-nginx-gate
-- name: GATE_MEMORY_LIMIT
-  value: 256Mi
-- name: IMAGE_TAG
+- name: IMAGE_GATE_TAG
   value: latest
   displayName: App interface nginx gate version
   description: App interface nginx gate version which defaults to latest
+- name: GATE_MEMORY_LIMIT
+  value: 256Mi
 
