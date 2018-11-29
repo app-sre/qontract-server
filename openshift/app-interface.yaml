@@ -39,6 +39,20 @@ objects:
                 secretKeyRef:
                     key: htpasswd
                     name: app-interface
+            - name: FORWARD_HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: forward_host
+                  name: app-interface
+          ports:
+          - containerPort: 8080
+          resources:
+            limits:
+              memory: ${GATE_MEMORY_LIMIT}
+        - image: ${IMAGE}:${IMAGE_TAG}
+          imagePullPolicy: Always
+          name: app-interface
+          env:
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
@@ -64,19 +78,6 @@ objects:
                 secretKeyRef:
                     key: aws.secret.access.key
                     name: app-interface
-            - name: FORWARD_HOST
-              valueFrom:
-                configMapKeyRef:
-                  key: forward_host
-                  name: app-interface
-          ports:
-          - containerPort: 8080
-          resources:
-            limits:
-              memory: ${GATE_MEMORY_LIMIT}
-        - image: ${IMAGE}:${IMAGE_TAG}
-          imagePullPolicy: Always
-          name: app-interface
           ports:
           - containerPort: 4000
           livenessProbe:
@@ -141,4 +142,3 @@ parameters:
   description: App interface nginx gate version which defaults to latest
 - name: GATE_MEMORY_LIMIT
   value: 256Mi
-
