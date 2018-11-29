@@ -97,7 +97,7 @@ objects:
       deploymentconfig: app-interface
 parameters:
 - name: IMAGE
-  value: quay.io/app-sre/app-interface
+  value: quay.io/app-sre/qontract-server
   displayName: App interface image
   description: App interface docker image. Defaults to quay.io/app-sre/app-interface
 - name: IMAGE_TAG
@@ -109,7 +109,7 @@ parameters:
   displayName: Memory Limit
   description: Maximum amount of memory the container can use. Defaults 512Mi
 - name: IMAGE_GATE
-  value: quay.io/app-sre/app-interface-nginx-gate
+  value: quay.io/app-sre/nginx-gate
 - name: IMAGE_GATE_TAG
   value: latest
   displayName: App interface nginx gate version
