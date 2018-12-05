@@ -25,7 +25,7 @@ const typeDefs = `
     service: String!
     cluster: String!
     namespace: String!
-    permission: String!
+    role: String!
   }
 
   type PermissionQuayOrg_v1 implements Permission_v1 {

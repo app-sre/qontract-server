@@ -11,11 +11,13 @@ db.load();
 
 var schemaFiles = [
     'base',
+    'vaultSecret',
     'entity',
     'bot',
     'user',
     'permission',
     'role',
+    'cluster',
 ];
 
 var typeDefs = [];
