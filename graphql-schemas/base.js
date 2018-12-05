@@ -23,20 +23,22 @@ var defaultResolver = function (root, args, context, info) {
 
   let val = root[info.fieldName];
 
-  if (val.constructor === Array && val.length > 0) {
-    if (!(_.map(val, (e) => db.isRef(e)).includes(false))) {
-      let arrayResolve = _.map(val, (e) => db.resolveRef(e, context.datafilePath));
-      if (String(info.returnType)[0]=="[") {
-        return _.flattenDepth(arrayResolve, 1);
+  if (typeof(val) != "undefined") {
+    if (val.constructor === Array && val.length > 0) {
+      if (!(_.map(val, (e) => db.isRef(e)).includes(false))) {
+        let arrayResolve = _.map(val, (e) => db.resolveRef(e, context.datafilePath));
+        if (String(info.returnType)[0]=="[") {
+          return _.flattenDepth(arrayResolve, 1);
+        }
+        return arrayResolve;
       }
-      return arrayResolve;
+
+      return val;
     }
 
-    return val;
-  }
-
-  if (db.isRef(val)) {
-    val = db.resolveRef(itemRef, context.datafilePath);
+    if (db.isRef(val)) {
+      val = db.resolveRef(itemRef, context.datafilePath);
+    }
   }
 
   return val;
@@ -53,6 +55,7 @@ var typeDefs = `
     user(label: JSON): [User_v1]
     bot(label: JSON): [Bot_v1]
     role(label: JSON): [Role_v1]
+    cluster(label: JSON): [Cluster_v1]
   }
 
   interface DataFile_v1 {
@@ -100,7 +103,11 @@ var resolvers = {
     role(root, args, context, info) {
       args.schemaIn = ["access/role-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
-    }
+    },
+    cluster(root, args, context, info) {
+      args.schemaIn = ["openshift/cluster-1.yml"];
+      return resolvers.Query.datafile(root, args, context, info);
+    },
   },
   DataFile_v1: {
     __resolveType(root, context) {
@@ -114,6 +121,9 @@ var resolvers = {
           break;
         case "access/role-1.yml":
           return "Role_v1";
+          break;
+        case "openshift/cluster-1.yml":
+          return "Cluster_v1";
           break;
       }
       return "DataFileGeneric_v1";
