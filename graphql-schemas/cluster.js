@@ -17,8 +17,8 @@ const typeDefs = `
     automationToken: VaultSecret_v1
     managedRoles: [ClusterManagedRole_v1]
   }
-`
-const resolvers = {}
+`;
+const resolvers = {};
 
 module.exports = {
   "typeDefs": typeDefs,

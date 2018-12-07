@@ -132,7 +132,7 @@ var resolveRef = function (itemRef, datafilePath) {
   }
 
   return resolvedData;
-}
+};
 
 // datafile Loading functions
 
@@ -201,7 +201,7 @@ var load = function () {
     default:
       throw new Error(`Unknown LOAD_METHOD ${process.env.LOAD_METHOD}`);
   }
-}
+};
 
 // main db object
 

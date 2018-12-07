@@ -10,8 +10,9 @@ const typeDefs = `
     redhat_username: String!
     github_username: String!
   }
-`
-const resolvers = {}
+`;
+
+const resolvers = {};
 
 module.exports = {
   "typeDefs": typeDefs,

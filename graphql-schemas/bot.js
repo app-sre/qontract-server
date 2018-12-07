@@ -10,8 +10,8 @@ const typeDefs = `
     github_username: String
     owner: User_v1
   }
-`
-const resolvers = {}
+`;
+const resolvers = {};
 
 module.exports = {
   "typeDefs": typeDefs,
