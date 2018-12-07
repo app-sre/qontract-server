@@ -113,6 +113,37 @@ var labelFilter = function (label_filter, input_set) {
   return match_datafiles;
 };
 
+var loadFromS3 = function (notifyLoadFile, notifyEnd) {
+  s3.getObject(s3params, function (err, data) {
+    if (err) {
+      console.log(err, err.stack);
+    } else {
+      let dbDatafileNew = {};
+      let dbDatafilesNew = [];
+
+      let raw = data.Body.toString('utf-8');
+      let datafilePack = JSON.parse(raw);
+
+      for (let d of datafilePack) {
+        let datafilePath = d[0];
+        let datafileData = d[1];
+
+        datafileData.path = datafilePath;
+
+        dbDatafilesNew.push(datafileData);
+        dbDatafileNew[datafilePath] = datafileData;
+
+        notifyLoadFile(datafilePath);
+      }
+
+      db.datafile = dbDatafileNew;
+      db.datafiles = dbDatafilesNew;
+
+      notifyEnd();
+    }
+  });
+};
+
 // main db object
 var db = {
   // collect datafiles
@@ -158,36 +189,11 @@ var db = {
   "isRef": isRef,
   "isNonEmptyArray": isNonEmptyArray,
   "load": () => {
+    var notifyEnd = () => console.log(`End datafile reload: ${new Date()}`);
+    var notifyLoadFile = (datafilePath) => console.log(`Load: ${datafilePath}`);
+
     console.log(`Start datafile reload: ${new Date()}`);
-
-    s3.getObject(s3params, function (err, data) {
-      if (err) {
-        console.log(err, err.stack);
-      } else {
-        let dbDatafileNew = {};
-        let dbDatafilesNew = [];
-
-        let raw = data.Body.toString('utf-8');
-        let datafilePack = JSON.parse(raw);
-
-        for (let d of datafilePack) {
-          let datafilePath = d[0];
-          let datafileData = d[1];
-
-          datafileData.path = datafilePath;
-
-          dbDatafilesNew.push(datafileData);
-          dbDatafileNew[datafilePath] = datafileData;
-
-          console.log(`Load: ${datafilePath}`);
-        }
-
-        db.datafile = dbDatafileNew;
-        db.datafiles = dbDatafilesNew;
-
-        console.log(`End datafile reload: ${new Date()}`);
-      }
-    });
+    loadFromS3(notifyLoadFile, notifyEnd);
   }
 };
 
