@@ -27,6 +27,10 @@ var isRef = function (obj) {
   return false;
 }
 
+var isNonEmptyArray = function (obj) {
+  return obj.constructor === Array && obj.length > 0;
+}
+
 var getRefPath = function (ref) {
   return /^[^$]*/.exec(ref)[0];
 }
