@@ -2,7 +2,6 @@ require('dotenv').config()
 
 const { ApolloServer, gql } = require("apollo-server-express");
 const express = require("express");
-const merge = require('lodash/merge');
 
 const db = require('./models/db');
 const base = require('./graphql-schemas/base');
@@ -26,7 +25,10 @@ var resolvers = {};
 for (schema of schemaFiles) {
     var schemaItem = require(`./graphql-schemas/${schema}`);
     typeDefs.push(schemaItem.typeDefs);
-    resolvers = merge(resolvers, schemaItem.resolvers);
+
+    for (var key in schemaItem.resolvers) {
+        resolvers[key] = schemaItem.resolvers[key];
+    }
 }
 
 const app = express();
