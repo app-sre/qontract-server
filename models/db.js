@@ -28,16 +28,16 @@ var isRef = function (obj) {
 
 var isNonEmptyArray = function (obj) {
   return obj.constructor === Array && obj.length > 0;
-}
+};
 
 var getRefPath = function (ref) {
   return /^[^$]*/.exec(ref)[0];
-}
+};
 
 var getRefExpr = function (ref) {
   m = /[$#].*/.exec(ref);
   return m ? m[0] : "";
-}
+};
 
 var resolvePath = function (relPath, basePath) {
   if (relPath == '.' || relPath == "") {
@@ -47,7 +47,7 @@ var resolvePath = function (relPath, basePath) {
   } else {
     return path.join(path.dirname(basePath), relPath);
   }
-}
+};
 
 // filters
 
@@ -65,14 +65,14 @@ var schemaInFilter = function (schema_in_filter, input_set) {
   }
 
   var match_datafiles = [];
-  for (datafile of datafiles) {
-    if (schema_in_filter.includes(datafile["$schema"])) {
+  for (let datafile of datafiles) {
+    if (schema_in_filter.includes(datafile.$schema)) {
       match_datafiles.push(datafile);
     }
   }
 
   return match_datafiles;
-}
+};
 
 var labelFilter = function (label_filter, input_set) {
   var datafiles;
@@ -89,8 +89,8 @@ var labelFilter = function (label_filter, input_set) {
 
   var match_datafiles = [];
 
-  for (datafile of datafiles) {
-    var datafile_labels = datafile["labels"];
+  for (let datafile of datafiles) {
+    var datafile_labels = datafile.labels;
 
     if (typeof (datafile_labels) == "undefined") {
       continue;
@@ -98,7 +98,7 @@ var labelFilter = function (label_filter, input_set) {
 
     var match = true;
 
-    for (var label in label_filter) {
+    for (let label in label_filter) {
       if (label_filter[label] != datafile_labels[label]) {
         match = false;
         break;
@@ -111,7 +111,7 @@ var labelFilter = function (label_filter, input_set) {
   }
 
   return match_datafiles;
-}
+};
 
 // main db object
 var db = {
@@ -127,9 +127,11 @@ var db = {
   "resolveRef": function (itemRef, datafilePath) {
     let ref, resolveFunc;
 
-    if (ref = itemRef['$ref']) {
+    if (itemRef.$ref) {
+      ref = itemRef.$ref;
       resolveFunc = (d, e) => jsonpointer.get(d, e);
-    } else if (ref = itemRef['$jsonpathref']) {
+    } else if (itemRef.$jsonpathref) {
+      ref = itemRef.$jsonpathref;
       resolveFunc = (d, e) => JSONPath({ json: d, path: e });
     } else {
       throw "Invalid ref object";
@@ -145,7 +147,7 @@ var db = {
       console.log(`Error retrieving datafile '${targetDatafilePath}'.`);
     }
 
-    let resolvedData = resolveFunc(datafile, expr)
+    let resolvedData = resolveFunc(datafile, expr);
 
     if (typeof (resolvedData) == "undefined") {
       console.log(`Error resolving ref: datafile: '${JSON.stringify(datafile)}', expr: '${expr}'.`);
@@ -168,11 +170,11 @@ var db = {
         let raw = data.Body.toString('utf-8');
         let datafilePack = JSON.parse(raw);
 
-        for (d of datafilePack) {
+        for (let d of datafilePack) {
           let datafilePath = d[0];
           let datafileData = d[1];
 
-          datafileData['path'] = datafilePath;
+          datafileData.path = datafilePath;
 
           dbDatafilesNew.push(datafileData);
           dbDatafileNew[datafilePath] = datafileData;
