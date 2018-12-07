@@ -4,17 +4,6 @@ const jsonpointer = require('jsonpointer');
 const { JSONPath } = require('jsonpath-plus');
 var AWS = require('aws-sdk');
 
-var s3 = new AWS.S3({
-  'AccessKeyID': process.env.AWS_ACCESS_KEY_ID,
-  'SecretAccessKey': process.env.AWS_SECRET_ACCESS_KEY,
-  'Region': process.env.AWS_REGION,
-});
-
-var s3params = {
-  Bucket: process.env.AWS_S3_BUCKET,
-  Key: process.env.AWS_S3_KEY,
-};
-
 // utils
 
 var isRef = function (obj) {
@@ -113,38 +102,109 @@ var labelFilter = function (label_filter, input_set) {
   return match_datafiles;
 };
 
-var loadFromS3 = function (notifyLoadFile, notifyEnd) {
+var resolveRef = function (itemRef, datafilePath) {
+  let ref, resolveFunc;
+
+  if (itemRef.$ref) {
+    ref = itemRef.$ref;
+    resolveFunc = (d, e) => jsonpointer.get(d, e);
+  } else if (itemRef.$jsonpathref) {
+    ref = itemRef.$jsonpathref;
+    resolveFunc = (d, e) => JSONPath({ json: d, path: e });
+  } else {
+    throw "Invalid ref object";
+  }
+
+  let path = getRefPath(ref);
+  let expr = getRefExpr(ref);
+
+  let targetDatafilePath = resolvePath(path, datafilePath);
+  let datafile = db.datafile[targetDatafilePath];
+
+  if (typeof (datafile) == "undefined") {
+    console.log(`Error retrieving datafile '${targetDatafilePath}'.`);
+  }
+
+  let resolvedData = resolveFunc(datafile, expr);
+
+  if (typeof (resolvedData) == "undefined") {
+    console.log(`Error resolving ref: datafile: '${JSON.stringify(datafile)}', expr: '${expr}'.`);
+  }
+
+  return resolvedData;
+}
+
+// datafile Loading functions
+
+var loadUnpack = function(raw) {
+  let dbDatafileNew = {};
+  let dbDatafilesNew = [];
+
+  let datafilePack = JSON.parse(raw);
+
+  for (let d of datafilePack) {
+    let datafilePath = d[0];
+    let datafileData = d[1];
+
+    datafileData.path = datafilePath;
+
+    dbDatafilesNew.push(datafileData);
+    dbDatafileNew[datafilePath] = datafileData;
+
+    console.log(`Load: ${datafilePath}`);
+  }
+
+  db.datafile = dbDatafileNew;
+  db.datafiles = dbDatafilesNew;
+
+  console.log(`End datafile reload: ${new Date()}`);
+};
+
+var loadFromS3 = function () {
+  var s3 = new AWS.S3({
+    'AccessKeyID': process.env.AWS_ACCESS_KEY_ID,
+    'SecretAccessKey': process.env.AWS_SECRET_ACCESS_KEY,
+    'Region': process.env.AWS_REGION,
+  });
+
+  var s3params = {
+    Bucket: process.env.AWS_S3_BUCKET,
+    Key: process.env.AWS_S3_KEY,
+  };
+
   s3.getObject(s3params, function (err, data) {
     if (err) {
       console.log(err, err.stack);
     } else {
-      let dbDatafileNew = {};
-      let dbDatafilesNew = [];
-
-      let raw = data.Body.toString('utf-8');
-      let datafilePack = JSON.parse(raw);
-
-      for (let d of datafilePack) {
-        let datafilePath = d[0];
-        let datafileData = d[1];
-
-        datafileData.path = datafilePath;
-
-        dbDatafilesNew.push(datafileData);
-        dbDatafileNew[datafilePath] = datafileData;
-
-        notifyLoadFile(datafilePath);
-      }
-
-      db.datafile = dbDatafileNew;
-      db.datafiles = dbDatafilesNew;
-
-      notifyEnd();
+      loadUnpack(data.Body.toString('utf-8'));
     }
   });
 };
 
+var loadFromFile = function () {
+  var raw = fs.readFileSync(process.env.DATAFILES_FILE);
+  loadUnpack(raw);
+};
+
+var load = function () {
+  console.log(`Start datafile reload: ${new Date()}`);
+
+  switch (process.env.LOAD_METHOD) {
+    case "fs":
+      console.log("Loading from fs.");
+      loadFromFile();
+      break;
+    case "s3":
+      console.log("Loading from s3.");
+      loadFromS3();
+      break;
+    default:
+      throw new Error(`Unknown LOAD_METHOD ${process.env.LOAD_METHOD}`);
+  }
+}
+
 // main db object
+
 var db = {
   // collect datafiles
   "datafiles": [],
@@ -155,46 +215,10 @@ var db = {
   "schemaInFilter": schemaInFilter,
 
   // utils
-  "resolveRef": function (itemRef, datafilePath) {
-    let ref, resolveFunc;
-
-    if (itemRef.$ref) {
-      ref = itemRef.$ref;
-      resolveFunc = (d, e) => jsonpointer.get(d, e);
-    } else if (itemRef.$jsonpathref) {
-      ref = itemRef.$jsonpathref;
-      resolveFunc = (d, e) => JSONPath({ json: d, path: e });
-    } else {
-      throw "Invalid ref object";
-    }
-
-    let path = getRefPath(ref);
-    let expr = getRefExpr(ref);
-
-    let targetDatafilePath = resolvePath(path, datafilePath);
-    let datafile = db.datafile[targetDatafilePath];
-
-    if (typeof (datafile) == "undefined") {
-      console.log(`Error retrieving datafile '${targetDatafilePath}'.`);
-    }
-
-    let resolvedData = resolveFunc(datafile, expr);
-
-    if (typeof (resolvedData) == "undefined") {
-      console.log(`Error resolving ref: datafile: '${JSON.stringify(datafile)}', expr: '${expr}'.`);
-    }
-
-    return resolvedData;
-  },
+  "resolveRef": resolveRef,
   "isRef": isRef,
   "isNonEmptyArray": isNonEmptyArray,
-  "load": () => {
-    var notifyEnd = () => console.log(`End datafile reload: ${new Date()}`);
-    var notifyLoadFile = (datafilePath) => console.log(`Load: ${datafilePath}`);
-
-    console.log(`Start datafile reload: ${new Date()}`);
-    loadFromS3(notifyLoadFile, notifyEnd);
-  }
+  "load": load,
 };
 
 module.exports = db;
