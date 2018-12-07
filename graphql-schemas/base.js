@@ -1,5 +1,4 @@
-const db = require('../models/db');
-const _ = require('lodash');
+const db = require("../models/db");
 
 var defaultResolver = function (root, args, context, info) {
   let datafileImplementations = info.schema._implementations.DataFile_v1;
@@ -17,22 +16,37 @@ var defaultResolver = function (root, args, context, info) {
     }
 
     if (info.fieldName == "schema") {
-      return root["$schema"];
+      return root.$schema;
     }
   }
 
   let val = root[info.fieldName];
 
-  if (val.constructor === Array && val.length > 0) {
-    if (!(_.map(val, (e) => db.isRef(e)).includes(false))) {
-      let arrayResolve = _.map(val, (e) => db.resolveRef(e, context.datafilePath));
-      if (String(info.returnType)[0]=="[") {
-        return _.flattenDepth(arrayResolve, 1);
-      }
-      return arrayResolve;
+  // if the item is null, return as is
+  if (typeof(val) == "undefined") {
+    return null;
+  }
+
+  if (db.isNonEmptyArray(val)) {
+    // are all the elements of this array references?
+    checkRefs = val.map((e) => db.isRef(e));
+
+    // if there are elements that aren't references return the array as is
+    if (checkRefs.includes(false)) {
+      return val;
     }
 
-    return val;
+    // resolve all the elements of the array
+    let arrayResolve = val.map((e) => db.resolveRef(e, context.datafilePath));
+
+    // `info.returnType` has information about what the GraphQL schema expects
+    // as a return type. If it starts with `[` it means that we need to return
+    // an array.
+    if (String(info.returnType)[0] == "[") {
+      arrayResolve = arrayResolve.flat(1);
+    }
+
+    return arrayResolve;
   }
 
   if (db.isRef(val)) {
@@ -53,6 +67,7 @@ var typeDefs = `
     user(label: JSON): [User_v1]
     bot(label: JSON): [Bot_v1]
     role(label: JSON): [Role_v1]
+    cluster(label: JSON): [Cluster_v1]
   }
 
   interface DataFile_v1 {
@@ -100,21 +115,20 @@ var resolvers = {
     role(root, args, context, info) {
       args.schemaIn = ["access/role-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
-    }
+    },
+    cluster(root, args, context, info) {
+      args.schemaIn = ["openshift/cluster-1.yml"];
+      return resolvers.Query.datafile(root, args, context, info);
+    },
   },
   DataFile_v1: {
     __resolveType(root, context) {
       // TODO: autogenerate for all types that implement DataFile
-      switch (root['$schema']) {
-        case "access/user-1.yml":
-          return "User_v1";
-          break;
-        case "access/bot-1.yml":
-          return "Bot_v1";
-          break;
-        case "access/role-1.yml":
-          return "Role_v1";
-          break;
+      switch (root.$schema) {
+        case "access/user-1.yml": return "User_v1";
+        case "access/bot-1.yml": return "Bot_v1";
+        case "access/role-1.yml": return "Role_v1";
+        case "openshift/cluster-1.yml": return "Cluster_v1";
       }
       return "DataFileGeneric_v1";
     }

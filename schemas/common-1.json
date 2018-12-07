@@ -83,6 +83,30 @@
           "additionalProperties": false
         }
       ]
+    },
+    "vaultSecret": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "field": {
+          "type": "string"
+        },
+        "format": {
+          "type": "string",
+          "enum": [
+            "plain",
+            "base64"
+          ],
+          "default": "plain"
+        }
+      },
+      "required": [
+        "path",
+        "field"
+      ]
     }
   }
 }

@@ -1,0 +1,38 @@
+---
+"$schema": metaschema-1.json
+version: '1.0'
+type: object
+
+additionalProperties: false
+properties:
+  "$schema":
+    type: string
+  labels:
+    "$ref": "common-1.json#/definitions/labels"
+  name:
+    type: string
+  serverUrl:
+    type: string
+    format: uri
+  automationToken:
+    "$ref": "common-1.json#/definitions/vaultSecret"
+  description:
+    type: string
+  managedRoles:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      properties:
+        namespace:
+          type: string
+        role:
+          type: string
+      required:
+      - namespace
+      - role
+required:
+- "$schema"
+- labels
+- name
+- serverUrl

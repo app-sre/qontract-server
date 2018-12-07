@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const jsonpointer = require('jsonpointer');
 const { JSONPath } = require('jsonpath-plus');
-const _ = require('lodash');
 var AWS = require('aws-sdk');
 
 var s3 = new AWS.S3({
@@ -20,11 +19,15 @@ var s3params = {
 
 var isRef = function (obj) {
   if (obj.constructor === Object) {
-    if (_.isEqual(_.keys(obj), ['$ref']) || _.isEqual(_.keys(obj), ['$jsonpathref'])) {
+    if (Object.keys(obj).length == 1 && ('$ref' in obj || '$jsonpathref' in obj)) {
       return true;
     }
   }
   return false;
+};
+
+var isNonEmptyArray = function (obj) {
+  return obj.constructor === Array && obj.length > 0;
 }
 
 var getRefPath = function (ref) {
@@ -151,6 +154,7 @@ var db = {
     return resolvedData;
   },
   "isRef": isRef,
+  "isNonEmptyArray": isNonEmptyArray,
   "load": () => {
     console.log(`Start datafile reload: ${new Date()}`);
 

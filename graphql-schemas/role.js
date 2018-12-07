@@ -1,7 +1,6 @@
 const db = require('../models/db');
 const base = require('./base');
 const { JSONPath } = require('jsonpath-plus');
-const _ = require('lodash');
 
 const typeDefs = `
   type Role_v1 implements DataFile_v1 {
@@ -12,17 +11,25 @@ const typeDefs = `
     members: [Entity_v1]!
     permissions: [Permission_v1]!
   }
-`
+`;
+
 const resolvers = {
   Role_v1: {
     members(root, args, context, info) {
       // TODO: this is not acceptable, it requires absolute paths
       let jsonpath = `$.roles[?(@["$ref"]=="/${root.path}")]`;
       let users = db.schemaInFilter(["access/user-1.yml", "access/bot-1.yml"]);
-      return _.filter(users, user => JSONPath({ json: user, path: jsonpath }).length > 0);
+
+      return users.filter((user) => {
+        let resolve = JSONPath({ json: user, path: jsonpath });
+
+        // if there are no matches, jsonpath returns an empty array. We want to
+        // filter by those that resolve to something (i.e. they match the jsonpath)
+        return resolve.length > 0;
+      });
     },
   },
-}
+};
 
 module.exports = {
   "typeDefs": typeDefs,
