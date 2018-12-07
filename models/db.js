@@ -155,6 +155,7 @@ var db = {
     return resolvedData;
   },
   "isRef": isRef,
+  "isNonEmptyArray": isNonEmptyArray,
   "load": () => {
     console.log(`Start datafile reload: ${new Date()}`);
 
