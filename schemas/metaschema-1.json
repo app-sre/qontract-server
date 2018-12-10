@@ -18,15 +18,23 @@
       "properties": {
         "labels": {
           "type": "object",
-          "additionalProperties": false,
           "properties": {
-            "$ref": {
+            "type": {
               "type": "string",
-              "const": "common-1.json#/definitions/labels"
+              "const": "object"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "string"
+                }
+              }
             }
           },
           "required": [
-            "$ref"
+            "type"
           ]
         },
         "$schema": {
