@@ -86,7 +86,7 @@ var typeDefs = `
 var resolvers = {
   Query: {
     datafile(root, args, context, info) {
-      var datafiles = db.datafiles;
+      var datafiles = Object.values(db.datafiles);
 
       if (args.label) {
         datafiles = db.labelFilter(args.label, datafiles);

@@ -137,8 +137,7 @@ var resolveRef = function (itemRef, datafilePath) {
 // datafile Loading functions
 
 var loadUnpack = function(raw) {
-  let dbDatafileNew = {};
-  let dbDatafilesNew = [];
+  let dbDatafilesNew = {};
 
   let bundle = JSON.parse(raw);
 
@@ -158,13 +157,11 @@ var loadUnpack = function(raw) {
 
     datafileData.path = datafilePath;
 
-    dbDatafilesNew.push(datafileData);
-    dbDatafileNew[datafilePath] = datafileData;
+    dbDatafilesNew[datafilePath] = datafileData;
 
     console.log(`Load: ${datafilePath}`);
   });
 
-  db.datafile = dbDatafileNew;
   db.datafiles = dbDatafilesNew;
 
   console.log(`End datafile reload: ${new Date()}`);
@@ -217,8 +214,7 @@ var load = function () {
 
 var db = {
   // collect datafiles
-  "datafiles": [],
-  "datafile": {},
+  "datafiles": {},
 
   // filter functions
   "labelFilter": labelFilter,
