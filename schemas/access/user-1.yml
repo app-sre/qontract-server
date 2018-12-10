@@ -16,7 +16,7 @@ properties:
   roles:
     type: array
     items:
-      "$ref": "/common-1.json#/definitions/crossref"
+      "$ref": "/access/role-1.yml"
 
 required:
 - $schema

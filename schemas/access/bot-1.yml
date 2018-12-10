@@ -12,11 +12,11 @@ properties:
   github_username:
     "$ref": "/common-1.json#/definitions/identifier"
   owner:
-    "$ref": "/common-1.json#/definitions/crossref"
+    "$ref": "/access/user-1.yml"
   roles:
     type: array
     items:
-      "$ref": "/common-1.json#/definitions/crossref"
+      "$ref": "/access/role-1.yml"
 
 required:
 - $schema

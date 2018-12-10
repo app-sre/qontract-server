@@ -55,35 +55,6 @@
       "maximum": 100,
       "exclusiveMaximum": true
     },
-    "crossref": {
-      "type": "object",
-      "oneOf": [
-        {
-          "properties": {
-            "$ref": {
-              "type": "string",
-              "format": "uri-reference"
-            }
-          },
-          "required": [
-            "$ref"
-          ],
-          "additionalProperties": false
-        },
-        {
-          "properties": {
-            "$jsonpathref": {
-              "type": "string",
-              "pattern": "^.*\\$.+$"
-            }
-          },
-          "required": [
-            "$jsonpathref"
-          ],
-          "additionalProperties": false
-        }
-      ]
-    },
     "vaultSecret": {
       "additionalProperties": false,
       "type": "object",

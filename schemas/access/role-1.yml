@@ -12,7 +12,7 @@ properties:
   permissions:
     type: array
     items:
-      "$ref": "/common-1.json#/definitions/crossref"
+      "$ref": "/access/permission-1.yml"
 required:
 - $schema
 - labels
