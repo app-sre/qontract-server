@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv').config();
 
 const { ApolloServer, gql } = require("apollo-server-express");
 const express = require("express");
@@ -22,7 +22,7 @@ var schemaFiles = [
 var typeDefs = [];
 var resolvers = {};
 
-for (schema of schemaFiles) {
+for (var schema of schemaFiles) {
     var schemaItem = require(`./graphql-schemas/${schema}`);
     typeDefs.push(schemaItem.typeDefs);
 
@@ -41,9 +41,9 @@ const server = new ApolloServer({
 
 server.applyMiddleware({ app });
 
-app.get('/reload', (req, res) => { db.load(); res.send() });
-app.get('/health-check', (req, res) => { res.send() });
-app.get('/', (req, res) => { res.redirect('/graphql') });
+app.get('/reload', (req, res) => { db.load(); res.send(); });
+app.get('/health-check', (req, res) => { res.send(); });
+app.get('/', (req, res) => { res.redirect('/graphql'); });
 
 app.listen({ port: 4000 }, () =>
     console.log(`Running at http://localhost:4000${server.graphqlPath}`));

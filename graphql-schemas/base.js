@@ -54,7 +54,7 @@ var defaultResolver = function (root, args, context, info) {
   }
 
   return val;
-}
+};
 
 var typeDefs = `
   scalar JSON
@@ -81,7 +81,7 @@ var typeDefs = `
     path: String!
     labels: JSON
   }
-`
+`;
 
 var resolvers = {
   Query: {
@@ -133,7 +133,7 @@ var resolvers = {
       return "DataFileGeneric_v1";
     }
   },
-}
+};
 
 module.exports = {
   "typeDefs": typeDefs,

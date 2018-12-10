@@ -53,6 +53,11 @@ objects:
           imagePullPolicy: Always
           name: app-interface
           env:
+            - name: LOAD_METHOD
+              valueFrom:
+                configMapKeyRef:
+                  key: load_method
+                  name: app-interface
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:

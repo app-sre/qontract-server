@@ -32,31 +32,22 @@ const typeDefs = `
     service: String!
     org: String!
   }
-`
+`;
+
 const resolvers = {
     Permission_v1: {
       __resolveType(root, context) {
-        switch (root['service']) {
-          case "aws-analytics":
-            return "PermissionAWSAnalytics_v1";
-            break;
-          case "github-org":
-            return "PermissionGithubOrg_v1";
-            break;
-          case "github-org-team":
-            return "PermissionGithubOrgTeam_v1";
-            break;
-          case "openshift-rolebinding":
-            return "PermissionOpenshiftRolebinding_v1";
-            break;
-          case "quay-org":
-            return "PermissionQuayOrg_v1";
-            break;
+        switch (root.service) {
+          case "aws-analytics": return "PermissionAWSAnalytics_v1";
+          case "github-org": return "PermissionGithubOrg_v1";
+          case "github-org-team": return "PermissionGithubOrgTeam_v1";
+          case "openshift-rolebinding": return "PermissionOpenshiftRolebinding_v1";
+          case "quay-org": return "PermissionQuayOrg_v1";
         }
       }
     }
 
-}
+};
 
 module.exports = {
     "typeDefs": typeDefs,
