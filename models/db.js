@@ -140,9 +140,9 @@ var loadUnpack = function(raw) {
   let dbDatafileNew = {};
   let dbDatafilesNew = [];
 
-  let datafilePack = JSON.parse(raw);
+  let bundle = JSON.parse(raw);
 
-  for (let d of datafilePack) {
+  Object.entries(bundle).forEach(d => {
     let datafilePath = d[0];
     let datafileData = d[1];
 
@@ -162,7 +162,7 @@ var loadUnpack = function(raw) {
     dbDatafileNew[datafilePath] = datafileData;
 
     console.log(`Load: ${datafilePath}`);
-  }
+  });
 
   db.datafile = dbDatafileNew;
   db.datafiles = dbDatafilesNew;
