@@ -39,10 +39,26 @@ const server = new ApolloServer({
     fieldResolver: base.defaultResolver
 });
 
+function ensurePresentData(req, res, next) {
+    if (req.url == '/graphql' && db.datafiles.length == 0) {
+        res.status(503).send('No loaded data.');
+    } else {
+        next();
+    }
+}
+
+app.use(ensurePresentData);
+
 server.applyMiddleware({ app });
 
 app.get('/reload', (req, res) => { db.load(); res.send(); });
-app.get('/health-check', (req, res) => { res.send(); });
+app.get('/health-check', (req, res) => {
+    if (db.datafiles.length == 0) {
+        res.status(503).send('No loaded data.');
+    } else {
+        res.send();
+    }
+ });
 app.get('/', (req, res) => { res.redirect('/graphql'); });
 
 app.listen({ port: 4000 }, () =>

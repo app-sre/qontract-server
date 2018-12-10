@@ -146,6 +146,16 @@ var loadUnpack = function(raw) {
     let datafilePath = d[0];
     let datafileData = d[1];
 
+    if (typeof(datafilePath) != "string") {
+      throw new Error("Expecting string for datafilePath");
+    }
+
+    if (typeof (datafileData) != "object" ||
+          Object.keys(datafileData).length == 0 ||
+          !('$schema' in datafileData)) {
+      throw new Error("Invalid datafileData object");
+    }
+
     datafileData.path = datafilePath;
 
     dbDatafilesNew.push(datafileData);
