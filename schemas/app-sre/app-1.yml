@@ -1,5 +1,5 @@
 ---
-"$schema": metaschema-1.json
+"$schema": /metaschema-1.json
 version: '1.0'
 type: object
 
@@ -8,7 +8,7 @@ properties:
   "$schema":
     type: string
   labels:
-    "$ref": "common-1.json#/definitions/labels"
+    "$ref": "/common-1.json#/definitions/labels"
 
   title:
     type: string
@@ -32,9 +32,9 @@ properties:
     additionalProperties: false
     properties:
       SLO:
-        "$ref": "common-1.json#/definitions/serviceLevel"
+        "$ref": "/common-1.json#/definitions/serviceLevel"
       SLA:
-        "$ref": "common-1.json#/definitions/serviceLevel"
+        "$ref": "/common-1.json#/definitions/serviceLevel"
       statusPage:
         type: string
         format: uri-reference
@@ -63,7 +63,7 @@ properties:
           type: string
           format: uri
         SLA:
-          "$ref": "common-1.json#/definitions/serviceLevel"
+          "$ref": "/common-1.json#/definitions/serviceLevel"
         dependencyFailureImpact:
           type: string
           enum:
