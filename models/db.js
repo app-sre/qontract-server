@@ -33,7 +33,7 @@ var schemaInFilter = function (schema_in_filter, input_set) {
   var datafiles;
 
   if (typeof (input_set) == "undefined") {
-    datafiles = this.datafiles;
+    datafiles = Object.values(db.datafiles);
   } else {
     datafiles = input_set;
   }
@@ -201,6 +201,8 @@ var db = {
   "isRef": isRef,
   "isNonEmptyArray": isNonEmptyArray,
   "load": load,
+  "getRefPath": getRefPath,
+  "getRefExpr": getRefExpr,
 };
 
 module.exports = db;
