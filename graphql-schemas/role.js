@@ -25,7 +25,7 @@ const resolvers = {
       let members = db.schemaInFilter(schemas);
 
       return members.filter(e => {
-        let backrefs = e[subAttr].map(r => db.getRefPath(r.$ref));
+        let backrefs = e[subAttr].map(r => r.$ref);
         return backrefs.includes(root.path);
       });
     },
@@ -38,7 +38,7 @@ const resolvers = {
       let users = db.schemaInFilter(schemas);
 
       return users.filter(e => {
-        let backrefs = e[subAttr].map(r => db.getRefPath(r.$ref));
+        let backrefs = e[subAttr].map(r => r.$ref);
         return backrefs.includes(root.path);
       });
     },
@@ -51,7 +51,7 @@ const resolvers = {
       let bots = db.schemaInFilter(schemas)
 
       return bots.filter(e => {
-        let backrefs = e[subAttr].map(r => db.getRefPath(r.$ref));
+        let backrefs = e[subAttr].map(r => r.$ref);
         return backrefs.includes(root.path);
       });
     },
