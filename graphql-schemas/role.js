@@ -16,29 +16,44 @@ const typeDefs = `
 
 const resolvers = {
   Role_v1: {
+    // synthetic field. It gets populated by all the users and bots that have a
+    // reference to this specific role datafile under `.roles[].$ref`.
     members(root, args, context, info) {
       let schemas = ["access/user-1.yml", "access/bot-1.yml"];
       let subAttr = "roles";
 
-      return db.schemaInFilter(schemas).filter(e =>
-        e[subAttr].map(r => db.getRefPath(r.$ref)).includes(root.path)
-      );
+      let members = db.schemaInFilter(schemas);
+
+      return members.filter(e => {
+        let backrefs = e[subAttr].map(r => db.getRefPath(r.$ref));
+        return backrefs.includes(root.path);
+      });
     },
+    // synthetic field. It gets populated by all the users that have a reference
+    // to this specific role datafile under `.roles[].$ref`.
     users(root, args, context, info) {
       let schemas = ["access/user-1.yml"];
       let subAttr = "roles";
 
-      return db.schemaInFilter(schemas).filter(e =>
-        e[subAttr].map(r => db.getRefPath(r.$ref)).includes(root.path)
-      );
+      let users = db.schemaInFilter(schemas);
+
+      return users.filter(e => {
+        let backrefs = e[subAttr].map(r => db.getRefPath(r.$ref));
+        return backrefs.includes(root.path);
+      });
     },
+    // synthetic field. It gets populated by all the bots that have a reference
+    // to this specific role datafile under `.roles[].$ref`.
     bots(root, args, context, info) {
       let schemas = ["access/bot-1.yml"];
       let subAttr = "roles";
 
-      return db.schemaInFilter(schemas).filter(e =>
-        e[subAttr].map(r => db.getRefPath(r.$ref)).includes(root.path)
-      );
+      let bots = db.schemaInFilter(schemas)
+
+      return bots.filter(e => {
+        let backrefs = e[subAttr].map(r => db.getRefPath(r.$ref));
+        return backrefs.includes(root.path);
+      });
     },
   },
 };
