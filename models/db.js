@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const jsonpointer = require('jsonpointer');
 var AWS = require('aws-sdk');
+var forge = require('node-forge');
 
 // utils
 
@@ -117,6 +118,11 @@ var loadUnpack = function(raw) {
 
   let bundle = JSON.parse(raw);
 
+  let sha256 = forge.md.sha256.create();
+  sha256.update(raw);
+
+  let sha256_hex = sha256.digest().toHex();
+
   Object.entries(bundle).forEach(d => {
     let datafilePath = d[0];
     let datafileData = d[1];
@@ -139,6 +145,7 @@ var loadUnpack = function(raw) {
   });
 
   db.datafiles = dbDatafilesNew;
+  db.sha256 = sha256_hex;
 
   console.log(`End datafile reload: ${new Date()}`);
 };
@@ -191,6 +198,8 @@ var load = function () {
 var db = {
   // collect datafiles
   "datafiles": {},
+  "sha256": "",
+
 
   // filter functions
   "labelFilter": labelFilter,

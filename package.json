@@ -16,6 +16,7 @@
     "fs": "0.0.1-security",
     "graphql": "^14.0.2",
     "jsonpointer": "^4.0.1",
+    "node-forge": "^0.7.6",
     "path": "^0.12.7"
   }
 }
