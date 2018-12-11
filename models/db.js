@@ -118,10 +118,10 @@ var loadUnpack = function(raw) {
 
   let bundle = JSON.parse(raw);
 
-  let sha1 = forge.md.sha1.create();
-  sha1.update(raw);
+  let sha256 = forge.md.sha256.create();
+  sha256.update(raw);
 
-  let sha1_hex = sha1.digest().toHex();
+  let sha256_hex = sha256.digest().toHex();
 
   Object.entries(bundle).forEach(d => {
     let datafilePath = d[0];
@@ -145,7 +145,7 @@ var loadUnpack = function(raw) {
   });
 
   db.datafiles = dbDatafilesNew;
-  db.sha1 = sha1_hex;
+  db.sha256 = sha256_hex;
 
   console.log(`End datafile reload: ${new Date()}`);
 };
@@ -198,7 +198,7 @@ var load = function () {
 var db = {
   // collect datafiles
   "datafiles": {},
-  "sha1": "",
+  "sha256": "",
 
 
   // filter functions
