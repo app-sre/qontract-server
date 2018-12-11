@@ -52,6 +52,7 @@ app.use(ensurePresentData);
 server.applyMiddleware({ app });
 
 app.get('/reload', (req, res) => { db.load(); res.send(); });
+app.get('/sha1', (req, res) => { res.send(db.sha1); });
 app.get('/health-check', (req, res) => {
     if (Object.keys(db.datafiles).length == 0) {
         res.status(503).send('No loaded data.');
