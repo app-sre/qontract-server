@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const jsonpointer = require('jsonpointer');
-const { JSONPath } = require('jsonpath-plus');
 var AWS = require('aws-sdk');
 
 // utils
@@ -26,16 +25,6 @@ var getRefPath = function (ref) {
 var getRefExpr = function (ref) {
   m = /[$#].*/.exec(ref);
   return m ? m[0] : "";
-};
-
-var resolvePath = function (relPath, basePath) {
-  if (relPath == '.' || relPath == "") {
-    return basePath;
-  } else if (relPath[0] == '/') {
-    return relPath.substr(1);
-  } else {
-    return path.join(path.dirname(basePath), relPath);
-  }
 };
 
 // filters
@@ -102,30 +91,17 @@ var labelFilter = function (label_filter, input_set) {
   return match_datafiles;
 };
 
-var resolveRef = function (itemRef, datafilePath) {
-  let ref, resolveFunc;
+var resolveRef = function (itemRef) {
+  let path = getRefPath(itemRef.$ref);
+  let expr = getRefExpr(itemRef.$ref);
 
-  if (itemRef.$ref) {
-    ref = itemRef.$ref;
-    resolveFunc = (d, e) => jsonpointer.get(d, e);
-  } else if (itemRef.$jsonpathref) {
-    ref = itemRef.$jsonpathref;
-    resolveFunc = (d, e) => JSONPath({ json: d, path: e });
-  } else {
-    throw "Invalid ref object";
-  }
-
-  let path = getRefPath(ref);
-  let expr = getRefExpr(ref);
-
-  let targetDatafilePath = resolvePath(path, datafilePath);
-  let datafile = db.datafile[targetDatafilePath];
+  let datafile = db.datafiles[path];
 
   if (typeof (datafile) == "undefined") {
-    console.log(`Error retrieving datafile '${targetDatafilePath}'.`);
+    console.log(`Error retrieving datafile '${path}'.`);
   }
 
-  let resolvedData = resolveFunc(datafile, expr);
+  let resolvedData = jsonpointer.get(datafile, expr);
 
   if (typeof (resolvedData) == "undefined") {
     console.log(`Error resolving ref: datafile: '${JSON.stringify(datafile)}', expr: '${expr}'.`);
