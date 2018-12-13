@@ -8,7 +8,7 @@ var AWS = require('aws-sdk');
 
 var isRef = function (obj) {
   if (obj.constructor === Object) {
-    if (Object.keys(obj).length == 1 && ('$ref' in obj || '$jsonpathref' in obj)) {
+    if (Object.keys(obj).length == 1 && ('$ref' in obj)) {
       return true;
     }
   }
@@ -44,7 +44,7 @@ var schemaInFilter = function (schema_in_filter, input_set) {
   var datafiles;
 
   if (typeof (input_set) == "undefined") {
-    datafiles = this.datafiles;
+    datafiles = Object.values(db.datafiles);
   } else {
     datafiles = input_set;
   }
@@ -137,12 +137,11 @@ var resolveRef = function (itemRef, datafilePath) {
 // datafile Loading functions
 
 var loadUnpack = function(raw) {
-  let dbDatafileNew = {};
-  let dbDatafilesNew = [];
+  let dbDatafilesNew = {};
 
-  let datafilePack = JSON.parse(raw);
+  let bundle = JSON.parse(raw);
 
-  for (let d of datafilePack) {
+  Object.entries(bundle).forEach(d => {
     let datafilePath = d[0];
     let datafileData = d[1];
 
@@ -158,13 +157,11 @@ var loadUnpack = function(raw) {
 
     datafileData.path = datafilePath;
 
-    dbDatafilesNew.push(datafileData);
-    dbDatafileNew[datafilePath] = datafileData;
+    dbDatafilesNew[datafilePath] = datafileData;
 
     console.log(`Load: ${datafilePath}`);
-  }
+  });
 
-  db.datafile = dbDatafileNew;
   db.datafiles = dbDatafilesNew;
 
   console.log(`End datafile reload: ${new Date()}`);
@@ -217,8 +214,7 @@ var load = function () {
 
 var db = {
   // collect datafiles
-  "datafiles": [],
-  "datafile": {},
+  "datafiles": {},
 
   // filter functions
   "labelFilter": labelFilter,
