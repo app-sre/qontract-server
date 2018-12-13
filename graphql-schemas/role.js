@@ -17,8 +17,8 @@ const resolvers = {
   Role_v1: {
     members(root, args, context, info) {
       // TODO: this is not acceptable, it requires absolute paths
-      let jsonpath = `$.roles[?(@["$ref"]=="/${root.path}")]`;
-      let users = db.schemaInFilter(["access/user-1.yml", "access/bot-1.yml"]);
+      let jsonpath = `$.roles[?(@["$ref"]=="${root.path}")]`;
+      let users = db.schemaInFilter(["/access/user-1.yml", "/access/bot-1.yml"]);
 
       return users.filter((user) => {
         let resolve = JSONPath({ json: user, path: jsonpath });

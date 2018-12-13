@@ -8,7 +8,7 @@
       "const": "metaschema-1.json"
     },
     "version": {
-      "$ref": "common-1.json#/definitions/version"
+      "$ref": "/common-1.json#/definitions/version"
     },
     "labels": {
       "type": "object"

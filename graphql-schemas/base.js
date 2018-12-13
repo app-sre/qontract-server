@@ -101,23 +101,23 @@ var resolvers = {
 
     // TODO: autogenerate for all types that implement DataFile
     entity(root, args, context, info) {
-      args.schemaIn = ["access/user-1.yml", "access/bot-1.yml"];
+      args.schemaIn = ["/access/user-1.yml", "/access/bot-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
     },
     user(root, args, context, info) {
-      args.schemaIn = ["access/user-1.yml"];
+      args.schemaIn = ["/access/user-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
     },
     bot(root, args, context, info) {
-      args.schemaIn = ["access/bot-1.yml"];
+      args.schemaIn = ["/access/bot-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
     },
     role(root, args, context, info) {
-      args.schemaIn = ["access/role-1.yml"];
+      args.schemaIn = ["/access/role-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
     },
     cluster(root, args, context, info) {
-      args.schemaIn = ["openshift/cluster-1.yml"];
+      args.schemaIn = ["/openshift/cluster-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
     },
   },
@@ -125,10 +125,10 @@ var resolvers = {
     __resolveType(root, context) {
       // TODO: autogenerate for all types that implement DataFile
       switch (root.$schema) {
-        case "access/user-1.yml": return "User_v1";
-        case "access/bot-1.yml": return "Bot_v1";
-        case "access/role-1.yml": return "Role_v1";
-        case "openshift/cluster-1.yml": return "Cluster_v1";
+        case "/access/user-1.yml": return "User_v1";
+        case "/access/bot-1.yml": return "Bot_v1";
+        case "/access/role-1.yml": return "Role_v1";
+        case "/openshift/cluster-1.yml": return "Cluster_v1";
       }
       return "DataFileGeneric_v1";
     }

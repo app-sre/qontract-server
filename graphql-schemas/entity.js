@@ -9,8 +9,8 @@ const resolvers = {
   Entity_v1: {
     __resolveType(root, context) {
       switch (root.$schema) {
-        case "access/user-1.yml": return "User_v1";
-        case "access/bot-1.yml": return "Bot_v1";
+        case "/access/user-1.yml": return "User_v1";
+        case "/access/bot-1.yml": return "Bot_v1";
       }
     }
   }
