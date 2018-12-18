@@ -64,3 +64,4 @@ required:
 - labels
 - name
 - description
+- service
