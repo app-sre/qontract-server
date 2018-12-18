@@ -5,7 +5,7 @@
   "properties": {
     "$schema": {
       "type": "string",
-      "const": "metaschema-1.json"
+      "enum": [ "/metaschema-1.json" ]
     },
     "version": {
       "$ref": "/common-1.json#/definitions/version"
@@ -22,7 +22,7 @@
           "properties": {
             "$ref": {
               "type": "string",
-              "const": "common-1.json#/definitions/labels"
+              "enum": [ "/common-1.json#/definitions/labels" ]
             }
           },
           "required": [
@@ -34,7 +34,7 @@
           "properties": {
             "type": {
               "type": "string",
-              "const": "uri"
+              "enum": [ "string" ]
             }
           }
         }
