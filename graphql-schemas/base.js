@@ -1,23 +1,8 @@
 const db = require("../models/db");
 
 var defaultResolver = function (root, args, context, info) {
-  let datafileImplementations = info.schema._implementations.DataFile_v1;
-  let parentType = info.parentType;
-
-  if (datafileImplementations.includes(parentType)) {
-    // TODO: This `if` is a temporary hack. We need to define
-    // `context.datafilePath = root.path;` but we must not reassign it every
-    // time we shift to another datafile, because it will not revert back to the
-    // previous value once we exit a nested field. This means that with the
-    // current implementation would be able to resolve one `resolveRef` going to
-    // another datafile, but not a second one.
-    if (typeof (context.datafilePath) == "undefined") {
-      context.datafilePath = root.path;
-    }
-
-    if (info.fieldName == "schema") {
-      return root.$schema;
-    }
+  if (info.fieldName == "schema") {
+    return root.$schema;
   }
 
   let val = root[info.fieldName];
@@ -29,7 +14,7 @@ var defaultResolver = function (root, args, context, info) {
 
   if (db.isNonEmptyArray(val)) {
     // are all the elements of this array references?
-    checkRefs = val.map((e) => db.isRef(e));
+    checkRefs = val.map(db.isRef);
 
     // if there are elements that aren't references return the array as is
     if (checkRefs.includes(false)) {
@@ -37,7 +22,7 @@ var defaultResolver = function (root, args, context, info) {
     }
 
     // resolve all the elements of the array
-    let arrayResolve = val.map((e) => db.resolveRef(e, context.datafilePath));
+    let arrayResolve = val.map(db.resolveRef);
 
     // `info.returnType` has information about what the GraphQL schema expects
     // as a return type. If it starts with `[` it means that we need to return
@@ -50,10 +35,21 @@ var defaultResolver = function (root, args, context, info) {
   }
 
   if (db.isRef(val)) {
-    val = db.resolveRef(itemRef, context.datafilePath);
+    val = db.resolveRef(itemRef);
   }
 
   return val;
+};
+
+// synthetic field. It gets populated by all the users that have a reference
+// to this specific role datafile under `.roles[].$ref`.
+var syntheticField = function (root, schemas, subAttr) {
+  let elements = db.schemaInFilter(schemas);
+
+  return elements.filter(e => {
+    let backrefs = e[subAttr].map(r => r.$ref);
+    return backrefs.includes(root.path);
+  });
 };
 
 var typeDefs = `
@@ -86,7 +82,7 @@ var typeDefs = `
 var resolvers = {
   Query: {
     datafile(root, args, context, info) {
-      var datafiles = db.datafiles;
+      var datafiles = Object.values(db.datafiles);
 
       if (args.label) {
         datafiles = db.labelFilter(args.label, datafiles);
@@ -101,23 +97,23 @@ var resolvers = {
 
     // TODO: autogenerate for all types that implement DataFile
     entity(root, args, context, info) {
-      args.schemaIn = ["access/user-1.yml", "access/bot-1.yml"];
+      args.schemaIn = ["/access/user-1.yml", "/access/bot-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
     },
     user(root, args, context, info) {
-      args.schemaIn = ["access/user-1.yml"];
+      args.schemaIn = ["/access/user-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
     },
     bot(root, args, context, info) {
-      args.schemaIn = ["access/bot-1.yml"];
+      args.schemaIn = ["/access/bot-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
     },
     role(root, args, context, info) {
-      args.schemaIn = ["access/role-1.yml"];
+      args.schemaIn = ["/access/role-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
     },
     cluster(root, args, context, info) {
-      args.schemaIn = ["openshift/cluster-1.yml"];
+      args.schemaIn = ["/openshift/cluster-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
     },
   },
@@ -125,10 +121,10 @@ var resolvers = {
     __resolveType(root, context) {
       // TODO: autogenerate for all types that implement DataFile
       switch (root.$schema) {
-        case "access/user-1.yml": return "User_v1";
-        case "access/bot-1.yml": return "Bot_v1";
-        case "access/role-1.yml": return "Role_v1";
-        case "openshift/cluster-1.yml": return "Cluster_v1";
+        case "/access/user-1.yml": return "User_v1";
+        case "/access/bot-1.yml": return "Bot_v1";
+        case "/access/role-1.yml": return "Role_v1";
+        case "/openshift/cluster-1.yml": return "Cluster_v1";
       }
       return "DataFileGeneric_v1";
     }
@@ -139,4 +135,5 @@ module.exports = {
   "typeDefs": typeDefs,
   "resolvers": resolvers,
   "defaultResolver": defaultResolver,
+  "syntheticField": syntheticField,
 };

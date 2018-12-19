@@ -1,14 +1,13 @@
 const fs = require('fs');
 const path = require('path');
 const jsonpointer = require('jsonpointer');
-const { JSONPath } = require('jsonpath-plus');
 var AWS = require('aws-sdk');
 
 // utils
 
 var isRef = function (obj) {
   if (obj.constructor === Object) {
-    if (Object.keys(obj).length == 1 && ('$ref' in obj || '$jsonpathref' in obj)) {
+    if (Object.keys(obj).length == 1 && ('$ref' in obj)) {
       return true;
     }
   }
@@ -28,23 +27,13 @@ var getRefExpr = function (ref) {
   return m ? m[0] : "";
 };
 
-var resolvePath = function (relPath, basePath) {
-  if (relPath == '.' || relPath == "") {
-    return basePath;
-  } else if (relPath[0] == '/') {
-    return relPath.substr(1);
-  } else {
-    return path.join(path.dirname(basePath), relPath);
-  }
-};
-
 // filters
 
 var schemaInFilter = function (schema_in_filter, input_set) {
   var datafiles;
 
   if (typeof (input_set) == "undefined") {
-    datafiles = this.datafiles;
+    datafiles = Object.values(db.datafiles);
   } else {
     datafiles = input_set;
   }
@@ -102,30 +91,17 @@ var labelFilter = function (label_filter, input_set) {
   return match_datafiles;
 };
 
-var resolveRef = function (itemRef, datafilePath) {
-  let ref, resolveFunc;
+var resolveRef = function (itemRef) {
+  let path = getRefPath(itemRef.$ref);
+  let expr = getRefExpr(itemRef.$ref);
 
-  if (itemRef.$ref) {
-    ref = itemRef.$ref;
-    resolveFunc = (d, e) => jsonpointer.get(d, e);
-  } else if (itemRef.$jsonpathref) {
-    ref = itemRef.$jsonpathref;
-    resolveFunc = (d, e) => JSONPath({ json: d, path: e });
-  } else {
-    throw "Invalid ref object";
-  }
-
-  let path = getRefPath(ref);
-  let expr = getRefExpr(ref);
-
-  let targetDatafilePath = resolvePath(path, datafilePath);
-  let datafile = db.datafile[targetDatafilePath];
+  let datafile = db.datafiles[path];
 
   if (typeof (datafile) == "undefined") {
-    console.log(`Error retrieving datafile '${targetDatafilePath}'.`);
+    console.log(`Error retrieving datafile '${path}'.`);
   }
 
-  let resolvedData = resolveFunc(datafile, expr);
+  let resolvedData = jsonpointer.get(datafile, expr);
 
   if (typeof (resolvedData) == "undefined") {
     console.log(`Error resolving ref: datafile: '${JSON.stringify(datafile)}', expr: '${expr}'.`);
@@ -137,12 +113,11 @@ var resolveRef = function (itemRef, datafilePath) {
 // datafile Loading functions
 
 var loadUnpack = function(raw) {
-  let dbDatafileNew = {};
-  let dbDatafilesNew = [];
+  let dbDatafilesNew = {};
 
-  let datafilePack = JSON.parse(raw);
+  let bundle = JSON.parse(raw);
 
-  for (let d of datafilePack) {
+  Object.entries(bundle).forEach(d => {
     let datafilePath = d[0];
     let datafileData = d[1];
 
@@ -158,13 +133,11 @@ var loadUnpack = function(raw) {
 
     datafileData.path = datafilePath;
 
-    dbDatafilesNew.push(datafileData);
-    dbDatafileNew[datafilePath] = datafileData;
+    dbDatafilesNew[datafilePath] = datafileData;
 
     console.log(`Load: ${datafilePath}`);
-  }
+  });
 
-  db.datafile = dbDatafileNew;
   db.datafiles = dbDatafilesNew;
 
   console.log(`End datafile reload: ${new Date()}`);
@@ -217,8 +190,7 @@ var load = function () {
 
 var db = {
   // collect datafiles
-  "datafiles": [],
-  "datafile": {},
+  "datafiles": {},
 
   // filter functions
   "labelFilter": labelFilter,

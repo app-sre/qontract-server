@@ -1,18 +1,19 @@
 ---
-"$schema": metaschema-1.json
+"$schema": /metaschema-1.json
 version: "1.0"
 type: object
 properties:
   "$schema":
     type: string
   labels:
-    "$ref": "common-1.json#/definitions/labels"
+    "$ref": "/common-1.json#/definitions/labels"
   name:
     type: string
   permissions:
     type: array
     items:
-      "$ref": "common-1.json#/definitions/crossref"
+      "$ref": "/common-1.json#/definitions/crossref"
+      "$schemaRef": "/access/permission-1.yml"
 required:
 - $schema
 - labels
