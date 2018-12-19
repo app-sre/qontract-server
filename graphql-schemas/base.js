@@ -14,7 +14,7 @@ var defaultResolver = function (root, args, context, info) {
 
   if (db.isNonEmptyArray(val)) {
     // are all the elements of this array references?
-    checkRefs = val.map(e => db.isRef(e));
+    checkRefs = val.map(db.isRef);
 
     // if there are elements that aren't references return the array as is
     if (checkRefs.includes(false)) {
@@ -22,7 +22,7 @@ var defaultResolver = function (root, args, context, info) {
     }
 
     // resolve all the elements of the array
-    let arrayResolve = val.map(e => db.resolveRef(e));
+    let arrayResolve = val.map(db.resolveRef);
 
     // `info.returnType` has information about what the GraphQL schema expects
     // as a return type. If it starts with `[` it means that we need to return
