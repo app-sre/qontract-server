@@ -35,7 +35,7 @@ var defaultResolver = function (root, args, context, info) {
   }
 
   if (db.isRef(val)) {
-    val = db.resolveRef(itemRef, context.datafilePath);
+    val = db.resolveRef(itemRef);
   }
 
   return val;
