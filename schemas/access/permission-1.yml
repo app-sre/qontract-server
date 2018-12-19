@@ -5,6 +5,8 @@ type: object
 properties:
   "$schema":
     type: string
+    enum:
+    - /access/permission-1.yml
   labels:
     "$ref": "/common-1.json#/definitions/labels"
   name:
@@ -13,12 +15,52 @@ properties:
     type: string
   service:
     type: string
-    enum:
-    - aws-analytics
-    - github-org
-    - github-org-team
-    - openshift-rolebinding
-    - quay-org
+oneOf:
+- properties:
+    service:
+      enum:
+      - aws-analytics
+- properties:
+    service:
+      enum:
+      - github-org
+    org:
+      type: string
+  required:
+  - org
+- properties:
+    service:
+      enum:
+      - github-org-team
+    org:
+      type: string
+    team:
+      type: string
+  required:
+  - org
+  - team
+- properties:
+    service:
+      enum:
+      - openshift-rolebinding
+    cluster:
+      type: string
+    namespace:
+      type: string
+    role:
+      type: string
+  required:
+  - cluster
+  - namespace
+  - role
+- properties:
+    service:
+      enum:
+      - quay-org
+    org:
+      type: string
+  required:
+  - org
 required:
 - $schema
 - labels

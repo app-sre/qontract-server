@@ -5,6 +5,8 @@ type: object
 properties:
   "$schema":
     type: string
+    enum:
+    - /access/role-1.yml
   labels:
     "$ref": "/common-1.json#/definitions/labels"
   name:
