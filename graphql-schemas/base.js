@@ -47,8 +47,12 @@ var syntheticField = function (root, schemas, subAttr) {
   let elements = db.schemaInFilter(schemas);
 
   return elements.filter(e => {
-    let backrefs = e[subAttr].map(r => r.$ref);
-    return backrefs.includes(root.path);
+    if (subAttr in e) {
+      let backrefs = e[subAttr].map(r => r.$ref);
+      return backrefs.includes(root.path);
+    } else {
+      return false;
+    }
   });
 };
 
