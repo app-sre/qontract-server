@@ -10,8 +10,8 @@ RUN yum install centos-release-scl-rh rh-nodejs8 -y && \
     yum install rh-nodejs8 -y && \
     yum clean all
 
-ADD . ${APP_ROOT}}
-WORKDIR ${APP_ROOT}}
+ADD . ${APP_ROOT}
+WORKDIR ${APP_ROOT}
 
 RUN npm install
 
