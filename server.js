@@ -17,6 +17,7 @@ var schemaFiles = [
     'permission',
     'role',
     'cluster',
+    'quay-org',
 ];
 
 var typeDefs = [];
