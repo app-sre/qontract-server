@@ -8,6 +8,7 @@ const typeDefs = `
     labels: JSON
     name: String!
     github_username: String
+    quay_username: String
     owner: User_v1
   }
 `;

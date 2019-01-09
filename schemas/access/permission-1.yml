@@ -56,11 +56,14 @@ oneOf:
 - properties:
     service:
       enum:
-      - quay-org
+      - quay-membership
     org:
+      type: string
+    team:
       type: string
   required:
   - org
+  - team
 required:
 - $schema
 - labels

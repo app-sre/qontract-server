@@ -68,6 +68,7 @@ var typeDefs = `
     bot(label: JSON): [Bot_v1]
     role(label: JSON): [Role_v1]
     cluster(label: JSON): [Cluster_v1]
+    quay_org(label: JSON): [QuayOrg_v1]
   }
 
   interface DataFile_v1 {
@@ -120,6 +121,10 @@ var resolvers = {
       args.schemaIn = ["/openshift/cluster-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
     },
+    quay_org(root, args, context, info) {
+      args.schemaIn = ["/dependencies/quay-org-1.yml"];
+      return resolvers.Query.datafile(root, args, context, info);
+    },
   },
   DataFile_v1: {
     __resolveType(root, context) {
@@ -129,6 +134,7 @@ var resolvers = {
         case "/access/bot-1.yml": return "Bot_v1";
         case "/access/role-1.yml": return "Role_v1";
         case "/openshift/cluster-1.yml": return "Cluster_v1";
+        case "/dependencies/quay-org-1.yml": return "QuayOrg_v1";
       }
       return "DataFileGeneric_v1";
     }

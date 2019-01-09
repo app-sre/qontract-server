@@ -28,9 +28,10 @@ const typeDefs = `
     role: String!
   }
 
-  type PermissionQuayOrg_v1 implements Permission_v1 {
+  type PermissionQuayOrgTeam_v1 implements Permission_v1 {
     service: String!
     org: String!
+    team: String!
   }
 `;
 
@@ -42,7 +43,7 @@ const resolvers = {
           case "github-org": return "PermissionGithubOrg_v1";
           case "github-org-team": return "PermissionGithubOrgTeam_v1";
           case "openshift-rolebinding": return "PermissionOpenshiftRolebinding_v1";
-          case "quay-org": return "PermissionQuayOrg_v1";
+          case "quay-membership": return "PermissionQuayOrgTeam_v1";
         }
       }
     }
