@@ -43,7 +43,7 @@ const resolvers = {
           case "github-org": return "PermissionGithubOrg_v1";
           case "github-org-team": return "PermissionGithubOrgTeam_v1";
           case "openshift-rolebinding": return "PermissionOpenshiftRolebinding_v1";
-          case "quay-org-team": return "PermissionQuayOrgTeam_v1";
+          case "quay-membership": return "PermissionQuayOrgTeam_v1";
         }
       }
     }

@@ -56,7 +56,7 @@ oneOf:
 - properties:
     service:
       enum:
-      - quay-org-team
+      - quay-membership
     org:
       type: string
     team:
