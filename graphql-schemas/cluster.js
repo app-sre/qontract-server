@@ -13,7 +13,7 @@ const typeDefs = `
     labels: JSON
     name: String!
     description: String!
-    serverUrl: String
+    serverUrl: String!
     automationToken: VaultSecret_v1
     managedRoles: [ClusterManagedRole_v1]
   }
