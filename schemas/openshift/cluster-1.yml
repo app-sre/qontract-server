@@ -38,3 +38,4 @@ required:
 - labels
 - name
 - serverUrl
+- description
