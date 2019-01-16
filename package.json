@@ -6,8 +6,8 @@
   "scripts": {
     "test": "mocha --recursive"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Red Hat App SREs <sd-app-sre@redhat.com>",
+  "license": "Apache-2.0",
   "dependencies": {
     "apollo-server-express": "^2.2.0",
     "aws-sdk": "^2.364.0",
