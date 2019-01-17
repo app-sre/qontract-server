@@ -41,14 +41,12 @@ const server = new ApolloServer({
 });
 
 function ensurePresentData(req, res, next) {
-    let urls = ['/graphql', '/sha256', '/health-check'];
-
-    if (urls.includes(req.url)) {
+    if (!["/", "/reload"].includes(req.url)) {
         if (db.datafiles.length == 0 || db.sha256 == "") {
             res.status(503).send('No loaded data.');
+            return;
         }
     }
-
     next();
 }
 
@@ -57,6 +55,7 @@ app.use(ensurePresentData);
 server.applyMiddleware({ app });
 
 app.get('/reload', (req, res) => { db.load(); res.send(); });
+
 app.get('/sha256', (req, res) => { res.send(db.sha256); });
 app.get('/health-check', (req, res) => { res.send(); });
 app.get('/', (req, res) => { res.redirect('/graphql'); });
