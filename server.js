@@ -60,5 +60,5 @@ app.get('/sha256', (req, res) => { res.send(db.sha256); });
 app.get('/health-check', (req, res) => { res.send(); });
 app.get('/', (req, res) => { res.redirect('/graphql'); });
 
-app.listen({ port: 4000 }, () =>
+module.exports = app.listen({ port: 4000 }, () =>
     console.log(`Running at http://localhost:4000${server.graphqlPath}`));
