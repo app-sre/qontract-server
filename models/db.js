@@ -140,8 +140,6 @@ var loadUnpack = function(raw) {
     datafileData.path = datafilePath;
 
     dbDatafilesNew[datafilePath] = datafileData;
-
-    console.log(`Load: ${datafilePath}`);
   });
 
   db.datafiles = dbDatafilesNew;
