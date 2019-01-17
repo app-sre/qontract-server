@@ -169,8 +169,11 @@ var loadFromS3 = function () {
   });
 };
 
-var loadFromFile = function () {
-  var raw = fs.readFileSync(process.env.DATAFILES_FILE);
+var loadFromFile = function (path) {
+  if (typeof(path) == "undefined")
+    path = process.env.DATAFILES_FILE;
+
+  var raw = fs.readFileSync(path);
   loadUnpack(raw);
 };
 
