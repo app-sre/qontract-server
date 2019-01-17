@@ -201,7 +201,6 @@ var db = {
   "datafiles": {},
   "sha256": "",
 
-
   // filter functions
   "labelFilter": labelFilter,
   "schemaInFilter": schemaInFilter,
@@ -211,6 +210,7 @@ var db = {
   "isRef": isRef,
   "isNonEmptyArray": isNonEmptyArray,
   "load": load,
+  "loadFromFile": loadFromFile,
 };
 
 module.exports = db;
