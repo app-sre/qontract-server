@@ -190,7 +190,7 @@ var load = function () {
       loadFromS3();
       break;
     default:
-      throw new Error(`Unknown LOAD_METHOD ${process.env.LOAD_METHOD}`);
+      console.log("Skip data loading.");
   }
 };
 
