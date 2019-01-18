@@ -4,6 +4,9 @@
   "description": "",
   "main": "server.js",
   "scripts": {
+    "dev": "rm -rf ./dist && ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode development --watch --progress",,
+    "build": "rm -rf ./dist && NODE_ENV=production ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode=production",
+    "server": "LOAD_METHOD=fs node dist/main-bundle.js schemas",
     "test": "mocha --recursive"
   },
   "author": "Red Hat App SREs <sd-app-sre@redhat.com>",
@@ -20,8 +23,15 @@
     "path": "^0.12.7"
   },
   "devDependencies": {
+    "@types/webpack": "^4.4.22",
     "chai": "^4.2.0",
     "chai-http": "^4.2.1",
-    "mocha": "^5.2.0"
+    "mocha": "^5.2.0",
+    "ts-loader": "^5.3.3",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.12.1",
+    "typescript": "^3.2.2",
+    "webpack": "^4.28.4",
+    "webpack-cli": "^3.2.1"
   }
 }
