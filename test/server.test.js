@@ -9,7 +9,7 @@ chai.use(chaiHttp);
 
 
 describe('server', function () {
-    before(function(){
+    before(function() {
         db.loadFromFile('test/server.data.json');
     });
 
