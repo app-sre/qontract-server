@@ -140,8 +140,6 @@ var loadUnpack = function(raw) {
     datafileData.path = datafilePath;
 
     dbDatafilesNew[datafilePath] = datafileData;
-
-    console.log(`Load: ${datafilePath}`);
   });
 
   db.datafiles = dbDatafilesNew;
@@ -171,8 +169,11 @@ var loadFromS3 = function () {
   });
 };
 
-var loadFromFile = function () {
-  var raw = fs.readFileSync(process.env.DATAFILES_FILE);
+var loadFromFile = function (path) {
+  if (typeof(path) == "undefined")
+    path = process.env.DATAFILES_FILE;
+
+  var raw = fs.readFileSync(path);
   loadUnpack(raw);
 };
 
@@ -189,7 +190,7 @@ var load = function () {
       loadFromS3();
       break;
     default:
-      throw new Error(`Unknown LOAD_METHOD ${process.env.LOAD_METHOD}`);
+      console.log("Skip data loading.");
   }
 };
 
@@ -200,7 +201,6 @@ var db = {
   "datafiles": {},
   "sha256": "",
 
-
   // filter functions
   "labelFilter": labelFilter,
   "schemaInFilter": schemaInFilter,
@@ -210,6 +210,7 @@ var db = {
   "isRef": isRef,
   "isNonEmptyArray": isNonEmptyArray,
   "load": load,
+  "loadFromFile": loadFromFile,
 };
 
 module.exports = db;

@@ -1,0 +1,21 @@
+{
+    "/role-A.yml": {
+        "$schema": "/access/role-1.yml",
+        "labels": {},
+        "name": "role-A",
+        "permissions": [
+            {
+                "$ref": "/permission-A.yml"
+            }
+        ]
+    },
+    "/permission-A.yml": {
+        "name": "permission-A",
+        "service": "github-org-team",
+        "team": "team-A",
+        "org": "org-A",
+        "$schema": "/access/permission-1.yml",
+        "labels": {},
+        "description": "description permission-A"
+    }
+}
