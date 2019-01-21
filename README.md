@@ -26,3 +26,11 @@ To run an instance of the qontract GraphQL console:
 ```sh
 LOAD_METHOD=fs DATAFILES_FILE=your_test_datafile yarn run server
 ```
+
+All code should follow the [airbnb style guide], which is enforced by this projects lint script:
+
+[airbnb style guide]: https://github.com/airbnb/javascript
+
+```sh
+yarn run lint
+```
