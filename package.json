@@ -1,26 +1,30 @@
 {
   "name": "qontract-server",
   "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "scripts": {
-    "dev": "rm -rf ./dist && ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode development --watch --progress",,
-    "build": "rm -rf ./dist && NODE_ENV=production ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode=production",
-    "server": "LOAD_METHOD=fs node dist/main-bundle.js schemas",
-    "test": "mocha --recursive"
-  },
+  "description": "qontract graphql server",
   "author": "Red Hat App SREs <sd-app-sre@redhat.com>",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=10.10"
+  },
+  "scripts": {
+    "watch": "rm -rf ./dist && ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode development --watch --progress",
+    "build": "rm -rf ./dist && NODE_ENV=production ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode=production",
+    "server": "node dist/main-bundle.js schemas",
+    "test": "mocha --recursive"
+  },
   "dependencies": {
     "apollo-server-express": "^2.2.0",
     "aws-sdk": "^2.364.0",
+    "bufferutil": "^4.0.1",
     "dotenv": "^6.1.0",
     "express": "^4.16.4",
     "fs": "0.0.1-security",
     "graphql": "^14.0.2",
     "jsonpointer": "^4.0.1",
     "node-forge": "^0.7.6",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "utf-8-validate": "^5.0.2"
   },
   "devDependencies": {
     "@types/webpack": "^4.4.22",

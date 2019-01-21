@@ -24,5 +24,5 @@ yarn run dev
 To run an instance of the qontract GraphQL console:
 
 ```sh
-DATAFILES_FILE=your_test_datafile yarn run server
+LOAD_METHOD=fs DATAFILES_FILE=your_test_datafile yarn run server
 ```
