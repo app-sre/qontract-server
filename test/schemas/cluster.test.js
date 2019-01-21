@@ -12,7 +12,7 @@ describe('cluster', function () {
         db.loadFromFile('test/schemas/cluster.data.json');
     });
 
-    it('works', function (done) {
+    it('serves a basic graphql query', function (done) {
         chai.request(server)
             .get('/graphql')
             .query({'query': '{ cluster { name } }'})
