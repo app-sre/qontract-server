@@ -1,7 +1,7 @@
 import * as webpack from 'webpack';
 import * as path from 'path';
 
-let config: webpack.Configuration = {
+const config: webpack.Configuration = {
   entry: [
     './server.ts',
   ],
@@ -19,7 +19,6 @@ let config: webpack.Configuration = {
           {
             loader: 'ts-loader',
             options: {
-              //happyPackMode: true, // This implicitly enables transpileOnly! No type checking!
               transpileOnly: true,
             },
           },
