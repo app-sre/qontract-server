@@ -1,5 +1,5 @@
-var server = require('../../server');
-var db = require('../../models/db');
+var server = require('../../src/server');
+var db = require('../../src/models/db');
 
 var chai = require('chai');
 var chaiHttp = require('chai-http');

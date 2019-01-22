@@ -1,19 +1,25 @@
 FROM centos:7
 
-ENV APP_ROOT /qontract-server
-
 # Set PATH, because "scl enable" does not have any effects to "docker build"
-ENV PATH $PATH:/opt/rh/rh-nodejs8/root/usr/bin
+ENV PATH /opt/rh/rh-nodejs10/root/usr/bin:$PATH
 
 # enable scl with nodejs8
-RUN yum install centos-release-scl-rh rh-nodejs8 -y && \
-    yum install rh-nodejs8 -y && \
-    yum clean all
+RUN yum install centos-release-scl-rh -y && \
+    yum install rh-nodejs10 rh-nodejs10-npm -y && \
+    yum clean all && \
+    npm install -g yarn
 
+ENV APP_ROOT /opt/qontract-server
 ADD . ${APP_ROOT}
 WORKDIR ${APP_ROOT}
 
-RUN npm install
+RUN adduser qontract
+RUN chown -R qontract /opt/qontract-server
+USER qontract
+
+ENV PATH /opt/rh/rh-nodejs10/root/usr/bin:$PATH
+
+RUN yarn install
 
 EXPOSE 4000
-CMD ["npm", "start"]
+CMD ["yarn", "run", "server"]

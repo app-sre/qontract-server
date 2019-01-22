@@ -1,0 +1,27 @@
+ {
+  "files": [
+    "src/server.ts"
+  ],
+  "include": [
+    "src/**/*.ts"
+  ],
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitAny": true,
+    "lib": [ "es6", "es2017" ],
+    "target": "es6",
+    "outDir": "dist",
+    "rootDir": "server",
+    "sourceMap": true,
+    "baseUrl": ".",
+    "moduleResolution": "node",
+    "removeComments": true,
+    "typeRoots": [ "node_modules/@types" ],
+    "paths": {
+      "*": [
+        "node_modules/@types/*",
+        "./types/*"
+      ]
+    }
+  }
+}
