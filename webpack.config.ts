@@ -3,7 +3,7 @@ import * as path from 'path';
 
 const config: webpack.Configuration = {
   entry: [
-    './server.ts',
+    './src/server.ts',
   ],
   output: {
     path: path.resolve(__dirname, 'dist'),

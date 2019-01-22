@@ -10,9 +10,9 @@
   "scripts": {
     "watch": "rm -rf ./dist && ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode development --watch --progress",
     "build": "rm -rf ./dist && NODE_ENV=production ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode=production",
-    "server": "node ./dist/main-bundle.js schemas",
+    "server": "node ./dist/main-bundle.js ./static/schemas",
     "lint": "./node_modules/.bin/tslint --project .",
-    "test": "mocha --recursive"
+    "test": "mocha -r ts-node/register --recursive"
   },
   "dependencies": {
     "apollo-server-express": "^2.2.0",
@@ -28,8 +28,10 @@
     "utf-8-validate": "^5.0.2"
   },
   "devDependencies": {
+    "@types/chai": "^4.1.7",
     "@types/express": "^4.16.0",
     "@types/graphql": "^14.0.5",
+    "@types/mocha": "^5.2.5",
     "@types/webpack": "^4.4.22",
     "chai": "^4.2.0",
     "chai-http": "^4.2.1",

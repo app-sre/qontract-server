@@ -1,10 +1,9 @@
  {
   "files": [
-    "server.ts"
+    "src/server.ts"
   ],
   "include": [
-    "models/**/*.ts",
-    "graphql-schemas/**/*.ts"
+    "src/**/*.ts"
   ],
   "compilerOptions": {
     "module": "commonjs",
