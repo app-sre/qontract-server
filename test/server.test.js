@@ -7,6 +7,11 @@ var should = chai.should();
 
 chai.use(chaiHttp);
 
+function validateGraphQLResponse(res) {
+    res.should.have.status(200);
+    res.body.should.not.have.any.keys("errors");
+    res.body.should.have.all.keys("data");
+}
 
 describe('server', function () {
     before(function() {
@@ -22,7 +27,7 @@ describe('server', function () {
             });
     });
 
-    it("resolves refs", function (done) {
+    it("resolves item refs", function (done) {
         var query = `{
             role {
                 name
@@ -36,9 +41,31 @@ describe('server', function () {
         .get('/graphql')
         .query({'query': query})
         .end(function (err, res) {
-            res.should.have.status(200);
+            validateGraphQLResponse(res);
             var permissionsName = res.body.data.role[0].permissions[0].service;
             permissionsName.should.equal("github-org-team");
+            done();
+        });
+    });
+
+    it("resolves object refs", function (done) {
+        var query = `{
+            app {
+                quayRepos {
+                    org {
+                        name
+                    }
+                }
+            }
+        }`;
+
+        chai.request(server)
+        .get('/graphql')
+        .query({'query': query})
+        .end(function (err, res) {
+            validateGraphQLResponse(res);
+            var org_response = res.body.data.app[0].quayRepos[0].org.name;
+            org_response.should.equal("quay-org-A");
             done();
         });
     });

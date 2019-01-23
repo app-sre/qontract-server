@@ -34,9 +34,8 @@ var defaultResolver = function (root, args, context, info) {
     return arrayResolve;
   }
 
-  if (db.isRef(val)) {
-    val = db.resolveRef(itemRef);
-  }
+  if (db.isRef(val))
+    val = db.resolveRef(val);
 
   return val;
 };
@@ -69,6 +68,7 @@ var typeDefs = `
     role(label: JSON): [Role_v1]
     cluster(label: JSON): [Cluster_v1]
     quay_org(label: JSON): [QuayOrg_v1]
+    app(label: JSON): [App_v1]
   }
 
   interface DataFile_v1 {
@@ -125,6 +125,10 @@ var resolvers = {
       args.schemaIn = ["/dependencies/quay-org-1.yml"];
       return resolvers.Query.datafile(root, args, context, info);
     },
+    app(root, args, context, info) {
+      args.schemaIn = ["/app-sre/app-1.yml"];
+      return resolvers.Query.datafile(root, args, context, info);
+    },
   },
   DataFile_v1: {
     __resolveType(root, context) {
@@ -135,6 +139,7 @@ var resolvers = {
         case "/access/role-1.yml": return "Role_v1";
         case "/openshift/cluster-1.yml": return "Cluster_v1";
         case "/dependencies/quay-org-1.yml": return "QuayOrg_v1";
+        case "/app-sre/app-1.yml": return "App_v1";
       }
       return "DataFileGeneric_v1";
     }
