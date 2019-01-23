@@ -48,6 +48,7 @@ const server = new ApolloServer({
   typeDefs,
   resolvers,
   playground: true,
+  introspection: true,
   fieldResolver: base.defaultResolver,
 });
 server.applyMiddleware({ app });
