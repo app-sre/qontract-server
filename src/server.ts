@@ -47,6 +47,7 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
 const server = new ApolloServer({
   typeDefs,
   resolvers,
+  playground: true,
   fieldResolver: base.defaultResolver,
 });
 server.applyMiddleware({ app });
