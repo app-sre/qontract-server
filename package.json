@@ -10,7 +10,7 @@
   "scripts": {
     "watch": "rm -rf ./dist && ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode development --watch --progress",
     "build": "rm -rf ./dist && NODE_ENV=production ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode=production",
-    "server": "node ./dist/main-bundle.js ./static/schemas",
+    "server": "node ./dist/main-bundle.js",
     "lint": "./node_modules/.bin/tslint --project .",
     "test": "mocha -r ts-node/register --recursive"
   },
