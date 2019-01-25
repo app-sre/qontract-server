@@ -61,6 +61,7 @@ properties:
           type: string
           enum:
           - Hosted
+          - External
         statusPage:
           type: string
           format: uri
