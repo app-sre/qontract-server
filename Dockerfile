@@ -19,7 +19,7 @@ USER qontract
 
 ENV PATH /opt/rh/rh-nodejs10/root/usr/bin:$PATH
 
-RUN yarn install
+RUN yarn install && yarn build
 
 EXPOSE 4000
 CMD ["yarn", "run", "server"]
