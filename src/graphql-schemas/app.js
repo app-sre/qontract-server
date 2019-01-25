@@ -35,10 +35,10 @@ const typeDefs = `
 
   type AppQuayRepos_v1 {
     org: QuayOrg_v1!
-    items: [AppQuayReposItems_V1!]!
+    items: [AppQuayReposItems_v1!]!
   }
 
-  type AppQuayReposItems_V1 {
+  type AppQuayReposItems_v1 {
     name: String!
     description: String!
     public: Boolean!
