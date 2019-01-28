@@ -18,6 +18,7 @@ const schemaFiles = [
   'role',
   'cluster',
   'quay-org',
+  'app',
 ];
 
 const schemas = schemaFiles.map((file) => { return require(`./graphql-schemas/${file}`); });

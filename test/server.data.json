@@ -10,12 +10,42 @@
         ]
     },
     "/permission-A.yml": {
+        "$schema": "/access/permission-1.yml",
         "name": "permission-A",
         "service": "github-org-team",
         "team": "team-A",
         "org": "org-A",
-        "$schema": "/access/permission-1.yml",
         "labels": {},
         "description": "description permission-A"
+    },
+    "/app-A.yml": {
+        "$schema": "/app-sre/app-1.yml",
+        "labels": {},
+        "title": "app-A",
+        "serviceOwner": {
+            "name": "serviceOwnerName",
+            "email": "test@example.com"
+        },
+        "quayRepos": [
+            {
+                "org": {
+                    "$ref": "/quay-org-A.yml"
+                },
+                "items": [
+                    {
+                        "name": "repoA",
+                        "description": "",
+                        "public": true
+                    }
+                ]
+            }
+        ]
+    },
+    "/quay-org-A.yml": {
+        "$schema": "/dependencies/quay-org-1.yml",
+        "labels": {},
+        "name": "quay-org-A",
+        "managedTeams": [ "teamA" ],
+        "description": "desc"
     }
 }

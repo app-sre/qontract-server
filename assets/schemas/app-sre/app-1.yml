@@ -81,6 +81,35 @@ properties:
       - SLA
       - dependencyFailureImpact
 
+  quayRepos:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      properties:
+        org:
+          "$ref": "/common-1.json#/definitions/crossref"
+          "$schemaRef": "/dependencies/quay-org-1.yml"
+        items:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              public:
+                type: boolean
+            required:
+            - name
+            - description
+            - public
+      required:
+      - org
+      - items
+
 required:
 - title
 - serviceOwner
