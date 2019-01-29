@@ -15,6 +15,6 @@ const typeDefs = `
 const resolvers = {};
 
 module.exports = {
-  "typeDefs": typeDefs,
-  "resolvers": resolvers
+  typeDefs,
+  resolvers,
 };
