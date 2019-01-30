@@ -11,6 +11,8 @@ import {
   GraphQLString,
   GraphQLList,
   GraphQLNonNull,
+  GraphQLInterfaceType,
+  printSchema,
 } from 'graphql';
 
 const db = require('./models/db');
@@ -74,15 +76,127 @@ const jsonType = new GraphQLScalarType({
   serialize: JSON.stringify,
 });
 
+// PERMISSION
+
+const permissionResolveType = (data: any) => {
+  return permissionAWSAnalyticsType;
+};
+
+const permissionFields: any = {};
+permissionFields['service'] = { type: new GraphQLNonNull(GraphQLString) };
+
+const permissionInterface: GraphQLInterfaceType = new GraphQLInterfaceType({
+  name: 'Permission_v1',
+  fields: permissionFields,
+  resolveType: permissionResolveType,
+});
+
+// -
+
+const permissionAWSAnalyticsFields: any = {};
+permissionAWSAnalyticsFields['service'] = { type: new GraphQLNonNull(GraphQLString) };
+
+const permissionAWSAnalyticsType = new GraphQLObjectType({
+  name: 'PermissionAWSAnalytics_v1',
+  interfaces: [permissionInterface],
+  fields: permissionAWSAnalyticsFields,
+});
+
+// -
+
+const permissionGithubOrgFields: any = {};
+permissionGithubOrgFields['service'] = { type: new GraphQLNonNull(GraphQLString) };
+permissionGithubOrgFields['org'] = { type: new GraphQLNonNull(GraphQLString) };
+
+const permissionGithubOrgType = new GraphQLObjectType({
+  name: 'PermissionGithubOrg_v1',
+  interfaces: [permissionInterface],
+  fields: permissionGithubOrgFields,
+});
+
+// -
+
+const permissionGithubOrgTeamFields: any = {};
+permissionGithubOrgTeamFields['service'] = { type: new GraphQLNonNull(GraphQLString) };
+permissionGithubOrgTeamFields['org'] = { type: new GraphQLNonNull(GraphQLString) };
+permissionGithubOrgTeamFields['team'] = { type: new GraphQLNonNull(GraphQLString) };
+
+const permissionGithubOrgTeamType = new GraphQLObjectType({
+  name: 'PermissionGithubOrgTeam_v1',
+  interfaces: [permissionInterface],
+  fields: permissionGithubOrgTeamFields,
+});
+
+// -
+
+const permissionOpenshiftRolebindingFields: any = {};
+permissionOpenshiftRolebindingFields['service'] = { type: new GraphQLNonNull(GraphQLString) };
+permissionOpenshiftRolebindingFields['cluster'] = { type: new GraphQLNonNull(GraphQLString) };
+permissionOpenshiftRolebindingFields['namespace'] = { type: new GraphQLNonNull(GraphQLString) };
+permissionOpenshiftRolebindingFields['role'] = { type: new GraphQLNonNull(GraphQLString) };
+
+const permissionOpenshiftRolebindingType = new GraphQLObjectType({
+  name: 'PermissionOpenshiftRolebinding_v1',
+  interfaces: [permissionInterface],
+  fields: permissionOpenshiftRolebindingFields,
+});
+
+// -
+
+const permissionQuayOrgTeamFields: any = {};
+permissionQuayOrgTeamFields['service'] = { type: new GraphQLNonNull(GraphQLString) };
+permissionQuayOrgTeamFields['org'] = { type: new GraphQLNonNull(GraphQLString) };
+permissionQuayOrgTeamFields['team'] = { type: new GraphQLNonNull(GraphQLString) };
+
+const permissionQuayOrgTeam = new GraphQLObjectType({
+  name: 'PermissionQuayOrgTeam_v1',
+  interfaces: [permissionInterface],
+  fields: permissionQuayOrgTeamFields,
+});
+
+// function permissionResolveType({ service }: any) {
+//   switch (service) {
+//     case 'aws-analytics': return permissionAWSAnalytics;
+//     case 'github-org': return permissionGithubOrg;
+//     case 'github-org-team': return permissionGithubOrgTeam;
+//     case 'openshift-rolebinding': return permissionOpenshiftRolebinding;
+//     case 'quay-membership': return permissionQuayOrgTeam;
+//   }
+// }
+
+// ------- DATAFILES -------
+
 const appSchemaFields: any = {};
 
-// USER
+// ROLE - datafile
+
+const roleFields: any = {};
+roleFields['schema'] = { type: new GraphQLNonNull(GraphQLString) };
+roleFields['path'] = { type: new GraphQLNonNull(GraphQLString) };
+roleFields['labels'] = { type: jsonType };
+roleFields['name'] = { type: new GraphQLNonNull(GraphQLString) };
+roleFields['permissions'] = { type: new GraphQLList(permissionInterface) };
+
+const roleType = new GraphQLObjectType({
+  name: 'Role_v1',
+  fields: roleFields,
+});
+
+appSchemaFields['role'] = {
+  type: new GraphQLList(roleType),
+  args: {
+    label: { type: jsonType },
+  },
+  resolve: () => filterBySchema('/access/role-1.yml'),
+};
+
+// USER - datafile
 
 const userFields: any = {};
-
 userFields['schema'] = { type: new GraphQLNonNull(GraphQLString) };
-userFields['name'] = { type: new GraphQLNonNull(GraphQLString) };
+userFields['path'] = { type: new GraphQLNonNull(GraphQLString) };
 userFields['labels'] = { type: jsonType };
+userFields['name'] = { type: new GraphQLNonNull(GraphQLString) };
 userFields['redhat_username'] = { type: new GraphQLNonNull(GraphQLString) };
 userFields['github_username'] = { type: new GraphQLNonNull(GraphQLString) };
 userFields['quay_username'] = { type: GraphQLString };
@@ -103,10 +217,10 @@ appSchemaFields['user'] = {
 // BOT
 
 const botFields: any = {};
-
 botFields['schema'] = { type: new GraphQLNonNull(GraphQLString) };
-botFields['name'] = { type: new GraphQLNonNull(GraphQLString) };
+botFields['path'] = { type: new GraphQLNonNull(GraphQLString) };
 botFields['labels'] = { type: jsonType };
+botFields['name'] = { type: new GraphQLNonNull(GraphQLString) };
 botFields['github_username'] = { type: GraphQLString };
 botFields['quay_username'] = { type: GraphQLString };
 botFields['owner'] = { type: userType };
