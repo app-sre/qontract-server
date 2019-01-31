@@ -133,53 +133,69 @@ schemaTypes.push(permissionQuayOrgTeamType);
 
 const appSchemaFields: any = {};
 
-// USER - datafile
+// USER -- datafile
 
-const userFields: any = {};
-userFields['schema'] = { type: new GraphQLNonNull(GraphQLString) };
-userFields['path'] = { type: new GraphQLNonNull(GraphQLString) };
-userFields['labels'] = { type: jsonType };
-userFields['name'] = { type: new GraphQLNonNull(GraphQLString) };
-userFields['redhat_username'] = { type: new GraphQLNonNull(GraphQLString) };
-userFields['github_username'] = { type: new GraphQLNonNull(GraphQLString) };
-userFields['quay_username'] = { type: GraphQLString };
+const schemaTypesHelper: any = {};
 
-const userType = new GraphQLObjectType({
-  name: 'User_v1',
-  fields: userFields,
-});
+const buildSchemaObject = (config: any) => {
+  const userFields: any = config.fields.reduce(
+    (userFields: any, fieldInfo: any) => {
+      let t = fieldInfo.type;
+      if ('required' in config && config.required) {
+        t = new GraphQLNonNull(t);
+      }
+      userFields[fieldInfo.name] = { type: t };
+      return userFields;
+    },
+    {},
+  );
 
-appSchemaFields['user'] = {
-  type: new GraphQLList(userType),
-  args: {
-    label: { type: jsonType },
-  },
-  resolve: () => db.getDatafilesBySchema('/access/user-1.yml'),
+  schemaTypesHelper[config.name] = new GraphQLObjectType({
+    name: `${config.name}_v${config.version}`,
+    fields: userFields,
+  });
+
+  const objectSchema: any = {
+    type: new GraphQLList(schemaTypesHelper[config.name]),
+  };
+
+  if ('datafile' in config) {
+    objectSchema['resolve'] = () => db.getDatafilesBySchema(config.datafile);
+  }
+
+  return objectSchema;
 };
 
-// BOT
+appSchemaFields['user'] = buildSchemaObject({
+  name: 'User',
+  version: '1',
+  datafile: '/access/user-1.yml',
 
-const botFields: any = {};
-botFields['schema'] = { type: new GraphQLNonNull(GraphQLString) };
-botFields['path'] = { type: new GraphQLNonNull(GraphQLString) };
-botFields['labels'] = { type: jsonType };
-botFields['name'] = { type: new GraphQLNonNull(GraphQLString) };
-botFields['github_username'] = { type: GraphQLString };
-botFields['quay_username'] = { type: GraphQLString };
-botFields['owner'] = { type: userType };
-
-const botType = new GraphQLObjectType({
-  name: 'Bot_v1',
-  fields: botFields,
+  fields: [
+    { name: 'schema', type: GraphQLString, required: true },
+    { name: 'labels', type: jsonType, required: true },
+    { name: 'name', type: GraphQLString, required: true },
+    { name: 'redhat_username', type: GraphQLString, required: true },
+    { name: 'github_username', type: GraphQLString, required: true },
+    { name: 'quay_username', type: GraphQLString, required: false },
+  ],
 });
 
-appSchemaFields['bot'] = {
-  type: new GraphQLList(botType),
-  args: {
-    label: { type: jsonType },
-  },
-  resolve: () => db.getDatafilesBySchema('/access/bot-1.yml'),
-};
+appSchemaFields['bot'] = buildSchemaObject({
+  name: 'Bot',
+  version: '1',
+  datafile: '/access/bot-1.yml',
+
+  fields: [
+    { name: 'schema', type: GraphQLString, required: true },
+    { name: 'path', type: GraphQLString, required: true },
+    { name: 'labels', type: jsonType, required: true },
+    { name: 'name', type: GraphQLString, required: true },
+    { name: 'github_username', type: GraphQLString, required: false },
+    { name: 'quay_username', type: GraphQLString, required: false },
+    { name: 'owner', type: schemaTypesHelper['User'], required: false },
+  ],
+});
 
 // ROLE - datafile
 
@@ -190,7 +206,7 @@ roleFields['labels'] = { type: jsonType };
 roleFields['name'] = { type: new GraphQLNonNull(GraphQLString) };
 roleFields['permissions'] = { type: new GraphQLList(permissionInterface) };
 roleFields['users'] = {
-  type: new GraphQLList(userType),
+  type: new GraphQLList(schemaTypesHelper['User']),
   resolve: (root: any) => {
     const schema = '/access/user-1.yml';
     const subAttr = 'roles';
@@ -198,7 +214,7 @@ roleFields['users'] = {
   },
 };
 roleFields['bots'] = {
-  type: new GraphQLList(userType),
+  type: new GraphQLList(schemaTypesHelper['User']),
   resolve: (root: any) => {
     const schema = '/access/bot-1.yml';
     const subAttr = 'roles';
@@ -213,9 +229,6 @@ const roleType = new GraphQLObjectType({
 
 appSchemaFields['role'] = {
   type: new GraphQLList(roleType),
-  args: {
-    label: { type: jsonType },
-  },
   resolve: () => db.getDatafilesBySchema('/access/role-1.yml'),
 };
 
