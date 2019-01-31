@@ -2,7 +2,6 @@ require('dotenv').config();
 
 import { ApolloServer, gql } from 'apollo-server-express';
 import * as express from 'express';
-import { makeExecutableSchema } from 'graphql-tools';
 
 import {
   GraphQLSchema,
@@ -12,7 +11,6 @@ import {
   GraphQLList,
   GraphQLNonNull,
   GraphQLInterfaceType,
-  printSchema,
 } from 'graphql';
 
 const db = require('./models/db');
@@ -20,9 +18,7 @@ const base = require('./graphql-schemas/base');
 
 db.load();
 
-// https://graphql.org/graphql-js/constructing-types/
-
-const filterBySchema = function (schema: string) {
+const getDatafilesBySchema = function (schema: string) {
   return Object.values(db.datafiles).filter((d: any) => d.$schema === schema);
 };
 
@@ -66,6 +62,21 @@ const defaultResolver = (root: any, args: any, context: any, info: any) => {
 
   return val;
 };
+
+// synthetic field. It gets populated by all the users that have a reference
+// to this specific role datafile under `.roles[].$ref`.
+const resolveSyntheticField = (root: any, schema: string, subAttr: string) => {
+  const elements = getDatafilesBySchema(schema);
+
+  return elements.filter((e: any) => {
+    if (subAttr in e) {
+      const backrefs = e[subAttr].map((r: any) => r.$ref);
+      return backrefs.includes(root.path);
+    }
+    return false;
+  });
+};
+
 
 // ------------------ START SCHEMA ------------------
 
@@ -177,28 +188,6 @@ schemaTypes.push(permissionQuayOrgTeamType);
 
 const appSchemaFields: any = {};
 
-// ROLE - datafile
-
-const roleFields: any = {};
-roleFields['schema'] = { type: new GraphQLNonNull(GraphQLString) };
-roleFields['path'] = { type: new GraphQLNonNull(GraphQLString) };
-roleFields['labels'] = { type: jsonType };
-roleFields['name'] = { type: new GraphQLNonNull(GraphQLString) };
-roleFields['permissions'] = { type: new GraphQLList(permissionInterface) };
-
-const roleType = new GraphQLObjectType({
-  name: 'Role_v1',
-  fields: roleFields,
-});
-
-appSchemaFields['role'] = {
-  type: new GraphQLList(roleType),
-  args: {
-    label: { type: jsonType },
-  },
-  resolve: () => filterBySchema('/access/role-1.yml'),
-};
-
 // USER - datafile
 
 const userFields: any = {};
@@ -220,7 +209,7 @@ appSchemaFields['user'] = {
   args: {
     label: { type: jsonType },
   },
-  resolve: () => filterBySchema('/access/user-1.yml'),
+  resolve: () => getDatafilesBySchema('/access/user-1.yml'),
 };
 
 // BOT
@@ -244,7 +233,45 @@ appSchemaFields['bot'] = {
   args: {
     label: { type: jsonType },
   },
-  resolve: () => filterBySchema('/access/bot-1.yml'),
+  resolve: () => getDatafilesBySchema('/access/bot-1.yml'),
+};
+
+// ROLE - datafile
+
+const roleFields: any = {};
+roleFields['schema'] = { type: new GraphQLNonNull(GraphQLString) };
+roleFields['path'] = { type: new GraphQLNonNull(GraphQLString) };
+roleFields['labels'] = { type: jsonType };
+roleFields['name'] = { type: new GraphQLNonNull(GraphQLString) };
+roleFields['permissions'] = { type: new GraphQLList(permissionInterface) };
+roleFields['users'] = {
+  type: new GraphQLList(userType),
+  resolve: (root: any) => {
+    const schema = '/access/user-1.yml';
+    const subAttr = 'roles';
+    return resolveSyntheticField(root, schema, subAttr);
+  },
+};
+roleFields['bots'] = {
+  type: new GraphQLList(userType),
+  resolve: (root: any) => {
+    const schema = '/access/bot-1.yml';
+    const subAttr = 'roles';
+    return resolveSyntheticField(root, schema, subAttr);
+  },
+};
+
+const roleType = new GraphQLObjectType({
+  name: 'Role_v1',
+  fields: roleFields,
+});
+
+appSchemaFields['role'] = {
+  type: new GraphQLList(roleType),
+  args: {
+    label: { type: jsonType },
+  },
+  resolve: () => getDatafilesBySchema('/access/role-1.yml'),
 };
 
 // BUILD SCHEMA
