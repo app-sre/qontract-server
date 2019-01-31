@@ -49,7 +49,7 @@ const loadUnpack = function (raw: any) {
   const sha256temp = forge.md.sha256.create();
   sha256temp.update(raw);
 
-  const sha256hex: String = sha256temp.digest().toHex();
+  const sha256hex: string = sha256temp.digest().toHex();
 
   Object.entries(bundle).forEach((d) => {
     const datafilePath: any = d[0];
@@ -98,7 +98,7 @@ const loadFromS3 = function () {
 };
 
 const loadFromFile = function (path: any) {
-  let loadPath: String;
+  let loadPath: string;
 
   if (typeof(path) === 'undefined') {
     loadPath = process.env.DATAFILES_FILE;
@@ -129,4 +129,4 @@ export function load() {
 
 // main db object
 export let datafiles: any = {};
-export let sha256: String = '';
+export let sha256: string = '';
