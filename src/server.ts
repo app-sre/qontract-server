@@ -76,11 +76,21 @@ const jsonType = new GraphQLScalarType({
   serialize: JSON.stringify,
 });
 
+const schemaTypes = [];
+
 // PERMISSION
 
-const permissionResolveType = (data: any) => {
-  return permissionAWSAnalyticsType;
+const permissionResolveType = ({ service }: any) : GraphQLObjectType => {
+  switch (service) {
+    case 'aws-analytics': return permissionAWSAnalyticsType;
+    case 'github-org': return permissionGithubOrgType;
+    case 'github-org-team': return permissionGithubOrgTeamType;
+    case 'openshift-rolebinding': return permissionOpenshiftRolebindingType;
+    case 'quay-membership': return permissionQuayOrgTeamType;
+  }
 };
+
+// -
 
 const permissionFields: any = {};
 permissionFields['service'] = { type: new GraphQLNonNull(GraphQLString) };
@@ -102,6 +112,7 @@ const permissionAWSAnalyticsType = new GraphQLObjectType({
   fields: permissionAWSAnalyticsFields,
 });
 
+schemaTypes.push(permissionAWSAnalyticsType);
 // -
 
 const permissionGithubOrgFields: any = {};
@@ -113,6 +124,8 @@ const permissionGithubOrgType = new GraphQLObjectType({
   interfaces: [permissionInterface],
   fields: permissionGithubOrgFields,
 });
+
+schemaTypes.push(permissionGithubOrgType);
 
 // -
 
@@ -126,6 +139,8 @@ const permissionGithubOrgTeamType = new GraphQLObjectType({
   interfaces: [permissionInterface],
   fields: permissionGithubOrgTeamFields,
 });
+
+schemaTypes.push(permissionGithubOrgTeamType);
 
 // -
 
@@ -141,6 +156,8 @@ const permissionOpenshiftRolebindingType = new GraphQLObjectType({
   fields: permissionOpenshiftRolebindingFields,
 });
 
+schemaTypes.push(permissionOpenshiftRolebindingType);
+
 // -
 
 const permissionQuayOrgTeamFields: any = {};
@@ -148,21 +165,13 @@ permissionQuayOrgTeamFields['service'] = { type: new GraphQLNonNull(GraphQLStrin
 permissionQuayOrgTeamFields['org'] = { type: new GraphQLNonNull(GraphQLString) };
 permissionQuayOrgTeamFields['team'] = { type: new GraphQLNonNull(GraphQLString) };
 
-const permissionQuayOrgTeam = new GraphQLObjectType({
+const permissionQuayOrgTeamType = new GraphQLObjectType({
   name: 'PermissionQuayOrgTeam_v1',
   interfaces: [permissionInterface],
   fields: permissionQuayOrgTeamFields,
 });
 
-// function permissionResolveType({ service }: any) {
-//   switch (service) {
-//     case 'aws-analytics': return permissionAWSAnalytics;
-//     case 'github-org': return permissionGithubOrg;
-//     case 'github-org-team': return permissionGithubOrgTeam;
-//     case 'openshift-rolebinding': return permissionOpenshiftRolebinding;
-//     case 'quay-membership': return permissionQuayOrgTeam;
-//   }
-// }
+schemaTypes.push(permissionQuayOrgTeamType);
 
 // ------- DATAFILES -------
 
@@ -241,6 +250,7 @@ appSchemaFields['bot'] = {
 // BUILD SCHEMA
 
 const appSchema = new GraphQLSchema({
+  types: schemaTypes,
   query: new GraphQLObjectType({
     name: 'Query',
     fields: appSchemaFields,
