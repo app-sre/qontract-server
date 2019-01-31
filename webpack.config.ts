@@ -2,6 +2,9 @@ import * as webpack from 'webpack';
 import * as path from 'path';
 
 const config: webpack.Configuration = {
+  resolve: {
+    extensions: [".ts", ".tsx", ".mjs", ".js"],
+  },
   entry: [
     './src/server.ts',
   ],
