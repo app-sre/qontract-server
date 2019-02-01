@@ -94,10 +94,14 @@ const createSchemaType = (schemaTypes: any, interfaceTypes: any, conf: any) => {
       const fieldDef: any = {};
 
       // type
-      let t = fieldInfo.type;
+      let t: any = fieldInfo.type;
 
       if (typeof t === 'string') {
-        t = schemaTypes[t];
+        if (fieldInfo.isInterface) {
+          t = interfaceTypes[t];
+        } else {
+          t = schemaTypes[t];
+        }
       }
 
       if (fieldInfo.isRequired) {
@@ -131,13 +135,30 @@ const createSchemaType = (schemaTypes: any, interfaceTypes: any, conf: any) => {
     {},
   );
 
-  // interfaces
+  // interface
   if (conf.interface) {
     objTypeConf['interfaces'] = [interfaceTypes[conf.interface]];
   }
 
-  if (conf.resolveType) {
-    objTypeConf['resoveType'] = conf.resolveType;
+  // generate resolveType for interfaces
+  if (conf.isInterface) {
+    let resolveType: any;
+
+    switch (conf.interfaceResolve.strategy) {
+      case 'fieldMap':
+        resolveType = (source: any) => {
+          const field = conf.interfaceResolve.field;
+          const fieldValue = source[field];
+
+          const fieldMap = conf.interfaceResolve.fieldMap;
+          return schemaTypes[fieldMap[fieldValue]];
+        };
+        break;
+      default:
+        throw new Error('strategy not implemented');
+    }
+
+    objTypeConf['resolveType'] = resolveType;
   }
 
   let objType: any;
@@ -164,16 +185,18 @@ const interfaceTypes: any = {};
 createSchemaType(schemaTypes, interfaceTypes, {
   name: 'Permission',
   version: '1',
-  // isInterface: true,
-  // resolveType: ({ service }: any): GraphQLObjectType => {
-  //   switch (service) {
-  //     case 'aws-analytics': return schemaTypes['PermissionAWSAnalyticsType'];
-  //     case 'github-org': return schemaTypes['PermissionGithubOrgType'];
-  //     case 'github-org-team': return schemaTypes['PermissionGithubOrgTeamType'];
-  //     case 'openshift-rolebinding': return schemaTypes['PermissionOpenshiftRolebindingType'];
-  //     case 'quay-membership': return schemaTypes['PermissionQuayOrgTeamType'];
-  //   }
-  // },
+  isInterface: true,
+  interfaceResolve: {
+    strategy: 'fieldMap',
+    field: 'service',
+    fieldMap: {
+      'aws-analytics': 'PermissionAWSAnalytics',
+      'github-org': 'PermissionGithubOrg',
+      'github-org-team': 'PermissionGithubOrgTeam',
+      'openshift-rolebinding': 'PermissionOpenshiftRolebinding',
+      'quay-membership': 'PermissionQuayOrgTeam',
+    },
+  },
   fields: [
     { name: 'service', type: GraphQLString, isRequired: true },
   ],
@@ -182,8 +205,53 @@ createSchemaType(schemaTypes, interfaceTypes, {
 createSchemaType(schemaTypes, interfaceTypes, {
   name: 'PermissionAWSAnalytics',
   version: '1',
+  interface: 'Permission',
   fields: [
     { name: 'service', type: GraphQLString, isRequired: true },
+  ],
+});
+
+createSchemaType(schemaTypes, interfaceTypes, {
+  name: 'PermissionGithubOrg',
+  version: '1',
+  interface: 'Permission',
+  fields: [
+    { name: 'service', type: GraphQLString, isRequired: true },
+    { name: 'org', type: GraphQLString, isRequired: true },
+  ],
+});
+
+createSchemaType(schemaTypes, interfaceTypes, {
+  name: 'PermissionGithubOrgTeam',
+  version: '1',
+  interface: 'Permission',
+  fields: [
+    { name: 'service', type: GraphQLString, isRequired: true },
+    { name: 'org', type: GraphQLString, isRequired: true },
+    { name: 'team', type: GraphQLString, isRequired: true },
+  ],
+});
+
+createSchemaType(schemaTypes, interfaceTypes, {
+  name: 'PermissionOpenshiftRolebinding',
+  version: '1',
+  interface: 'Permission',
+  fields: [
+    { name: 'service', type: GraphQLString, isRequired: true },
+    { name: 'cluster', type: GraphQLString, isRequired: true },
+    { name: 'namespace', type: GraphQLString, isRequired: true },
+    { name: 'role', type: GraphQLString, isRequired: true },
+  ],
+});
+
+createSchemaType(schemaTypes, interfaceTypes, {
+  name: 'PermissionQuayOrgTeam',
+  version: '1',
+  interface: 'Permission',
+  fields: [
+    { name: 'service', type: GraphQLString, isRequired: true },
+    { name: 'org', type: GraphQLString, isRequired: true },
+    { name: 'team', type: GraphQLString, isRequired: true },
   ],
 });
 
@@ -224,6 +292,12 @@ createSchemaType(schemaTypes, interfaceTypes, {
     { name: 'path', type: GraphQLString, isRequired: true },
     { name: 'labels', type: jsonType },
     { name: 'name', type: GraphQLString, isRequired: true },
+    {
+      name: 'permissions',
+      type: 'Permission',
+      isList: true,
+      isInterface: true,
+    },
     {
       name: 'users',
       type: 'User',
