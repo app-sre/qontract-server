@@ -1,0 +1,274 @@
+[
+  {
+    "name": "Permission",
+    "version": "1",
+    "isInterface": true,
+    "interfaceResolve": {
+      "strategy": "fieldMap",
+      "field": "service",
+      "fieldMap": {
+        "aws-analytics": "PermissionAWSAnalytics",
+        "github-org": "PermissionGithubOrg",
+        "github-org-team": "PermissionGithubOrgTeam",
+        "openshift-rolebinding": "PermissionOpenshiftRolebinding",
+        "quay-membership": "PermissionQuayOrgTeam"
+      }
+    },
+    "fields": [
+      {
+        "name": "service",
+        "type": "string",
+        "isRequired": true
+      }
+    ]
+  },
+  {
+    "name": "PermissionAWSAnalytics",
+    "version": "1",
+    "interface": "Permission",
+    "fields": [
+      {
+        "name": "service",
+        "type": "string",
+        "isRequired": true
+      }
+    ]
+  },
+  {
+    "name": "PermissionGithubOrg",
+    "version": "1",
+    "interface": "Permission",
+    "fields": [
+      {
+        "name": "service",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "org",
+        "type": "string",
+        "isRequired": true
+      }
+    ]
+  },
+  {
+    "name": "PermissionGithubOrgTeam",
+    "version": "1",
+    "interface": "Permission",
+    "fields": [
+      {
+        "name": "service",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "org",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "team",
+        "type": "string",
+        "isRequired": true
+      }
+    ]
+  },
+  {
+    "name": "PermissionOpenshiftRolebinding",
+    "version": "1",
+    "interface": "Permission",
+    "fields": [
+      {
+        "name": "service",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "cluster",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "namespace",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "role",
+        "type": "string",
+        "isRequired": true
+      }
+    ]
+  },
+  {
+    "name": "PermissionQuayOrgTeam",
+    "version": "1",
+    "interface": "Permission",
+    "fields": [
+      {
+        "name": "service",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "org",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "team",
+        "type": "string",
+        "isRequired": true
+      }
+    ]
+  },
+  {
+    "name": "User",
+    "version": "1",
+    "fields": [
+      {
+        "name": "schema",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "path",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "labels",
+        "type": "json"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "redhat_username",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "github_username",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "quay_username",
+        "type": "string"
+      }
+    ]
+  },
+  {
+    "name": "Bot",
+    "version": "1",
+    "fields": [
+      {
+        "name": "schema",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "path",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "labels",
+        "type": "json"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "github_username",
+        "type": "string"
+      },
+      {
+        "name": "quay_username",
+        "type": "string"
+      },
+      {
+        "name": "owner",
+        "type": "User"
+      }
+    ]
+  },
+  {
+    "name": "Role",
+    "version": "1",
+    "datafile": "/access/role-1.yml",
+    "fields": [
+      {
+        "name": "schema",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "path",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "labels",
+        "type": "json"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "isRequired": true
+      },
+      {
+        "name": "permissions",
+        "type": "Permission",
+        "isList": true,
+        "isInterface": true
+      },
+      {
+        "name": "users",
+        "type": "User",
+        "isList": true,
+        "synthetic": {
+          "schema": "/access/user-1.yml",
+          "subAttr": "roles"
+        }
+      },
+      {
+        "name": "bots",
+        "type": "Bot",
+        "isList": true,
+        "synthetic": {
+          "schema": "/access/bot-1.yml",
+          "subAttr": "roles"
+        }
+      }
+    ]
+  },
+  {
+    "name": "Query",
+    "fields": [
+      {
+        "name": "user",
+        "type": "User",
+        "isList": true,
+        "datafileSchema": "/access/user-1.yml"
+      },
+      {
+        "name": "bot",
+        "type": "Bot",
+        "isList": true,
+        "datafileSchema": "/access/bot-1.yml"
+      },
+      {
+        "name": "role",
+        "type": "Role",
+        "isList": true,
+        "datafileSchema": "/access/role-1.yml"
+      }
+    ]
+  }
+]

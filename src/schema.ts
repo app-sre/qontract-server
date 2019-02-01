@@ -11,6 +11,8 @@ import {
   astFromValue,
 } from 'graphql';
 
+import * as schemaData from './schema.json';
+
 const isRef = function (obj: any) {
   if (obj.constructor === Object) {
     if (Object.keys(obj).length === 1 && ('$ref' in obj)) {
@@ -191,145 +193,7 @@ const jsonType = new GraphQLScalarType({
 const schemaTypes: any = {};
 const interfaceTypes: any = {};
 
-createSchemaType(schemaTypes, interfaceTypes, {
-  name: 'Permission',
-  version: '1',
-  isInterface: true,
-  interfaceResolve: {
-    strategy: 'fieldMap',
-    field: 'service',
-    fieldMap: {
-      'aws-analytics': 'PermissionAWSAnalytics',
-      'github-org': 'PermissionGithubOrg',
-      'github-org-team': 'PermissionGithubOrgTeam',
-      'openshift-rolebinding': 'PermissionOpenshiftRolebinding',
-      'quay-membership': 'PermissionQuayOrgTeam',
-    },
-  },
-  fields: [
-    { name: 'service', type: 'string', isRequired: true },
-  ],
-});
-
-createSchemaType(schemaTypes, interfaceTypes, {
-  name: 'PermissionAWSAnalytics',
-  version: '1',
-  interface: 'Permission',
-  fields: [
-    { name: 'service', type: 'string', isRequired: true },
-  ],
-});
-
-createSchemaType(schemaTypes, interfaceTypes, {
-  name: 'PermissionGithubOrg',
-  version: '1',
-  interface: 'Permission',
-  fields: [
-    { name: 'service', type: 'string', isRequired: true },
-    { name: 'org', type: 'string', isRequired: true },
-  ],
-});
-
-createSchemaType(schemaTypes, interfaceTypes, {
-  name: 'PermissionGithubOrgTeam',
-  version: '1',
-  interface: 'Permission',
-  fields: [
-    { name: 'service', type: 'string', isRequired: true },
-    { name: 'org', type: 'string', isRequired: true },
-    { name: 'team', type: 'string', isRequired: true },
-  ],
-});
-
-createSchemaType(schemaTypes, interfaceTypes, {
-  name: 'PermissionOpenshiftRolebinding',
-  version: '1',
-  interface: 'Permission',
-  fields: [
-    { name: 'service', type: 'string', isRequired: true },
-    { name: 'cluster', type: 'string', isRequired: true },
-    { name: 'namespace', type: 'string', isRequired: true },
-    { name: 'role', type: 'string', isRequired: true },
-  ],
-});
-
-createSchemaType(schemaTypes, interfaceTypes, {
-  name: 'PermissionQuayOrgTeam',
-  version: '1',
-  interface: 'Permission',
-  fields: [
-    { name: 'service', type: 'string', isRequired: true },
-    { name: 'org', type: 'string', isRequired: true },
-    { name: 'team', type: 'string', isRequired: true },
-  ],
-});
-
-createSchemaType(schemaTypes, interfaceTypes, {
-  name: 'User',
-  version: '1',
-  fields: [
-    { name: 'schema', type: 'string', isRequired: true },
-    { name: 'path', type: 'string', isRequired: true },
-    { name: 'labels', type: jsonType },
-    { name: 'name', type: 'string', isRequired: true },
-    { name: 'redhat_username', type: 'string', isRequired: true },
-    { name: 'github_username', type: 'string', isRequired: true },
-    { name: 'quay_username', type: 'string' },
-  ],
-});
-
-createSchemaType(schemaTypes, interfaceTypes, {
-  name: 'Bot',
-  version: '1',
-  fields: [
-    { name: 'schema', type: 'string', isRequired: true },
-    { name: 'path', type: 'string', isRequired: true },
-    { name: 'labels', type: jsonType },
-    { name: 'name', type: 'string', isRequired: true },
-    { name: 'github_username', type: 'string' },
-    { name: 'quay_username', type: 'string' },
-    { name: 'owner', type: 'User' },
-  ],
-});
-
-createSchemaType(schemaTypes, interfaceTypes, {
-  name: 'Role',
-  version: '1',
-  datafile: '/access/role-1.yml',
-  fields: [
-    { name: 'schema', type: 'string', isRequired: true },
-    { name: 'path', type: 'string', isRequired: true },
-    { name: 'labels', type: 'json' },
-    { name: 'name', type: 'string', isRequired: true },
-    {
-      name: 'permissions',
-      type: 'Permission',
-      isList: true,
-      isInterface: true,
-    },
-    {
-      name: 'users',
-      type: 'User',
-      isList: true,
-      synthetic: { schema: '/access/user-1.yml', subAttr: 'roles' },
-    },
-    {
-      name: 'bots',
-      type: 'Bot',
-      isList: true,
-      synthetic: { schema: '/access/bot-1.yml', subAttr: 'roles' },
-    },
-  ],
-});
-
-createSchemaType(schemaTypes, interfaceTypes, {
-  name: 'Query',
-  fields: [
-    { name: 'user', type: 'User', isList: true, datafileSchema: '/access/user-1.yml' },
-    { name: 'bot', type: 'Bot', isList: true, datafileSchema: '/access/bot-1.yml' },
-    { name: 'role', type: 'Role', isList: true, datafileSchema: '/access/role-1.yml' },
-  ],
-});
+schemaData.map((t: any) => createSchemaType(schemaTypes, interfaceTypes, t));
 
 export const appSchema = new GraphQLSchema({
   types: Object.values(schemaTypes),
