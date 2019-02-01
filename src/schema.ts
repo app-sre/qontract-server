@@ -24,7 +24,7 @@ const isNonEmptyArray = function (obj: any) {
   return obj.constructor === Array && obj.length > 0;
 };
 
-const  resolveSyntheticField = function (root: any, schema: string, subAttr: string) {
+const resolveSyntheticField = function (root: any, schema: string, subAttr: string) {
   const elements = db.getDatafilesBySchema(schema);
 
   return elements.filter((e: any) => {
@@ -110,9 +110,18 @@ const createSchemaType = (schemaTypes: any, interfaceTypes: any, conf: any) => {
 
       fieldDef['type'] = t;
 
-      // resolve
+      // schema
       if (fieldInfo.datafileSchema) {
         fieldDef['resolve'] = () => db.getDatafilesBySchema(fieldInfo.datafileSchema);
+      }
+
+      // synthetic
+      if (fieldInfo.synthetic) {
+        fieldDef['resolve'] = (root: any) => resolveSyntheticField(
+          root,
+          fieldInfo.synthetic.schema,
+          fieldInfo.synthetic.subAttr,
+        );
       }
 
       // return
@@ -127,9 +136,19 @@ const createSchemaType = (schemaTypes: any, interfaceTypes: any, conf: any) => {
     objTypeConf['interfaces'] = [interfaceTypes[conf.interface]];
   }
 
-  const objType = new GraphQLObjectType(objTypeConf);
+  if (conf.resolveType) {
+    objTypeConf['resoveType'] = conf.resolveType;
+  }
 
-  schemaTypes[conf.name] = objType;
+  let objType: any;
+
+  if (conf.isInterface) {
+    objType = new GraphQLInterfaceType(objTypeConf);
+    interfaceTypes[conf.name] = objType;
+  } else {
+    objType = new GraphQLObjectType(objTypeConf);
+    schemaTypes[conf.name] = objType;
+  }
 
   return objType;
 };
@@ -141,6 +160,32 @@ const jsonType = new GraphQLScalarType({
 
 const schemaTypes: any = {};
 const interfaceTypes: any = {};
+
+createSchemaType(schemaTypes, interfaceTypes, {
+  name: 'Permission',
+  version: '1',
+  // isInterface: true,
+  // resolveType: ({ service }: any): GraphQLObjectType => {
+  //   switch (service) {
+  //     case 'aws-analytics': return schemaTypes['PermissionAWSAnalyticsType'];
+  //     case 'github-org': return schemaTypes['PermissionGithubOrgType'];
+  //     case 'github-org-team': return schemaTypes['PermissionGithubOrgTeamType'];
+  //     case 'openshift-rolebinding': return schemaTypes['PermissionOpenshiftRolebindingType'];
+  //     case 'quay-membership': return schemaTypes['PermissionQuayOrgTeamType'];
+  //   }
+  // },
+  fields: [
+    { name: 'service', type: GraphQLString, isRequired: true },
+  ],
+});
+
+createSchemaType(schemaTypes, interfaceTypes, {
+  name: 'PermissionAWSAnalytics',
+  version: '1',
+  fields: [
+    { name: 'service', type: GraphQLString, isRequired: true },
+  ],
+});
 
 createSchemaType(schemaTypes, interfaceTypes, {
   name: 'User',
@@ -157,9 +202,49 @@ createSchemaType(schemaTypes, interfaceTypes, {
 });
 
 createSchemaType(schemaTypes, interfaceTypes, {
+  name: 'Bot',
+  version: '1',
+  fields: [
+    { name: 'schema', type: GraphQLString, isRequired: true },
+    { name: 'path', type: GraphQLString, isRequired: true },
+    { name: 'labels', type: jsonType },
+    { name: 'name', type: GraphQLString, isRequired: true },
+    { name: 'github_username', type: GraphQLString },
+    { name: 'quay_username', type: GraphQLString },
+    { name: 'owner', type: 'User' },
+  ],
+});
+
+createSchemaType(schemaTypes, interfaceTypes, {
+  name: 'Role',
+  version: '1',
+  datafile: '/access/role-1.yml',
+  fields: [
+    { name: 'schema', type: GraphQLString, isRequired: true },
+    { name: 'path', type: GraphQLString, isRequired: true },
+    { name: 'labels', type: jsonType },
+    { name: 'name', type: GraphQLString, isRequired: true },
+    {
+      name: 'users',
+      type: 'User',
+      isList: true,
+      synthetic: { schema: '/access/user-1.yml', subAttr: 'roles' },
+    },
+    {
+      name: 'bots',
+      type: 'Bot',
+      isList: true,
+      synthetic: { schema: '/access/bot-1.yml', subAttr: 'roles' },
+    },
+  ],
+});
+
+createSchemaType(schemaTypes, interfaceTypes, {
   name: 'Query',
   fields: [
     { name: 'user', type: 'User', isList: true, datafileSchema: '/access/user-1.yml' },
+    { name: 'bot', type: 'Bot', isList: true, datafileSchema: '/access/bot-1.yml' },
+    { name: 'role', type: 'Role', isList: true, datafileSchema: '/access/role-1.yml' },
   ],
 });
 
