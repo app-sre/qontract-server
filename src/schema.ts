@@ -97,10 +97,19 @@ const createSchemaType = (schemaTypes: any, interfaceTypes: any, conf: any) => {
       let t: any = fieldInfo.type;
 
       if (typeof t === 'string') {
-        if (fieldInfo.isInterface) {
-          t = interfaceTypes[t];
-        } else {
-          t = schemaTypes[t];
+        switch (t) {
+          case 'string':
+            t = GraphQLString;
+            break;
+          case 'json':
+            t = jsonType;
+            break;
+          default:
+            if (fieldInfo.isInterface) {
+              t = interfaceTypes[t];
+            } else {
+              t = schemaTypes[t];
+            }
         }
       }
 
@@ -198,7 +207,7 @@ createSchemaType(schemaTypes, interfaceTypes, {
     },
   },
   fields: [
-    { name: 'service', type: GraphQLString, isRequired: true },
+    { name: 'service', type: 'string', isRequired: true },
   ],
 });
 
@@ -207,7 +216,7 @@ createSchemaType(schemaTypes, interfaceTypes, {
   version: '1',
   interface: 'Permission',
   fields: [
-    { name: 'service', type: GraphQLString, isRequired: true },
+    { name: 'service', type: 'string', isRequired: true },
   ],
 });
 
@@ -216,8 +225,8 @@ createSchemaType(schemaTypes, interfaceTypes, {
   version: '1',
   interface: 'Permission',
   fields: [
-    { name: 'service', type: GraphQLString, isRequired: true },
-    { name: 'org', type: GraphQLString, isRequired: true },
+    { name: 'service', type: 'string', isRequired: true },
+    { name: 'org', type: 'string', isRequired: true },
   ],
 });
 
@@ -226,9 +235,9 @@ createSchemaType(schemaTypes, interfaceTypes, {
   version: '1',
   interface: 'Permission',
   fields: [
-    { name: 'service', type: GraphQLString, isRequired: true },
-    { name: 'org', type: GraphQLString, isRequired: true },
-    { name: 'team', type: GraphQLString, isRequired: true },
+    { name: 'service', type: 'string', isRequired: true },
+    { name: 'org', type: 'string', isRequired: true },
+    { name: 'team', type: 'string', isRequired: true },
   ],
 });
 
@@ -237,10 +246,10 @@ createSchemaType(schemaTypes, interfaceTypes, {
   version: '1',
   interface: 'Permission',
   fields: [
-    { name: 'service', type: GraphQLString, isRequired: true },
-    { name: 'cluster', type: GraphQLString, isRequired: true },
-    { name: 'namespace', type: GraphQLString, isRequired: true },
-    { name: 'role', type: GraphQLString, isRequired: true },
+    { name: 'service', type: 'string', isRequired: true },
+    { name: 'cluster', type: 'string', isRequired: true },
+    { name: 'namespace', type: 'string', isRequired: true },
+    { name: 'role', type: 'string', isRequired: true },
   ],
 });
 
@@ -249,9 +258,9 @@ createSchemaType(schemaTypes, interfaceTypes, {
   version: '1',
   interface: 'Permission',
   fields: [
-    { name: 'service', type: GraphQLString, isRequired: true },
-    { name: 'org', type: GraphQLString, isRequired: true },
-    { name: 'team', type: GraphQLString, isRequired: true },
+    { name: 'service', type: 'string', isRequired: true },
+    { name: 'org', type: 'string', isRequired: true },
+    { name: 'team', type: 'string', isRequired: true },
   ],
 });
 
@@ -259,13 +268,13 @@ createSchemaType(schemaTypes, interfaceTypes, {
   name: 'User',
   version: '1',
   fields: [
-    { name: 'schema', type: GraphQLString, isRequired: true },
-    { name: 'path', type: GraphQLString, isRequired: true },
+    { name: 'schema', type: 'string', isRequired: true },
+    { name: 'path', type: 'string', isRequired: true },
     { name: 'labels', type: jsonType },
-    { name: 'name', type: GraphQLString, isRequired: true },
-    { name: 'redhat_username', type: GraphQLString, isRequired: true },
-    { name: 'github_username', type: GraphQLString, isRequired: true },
-    { name: 'quay_username', type: GraphQLString },
+    { name: 'name', type: 'string', isRequired: true },
+    { name: 'redhat_username', type: 'string', isRequired: true },
+    { name: 'github_username', type: 'string', isRequired: true },
+    { name: 'quay_username', type: 'string' },
   ],
 });
 
@@ -273,12 +282,12 @@ createSchemaType(schemaTypes, interfaceTypes, {
   name: 'Bot',
   version: '1',
   fields: [
-    { name: 'schema', type: GraphQLString, isRequired: true },
-    { name: 'path', type: GraphQLString, isRequired: true },
+    { name: 'schema', type: 'string', isRequired: true },
+    { name: 'path', type: 'string', isRequired: true },
     { name: 'labels', type: jsonType },
-    { name: 'name', type: GraphQLString, isRequired: true },
-    { name: 'github_username', type: GraphQLString },
-    { name: 'quay_username', type: GraphQLString },
+    { name: 'name', type: 'string', isRequired: true },
+    { name: 'github_username', type: 'string' },
+    { name: 'quay_username', type: 'string' },
     { name: 'owner', type: 'User' },
   ],
 });
@@ -288,10 +297,10 @@ createSchemaType(schemaTypes, interfaceTypes, {
   version: '1',
   datafile: '/access/role-1.yml',
   fields: [
-    { name: 'schema', type: GraphQLString, isRequired: true },
-    { name: 'path', type: GraphQLString, isRequired: true },
-    { name: 'labels', type: jsonType },
-    { name: 'name', type: GraphQLString, isRequired: true },
+    { name: 'schema', type: 'string', isRequired: true },
+    { name: 'path', type: 'string', isRequired: true },
+    { name: 'labels', type: 'json' },
+    { name: 'name', type: 'string', isRequired: true },
     {
       name: 'permissions',
       type: 'Permission',
