@@ -23,6 +23,7 @@ const server = new ApolloServer({
   introspection: true,
   fieldResolver: defaultResolver,
 });
+
 server.applyMiddleware({ app });
 
 app.get('/reload', (req: express.Request, res: express.Response) => {
