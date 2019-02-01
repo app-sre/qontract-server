@@ -1,17 +1,22 @@
-import * as db from './db';
+const yaml = require('js-yaml');
+const fs = require('fs');
 
 import {
   GraphQLSchema,
   GraphQLObjectType,
   GraphQLScalarType,
   GraphQLString,
+  GraphQLFloat,
+  GraphQLBoolean,
+  GraphQLInt,
   GraphQLList,
   GraphQLNonNull,
   GraphQLInterfaceType,
-  astFromValue,
 } from 'graphql';
 
-import * as schemaData from './schema.json';
+import * as db from './db';
+
+const schemaData = yaml.safeLoad(fs.readFileSync('assets/schema.yml', 'utf8'));
 
 const isRef = function (obj: any) {
   if (obj.constructor === Object) {
@@ -102,6 +107,15 @@ const createSchemaType = (schemaTypes: any, interfaceTypes: any, conf: any) => {
         switch (t) {
           case 'string':
             t = GraphQLString;
+            break;
+          case 'float':
+            t = GraphQLFloat;
+            break;
+          case 'boolean':
+            t = GraphQLBoolean;
+            break;
+          case 'int':
+            t = GraphQLInt;
             break;
           case 'json':
             t = jsonType;
