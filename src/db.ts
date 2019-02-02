@@ -7,11 +7,9 @@ const jsonpointer = require('jsonpointer');
 
 // utils
 
-const getRefPath = function (ref: any) {
-  return /^[^$]*/.exec(ref)[0];
-};
+const getRefPath = (ref: string): string => /^[^$]*/.exec(ref)[0];
 
-const getRefExpr = function (ref: any) {
+const getRefExpr = (ref: string): string => {
   const m = /[$#].*/.exec(ref);
   return m ? m[0] : '';
 };
@@ -43,7 +41,7 @@ export function resolveRef(itemRef: any) {
 
 // datafile Loading functions
 
-const loadUnpack = function (raw: any) {
+const loadUnpack = (raw: string) => {
   const dbDatafilesNew: any = {};
 
   const bundle = JSON.parse(raw);
@@ -78,11 +76,11 @@ const loadUnpack = function (raw: any) {
   console.log(`End datafile reload: ${new Date()}`);
 };
 
-const loadFromS3 = function () {
+const loadFromS3 = () => {
   const s3 = new S3({
-    AccessKeyID: process.env.AWS_ACCESS_KEY_ID,
-    SecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    Region: process.env.AWS_REGION,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION,
   });
 
   const s3params = {
@@ -99,7 +97,7 @@ const loadFromS3 = function () {
   });
 };
 
-export function loadFromFile(path: any) {
+export function loadFromFile(path: string) {
   let loadPath: string;
 
   if (typeof (path) === 'undefined') {
@@ -109,8 +107,8 @@ export function loadFromFile(path: any) {
   }
 
   const raw = readFileSync(loadPath);
-  loadUnpack(raw);
-};
+  loadUnpack(String(raw));
+}
 
 export function load() {
   console.log(`Start datafile reload: ${new Date()}`);
