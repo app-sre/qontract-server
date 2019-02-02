@@ -4,7 +4,7 @@ import { ApolloServer, gql } from 'apollo-server-express';
 import * as express from 'express';
 
 import * as db from './db';
-import { appSchema, defaultResolver  } from './schema';
+import { generateAppSchema, defaultResolver  } from './schema';
 
 db.load();
 
@@ -18,7 +18,7 @@ app.use((req: express.Request, res: express.Response, next: express.NextFunction
 });
 
 const server = new ApolloServer({
-  schema: appSchema,
+  schema: generateAppSchema('assets/schema.yml'),
   playground: true,
   introspection: true,
   fieldResolver: defaultResolver,
