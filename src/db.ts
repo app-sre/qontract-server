@@ -1,7 +1,9 @@
-const fs = require('fs');
+import { readFileSync } from 'fs';
+import { S3 } from 'aws-sdk';
+import { md as forgeMd } from 'node-forge';
+
+// cannot use `import` (old package with no associated types)
 const jsonpointer = require('jsonpointer');
-const AWS = require('aws-sdk');
-const forge = require('node-forge');
 
 // utils
 
@@ -46,7 +48,7 @@ const loadUnpack = function (raw: any) {
 
   const bundle = JSON.parse(raw);
 
-  const sha256temp = forge.md.sha256.create();
+  const sha256temp = forgeMd.sha256.create();
   sha256temp.update(raw);
 
   const sha256hex: string = sha256temp.digest().toHex();
@@ -55,13 +57,13 @@ const loadUnpack = function (raw: any) {
     const datafilePath: any = d[0];
     const datafileData: any = d[1];
 
-    if (typeof(datafilePath) !== 'string') {
+    if (typeof (datafilePath) !== 'string') {
       throw new Error('Expecting string for datafilePath');
     }
 
     if (typeof (datafileData) !== 'object' ||
-          Object.keys(datafileData).length === 0 ||
-          !('$schema' in datafileData)) {
+      Object.keys(datafileData).length === 0 ||
+      !('$schema' in datafileData)) {
       throw new Error('Invalid datafileData object');
     }
 
@@ -77,7 +79,7 @@ const loadUnpack = function (raw: any) {
 };
 
 const loadFromS3 = function () {
-  const s3 = new AWS.S3({
+  const s3 = new S3({
     AccessKeyID: process.env.AWS_ACCESS_KEY_ID,
     SecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     Region: process.env.AWS_REGION,
@@ -100,13 +102,13 @@ const loadFromS3 = function () {
 export function loadFromFile(path: any) {
   let loadPath: string;
 
-  if (typeof(path) === 'undefined') {
+  if (typeof (path) === 'undefined') {
     loadPath = process.env.DATAFILES_FILE;
   } else {
     loadPath = path;
   }
 
-  const raw = fs.readFileSync(loadPath);
+  const raw = readFileSync(loadPath);
   loadUnpack(raw);
 };
 
