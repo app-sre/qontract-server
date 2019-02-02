@@ -97,7 +97,7 @@ const loadFromS3 = function () {
   });
 };
 
-const loadFromFile = function (path: any) {
+export function loadFromFile(path: any) {
   let loadPath: string;
 
   if (typeof(path) === 'undefined') {
