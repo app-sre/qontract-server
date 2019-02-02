@@ -5,8 +5,20 @@ import { md as forgeMd } from 'node-forge';
 // cannot use `import` (old package with no associated types)
 const jsonpointer = require('jsonpointer');
 
-// utils
+// interfaces
+interface SchemaEnforced {
+  $schema: string;
+}
 
+interface IDatafilesDict {
+  [key: string]: any;
+}
+
+// module variables
+let datafiles: IDatafilesDict = new Map<string, SchemaEnforced>();
+let sha256sum: string = '';
+
+// utils
 const getRefPath = (ref: string): string => /^[^$]*/.exec(ref)[0];
 
 const getRefExpr = (ref: string): string => {
@@ -15,8 +27,7 @@ const getRefExpr = (ref: string): string => {
 };
 
 // filters
-
-export function getDatafilesBySchema(schema: string) {
+export function getDatafilesBySchema(schema: string): SchemaEnforced[] {
   return Object.values(datafiles).filter((d: any) => d.$schema === schema);
 }
 
@@ -40,16 +51,12 @@ export function resolveRef(itemRef: any) {
 }
 
 // datafile Loading functions
-
-const loadUnpack = (raw: string) => {
+function loadUnpack(raw: string) {
   const dbDatafilesNew: any = {};
 
   const bundle = JSON.parse(raw);
 
-  const sha256temp = forgeMd.sha256.create();
-  sha256temp.update(raw);
-
-  const sha256hex: string = sha256temp.digest().toHex();
+  const sha256hex = forgeMd.sha256.create().update(raw).digest().toHex();
 
   Object.entries(bundle).forEach((d) => {
     const datafilePath: any = d[0];
@@ -71,12 +78,12 @@ const loadUnpack = (raw: string) => {
   });
 
   datafiles = dbDatafilesNew;
-  sha256 = sha256hex;
+  sha256sum = sha256hex;
 
   console.log(`End datafile reload: ${new Date()}`);
-};
+}
 
-const loadFromS3 = () => {
+function loadFromS3() {
   const s3 = new S3({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -95,7 +102,7 @@ const loadFromS3 = () => {
       loadUnpack(data.Body.toString('utf-8'));
     }
   });
-};
+}
 
 export function loadFromFile(path: string) {
   let loadPath: string;
@@ -127,6 +134,5 @@ export function load() {
   }
 }
 
-// main db object
-export let datafiles: any = {};
-export let sha256: string = '';
+export const sha256 = (): string => sha256sum;
+export const datafilesLength = (): number => Object.keys(datafiles).length;

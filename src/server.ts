@@ -10,7 +10,7 @@ db.load();
 
 const app = express();
 app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-  if ((!['/', '/reload'].includes(req.url)) && (db.datafiles.length === 0 || db.sha256 === '')) {
+  if ((!['/', '/reload'].includes(req.url)) && (db.datafilesLength() === 0 || db.sha256() === '')) {
     res.status(503).send('No loaded data.');
     return;
   }
