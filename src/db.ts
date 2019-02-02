@@ -6,8 +6,9 @@ import { md as forgeMd } from 'node-forge';
 const jsonpointer = require('jsonpointer');
 
 // interfaces
-interface SchemaEnforced {
+interface IDatafile {
   $schema: string;
+  path: string;
 }
 
 interface IDatafilesDict {
@@ -15,7 +16,7 @@ interface IDatafilesDict {
 }
 
 // module variables
-let datafiles: IDatafilesDict = new Map<string, SchemaEnforced>();
+let datafiles: IDatafilesDict = new Map<string, IDatafile>();
 let sha256sum: string = '';
 
 // utils
@@ -27,7 +28,7 @@ const getRefExpr = (ref: string): string => {
 };
 
 // filters
-export function getDatafilesBySchema(schema: string): SchemaEnforced[] {
+export function getDatafilesBySchema(schema: string): IDatafile[] {
   return Object.values(datafiles).filter((d: any) => d.$schema === schema);
 }
 
@@ -50,6 +51,21 @@ export function resolveRef(itemRef: any) {
   return resolvedData;
 }
 
+function validateDatafile(d: any) {
+  const datafilePath: any = d[0];
+  const datafileData: any = d[1];
+
+  if (typeof (datafilePath) !== 'string') {
+    throw new Error('Expecting string for datafilePath');
+  }
+
+  if (typeof (datafileData) !== 'object' ||
+    Object.keys(datafileData).length === 0 ||
+    !('$schema' in datafileData)) {
+    throw new Error('Invalid datafileData object');
+  }
+
+}
 // datafile Loading functions
 function loadUnpack(raw: string) {
   const dbDatafilesNew: any = {};
@@ -59,18 +75,10 @@ function loadUnpack(raw: string) {
   const sha256hex = forgeMd.sha256.create().update(raw).digest().toHex();
 
   Object.entries(bundle).forEach((d) => {
-    const datafilePath: any = d[0];
+    validateDatafile(d);
+
+    const datafilePath: string = d[0];
     const datafileData: any = d[1];
-
-    if (typeof (datafilePath) !== 'string') {
-      throw new Error('Expecting string for datafilePath');
-    }
-
-    if (typeof (datafileData) !== 'object' ||
-      Object.keys(datafileData).length === 0 ||
-      !('$schema' in datafileData)) {
-      throw new Error('Invalid datafileData object');
-    }
 
     datafileData.path = datafilePath;
 
