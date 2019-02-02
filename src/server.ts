@@ -30,7 +30,7 @@ app.get('/reload', (req: express.Request, res: express.Response) => {
   db.load(); res.send();
 });
 
-app.get('/sha256', (req: express.Request, res: express.Response) => { res.send(db.sha256); });
+app.get('/sha256', (req: express.Request, res: express.Response) => { res.send(db.sha256()); });
 app.get('/healthz', (req: express.Request, res: express.Response) => { res.send(); });
 
 app.get('/', (req: express.Request, res: express.Response) => { res.redirect('/graphql'); });
