@@ -1,0 +1,188 @@
+- name: VaultSecret
+  version: '1'
+  fields:
+  - { name: path, type: string, isRequired: true }
+  - { name: field, type: string, isRequired: true }
+  - { name: format, type: string }
+
+- name: QuayOrg
+  version: '1'
+  fields:
+  - { name: schema, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+  - { name: labels, type: json }
+  - { name: name, type: string, isRequired: true }
+  - { name: description, type: string, isRequired: true }
+  - { name: managedTeams, type: string, isList: true, isRequired: true }
+  - { name: automationToken, type: VaultSecret }
+
+- name: ClusterManagedRole
+  version: '1'
+  fields:
+  - { name: namespace, type: string, isRequired: true }
+  - { name: role, type: string, isRequired: true }
+
+- name: Cluster
+  version: '1'
+  fields:
+  - { name: schema, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+  - { name: labels, type: json }
+  - { name: name, type: string, isRequired: true }
+  - { name: description, type: string, isRequired: true }
+  - { name: serverUrl, type: string, isRequired: true }
+  - { name: automationToken, type: VaultSecret }
+  - { name: managedRoles, type: ClusterManagedRole, isList: true }
+
+- name: AppServiceOwner
+  version: '1'
+  fields:
+  - { name: name, type: string, isRequired: true }
+  - { name: email, type: string, isRequired: true }
+
+- name: AppPerformanceParameters
+  version: '1'
+  fields:
+  - { name: SLO, type: float, isRequired: true }
+  - { name: SLA, type: float }
+  - { name: statusPage, type: string }
+
+- name: AppDependencies
+  version: '1'
+  fields:
+  - { name: name, type: string, isRequired: true }
+  - { name: statefulness, type: string, isRequired: true }
+  - { name: opsModel, type: string, isRequired: true }
+  - { name: statusPage, type: string }
+  - { name: SLA, type: float, isRequired: true }
+  - { name: dependencyFailureImpact, type: string, isRequired: true }
+
+- name: AppQuayReposItems
+  version: '1'
+  fields:
+  - { name: name, type: string, isRequired: true }
+  - { name: description, type: string, isRequired: true }
+  - { name: public, type: boolean, isRequired: true }
+
+- name: AppQuayRepos
+  version: '1'
+  fields:
+  - { name: org, type: QuayOrg, isRequired: true }
+  - { name: items, type: AppQuayReposItems, isRequired: true, isList: true }
+
+- name: App
+  version: '1'
+  fields:
+  - { name: schema, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+  - { name: labels, type: json }
+  - { name: title, type: string, isRequired: true }
+  - { name: serviceOwner, type: AppServiceOwner, isRequired: true }
+  - { name: dependencies, type: AppDependencies, isList: true }
+  - { name: quayRepos, type: AppQuayRepos, isList: true }
+
+- name: Permission
+  version: '1'
+  isInterface: true
+  interfaceResolve:
+    strategy: fieldMap
+    field: service
+    fieldMap:
+      aws-analytics: PermissionAWSAnalytics
+      github-org: PermissionGithubOrg
+      github-org-team: PermissionGithubOrgTeam
+      openshift-rolebinding: PermissionOpenshiftRolebinding
+      quay-membership: PermissionQuayOrgTeam
+  fields:
+  - { name: service, type: string, isRequired: true }
+
+- name: PermissionAWSAnalytics
+  version: '1'
+  interface: Permission
+  fields:
+  - { name: service, type: string, isRequired: true }
+
+- name: PermissionGithubOrg
+  version: '1'
+  interface: Permission
+  fields:
+  - { name: service, type: string, isRequired: true }
+  - { name: org, type: string, isRequired: true }
+
+- name: PermissionGithubOrgTeam
+  version: '1'
+  interface: Permission
+  fields:
+  - { name: service, type: string, isRequired: true }
+  - { name: org, type: string, isRequired: true }
+  - { name: team, type: string, isRequired: true }
+
+- name: PermissionOpenshiftRolebinding
+  version: '1'
+  interface: Permission
+  fields:
+  - { name: service, type: string, isRequired: true }
+  - { name: cluster, type: string, isRequired: true }
+  - { name: namespace, type: string, isRequired: true }
+  - { name: role, type: string, isRequired: true }
+
+- name: PermissionQuayOrgTeam
+  version: '1'
+  interface: Permission
+  fields:
+  - { name: service, type: string, isRequired: true }
+  - { name: org, type: string, isRequired: true }
+  - { name: team, type: string, isRequired: true }
+
+- name: User
+  version: '1'
+  fields:
+  - { name: schema, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+  - { name: labels, type: json }
+  - { name: name, type: string, isRequired: true }
+  - { name: redhat_username, type: string, isRequired: true }
+  - { name: github_username, type: string, isRequired: true }
+  - { name: quay_username, type: string }
+
+- name: Bot
+  version: '1'
+  fields:
+  - { name: schema, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+  - { name: labels, type: json }
+  - { name: name, type: string, isRequired: true }
+  - { name: github_username, type: string }
+  - { name: quay_username, type: string }
+  - { name: owner, type: User }
+
+- name: Role
+  version: '1'
+  datafile: /access/role-1.yml
+  fields:
+  - { name: schema, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+  - { name: labels, type: json }
+  - { name: name, type: string, isRequired: true }
+  - { name: permissions, type: Permission, isList: true, isInterface: true }
+  - name: users
+    type: User
+    isList: true
+    synthetic:
+      schema: /access/user-1.yml
+      subAttr: roles
+  - name: bots
+    type: Bot
+    isList: true
+    synthetic:
+      schema: /access/bot-1.yml
+      subAttr: roles
+
+- name: Query
+  fields:
+  - { name: user, type: User, isList: true, datafileSchema: /access/user-1.yml }
+  - { name: bot, type: Bot, isList: true, datafileSchema: /access/bot-1.yml }
+  - { name: role, type: Role, isList: true, datafileSchema: /access/role-1.yml }
+  - { name: cluster, type: Cluster, isList: true, datafileSchema: /openshift/cluster-1.yml }
+  - { name: quay_org, type: QuayOrg, isList: true, datafileSchema: /dependencies/quay-org-1.yml }
+  - { name: app, type: App, isList: true, datafileSchema: /app-sre/app-1.yml }
