@@ -132,18 +132,25 @@ const createSchemaType = function (schemaTypes: any, interfaceTypes: any, conf: 
 
       fieldDef['type'] = t;
 
-      // schema
       if (fieldInfo.datafileSchema) {
+        // schema
         fieldDef['resolve'] = () => db.getDatafilesBySchema(fieldInfo.datafileSchema);
-      }
-
-      // synthetic
-      if (fieldInfo.synthetic) {
+      } else if (fieldInfo.synthetic) {
+        // synthetic
         fieldDef['resolve'] = (root: any) => resolveSyntheticField(
           root,
           fieldInfo.synthetic.schema,
           fieldInfo.synthetic.subAttr,
         );
+      } else if (fieldInfo.isResource) {
+        // resource
+        fieldDef['args'] = { path: { type: GraphQLString } };
+        fieldDef['resolve'] = (root: any, args: any) => {
+          if (args.path) {
+            return [db.getResource(args.path)];
+          }
+          return db.getResources();
+        };
       }
 
       // return
@@ -195,6 +202,15 @@ const createSchemaType = function (schemaTypes: any, interfaceTypes: any, conf: 
 const jsonType = new GraphQLScalarType({
   name: 'JSON',
   serialize: JSON.stringify,
+});
+
+const resourceType = new GraphQLObjectType({
+  name: 'Resource_v1',
+  fields: {
+    sha256sum: { type: new GraphQLNonNull(GraphQLString) },
+    path: { type: new GraphQLNonNull(GraphQLString) },
+    content: { type: new GraphQLNonNull(GraphQLString) },
+  },
 });
 
 export function generateAppSchema(path: string): GraphQLSchema {

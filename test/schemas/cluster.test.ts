@@ -7,7 +7,7 @@ import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 const should = chai.should();
 
-describe('cluster', () => {
+describe('clusters', () => {
   before(() => {
     db.loadFromFile('test/schemas/cluster.data.json');
   });
@@ -15,7 +15,7 @@ describe('cluster', () => {
   it('serves a basic graphql query', (done) => {
     chai.request(server)
       .get('/graphql')
-      .query({ query: '{ cluster { name } }' })
+      .query({ query: '{ clusters { name } }' })
       .end((err, res) => {
         res.should.have.status(200);
         res.body.data.cluster[0].name.should.equal('example cluster');

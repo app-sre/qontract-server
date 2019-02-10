@@ -1,3 +1,10 @@
+- name: Resource
+  version: '1'
+  fields:
+  - { name: path, type: string, isRequired: true}
+  - { name: content, type: string, isRequired: true}
+  - { name: sha256sum, type: string, isRequired: true}
+
 - name: VaultSecret
   version: '1'
   fields:
@@ -180,9 +187,10 @@
 
 - name: Query
   fields:
-  - { name: user, type: User, isList: true, datafileSchema: /access/user-1.yml }
-  - { name: bot, type: Bot, isList: true, datafileSchema: /access/bot-1.yml }
-  - { name: role, type: Role, isList: true, datafileSchema: /access/role-1.yml }
-  - { name: cluster, type: Cluster, isList: true, datafileSchema: /openshift/cluster-1.yml }
-  - { name: quay_org, type: QuayOrg, isList: true, datafileSchema: /dependencies/quay-org-1.yml }
-  - { name: app, type: App, isList: true, datafileSchema: /app-sre/app-1.yml }
+  - { name: users, type: User, isList: true, datafileSchema: /access/user-1.yml }
+  - { name: bots, type: Bot, isList: true, datafileSchema: /access/bot-1.yml }
+  - { name: roles, type: Role, isList: true, datafileSchema: /access/role-1.yml }
+  - { name: clusters, type: Cluster, isList: true, datafileSchema: /openshift/cluster-1.yml }
+  - { name: quay_orgs, type: QuayOrg, isList: true, datafileSchema: /dependencies/quay-org-1.yml }
+  - { name: apps, type: App, isList: true, datafileSchema: /app-sre/app-1.yml }
+  - { name: resources, type: Resource, isResource: true, isRequired: true, isList: true }

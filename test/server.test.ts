@@ -50,7 +50,7 @@ describe('server', () => {
 
   it('resolves object refs', (done) => {
     const query = `{
-          app {
+          apps {
               quayRepos {
                   org {
                       name
