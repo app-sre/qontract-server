@@ -30,7 +30,7 @@ properties:
     type: array
     items:
       type: string
-      # oc api-resources --verbs=list --no-headers | awk '{print $NF} | sort -u'
+      # oc api-resources --verbs=list --no-headers | awk '{print $NF}' | sort -u
       enum:
       - Alertmanager
       - APIService
