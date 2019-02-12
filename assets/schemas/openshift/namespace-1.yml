@@ -1,0 +1,120 @@
+---
+"$schema": /metaschema-1.json
+version: '1.0'
+type: object
+
+additionalProperties: false
+properties:
+  "$schema":
+    type: string
+    enum:
+    - /openshift/namespace-1.yml
+  labels:
+    "$ref": "/common-1.json#/definitions/labels"
+  name:
+    type: string
+  description:
+    type: string
+  cluster:
+    "$ref": "/common-1.json#/definitions/crossref"
+    "$schemaRef": "/openshift/cluster-1.yml"
+  managedRoles:
+    type: array
+    items:
+      type: string
+      enum:
+      - view
+      - edit
+      - admin
+  managedResourceTypes:
+    type: array
+    items:
+      type: string
+      # oc api-resources --verbs=list --no-headers | awk '{print $NF} | sort -u'
+      enum:
+      - Alertmanager
+      - APIService
+      - AppliedClusterResourceQuota
+      - BrokerTemplateInstance
+      - Build
+      - BuildConfig
+      - CatalogSource
+      - CertificateSigningRequest
+      - ClusterNetwork
+      - ClusterResourceQuota
+      - ClusterRole
+      - ClusterRoleBinding
+      - ClusterServiceVersion
+      - ComponentStatus
+      - ConfigMap
+      - ControllerRevision
+      - CronJob
+      - CustomResourceDefinition
+      - DaemonSet
+      - Deployment
+      - DeploymentConfig
+      - EgressNetworkPolicy
+      - Endpoints
+      - Event
+      - Group
+      - HorizontalPodAutoscaler
+      - HostSubnet
+      - Identity
+      - Image
+      - ImageStream
+      - ImageStreamTag
+      - Ingress
+      - InstallPlan
+      - Job
+      - LimitRange
+      - MutatingWebhookConfiguration
+      - Namespace
+      - NetNamespace
+      - NetworkPolicy
+      - Node
+      - NodeMetrics
+      - OAuthAccessToken
+      - OAuthAuthorizeToken
+      - OAuthClient
+      - OAuthClientAuthorization
+      - OperatorGroup
+      - PackageManifest
+      - PersistentVolume
+      - PersistentVolumeClaim
+      - Pod
+      - PodDisruptionBudget
+      - PodMetrics
+      - PodSecurityPolicy
+      - PodTemplate
+      - PriorityClass
+      - Project
+      - ProjectRequest
+      - Prometheus
+      - PrometheusRule
+      - RangeAllocation
+      - ReplicaSet
+      - ReplicationController
+      - ResourceQuota
+      - Role
+      - RoleBinding
+      - RoleBindingRestriction
+      - Route
+      - Secret
+      - SecurityContextConstraints
+      - Service
+      - ServiceAccount
+      - ServiceMonitor
+      - StatefulSet
+      - StorageClass
+      - Subscription
+      - Template
+      - TemplateInstance
+      - User
+      - ValidatingWebhookConfiguration
+      - VolumeAttachment
+required:
+- "$schema"
+- labels
+- name
+- description
+- cluster
