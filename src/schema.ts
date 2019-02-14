@@ -219,7 +219,9 @@ export function generateAppSchema(path: string): GraphQLSchema {
   const schemaTypes: any = {};
   const interfaceTypes: any = {};
 
+
   schemaData.map((t: any) => createSchemaType(schemaTypes, interfaceTypes, t));
+  console.log(interfaceTypes);
 
   return new GraphQLSchema({
     types: Object.values(schemaTypes),

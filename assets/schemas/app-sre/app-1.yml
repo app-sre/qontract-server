@@ -81,6 +81,38 @@ properties:
       - SLA
       - dependencyFailureImpact
 
+  openshiftResources:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      properties:
+        resource:
+          type: object
+          properties:
+            provider:
+              type: string
+          oneOf:
+          - additionalProperties: false
+            properties:
+              provider:
+                type: string
+                enum:
+                - resource
+              path:
+                type: string
+            required:
+            - provider
+            - path
+          required:
+          - provider
+        namespace:
+          "$ref": "/common-1.json#/definitions/crossref"
+          "$schemaRef": "/openshift/namespace-1.yml"
+      required:
+      - resource
+      - namespace
+
   quayRepos:
     type: array
     items:

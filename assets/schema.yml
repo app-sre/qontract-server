@@ -23,12 +23,6 @@
   - { name: managedTeams, type: string, isList: true, isRequired: true }
   - { name: automationToken, type: VaultSecret }
 
-- name: ClusterManagedRole
-  version: '1'
-  fields:
-  - { name: namespace, type: string, isRequired: true }
-  - { name: role, type: string, isRequired: true }
-
 - name: Cluster
   version: '1'
   fields:
@@ -39,7 +33,18 @@
   - { name: description, type: string, isRequired: true }
   - { name: serverUrl, type: string, isRequired: true }
   - { name: automationToken, type: VaultSecret }
-  - { name: managedRoles, type: ClusterManagedRole, isList: true }
+
+- name: Namespace
+  version: '1'
+  fields:
+  - { name: schema, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+  - { name: labels, type: json }
+  - { name: name, type: string, isRequired: true }
+  - { name: description, type: string, isRequired: true }
+  - { name: cluster, type: Cluster, isRequired: true }
+  - { name: managedRoles, type: string, isList: true}
+  - { name: managedResourceTypes, type: string, isList: true}
 
 - name: AppServiceOwner
   version: '1'
@@ -77,6 +82,30 @@
   - { name: org, type: QuayOrg, isRequired: true }
   - { name: items, type: AppQuayReposItems, isRequired: true, isList: true }
 
+- name: AppOpenshiftResourcesResource
+  version: '1'
+  isInterface: true
+  interfaceResolve:
+    strategy: fieldMap
+    field: provider
+    fieldMap:
+      resource: AppOpenshiftResourcesResourceResource
+  fields:
+  - { name: provider, type: string, isRequired: true }
+
+- name: AppOpenshiftResourcesResourceResource
+  version: '1'
+  interface: AppOpenshiftResourcesResource
+  fields:
+  - { name: provider, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+
+- name: AppOpenshiftResources
+  version: '1'
+  fields:
+  - { name: resource, type: AppOpenshiftResourcesResource, isRequired: true, isInterface: true}
+  - { name: namespace, type: Namespace, isRequired: true}
+
 - name: App
   version: '1'
   fields:
@@ -87,6 +116,7 @@
   - { name: serviceOwner, type: AppServiceOwner, isRequired: true }
   - { name: dependencies, type: AppDependencies, isList: true }
   - { name: quayRepos, type: AppQuayRepos, isList: true }
+  - { name: openshiftResources, type: AppOpenshiftResources, isList: true }
 
 - name: Permission
   version: '1'
@@ -191,6 +221,7 @@
   - { name: bots, type: Bot, isList: true, datafileSchema: /access/bot-1.yml }
   - { name: roles, type: Role, isList: true, datafileSchema: /access/role-1.yml }
   - { name: clusters, type: Cluster, isList: true, datafileSchema: /openshift/cluster-1.yml }
+  - { name: namespaces, type: Namespace, isList: true, datafileSchema: /openshift/namespace-1.yml }
   - { name: quay_orgs, type: QuayOrg, isList: true, datafileSchema: /dependencies/quay-org-1.yml }
   - { name: apps, type: App, isList: true, datafileSchema: /app-sre/app-1.yml }
   - { name: resources, type: Resource, isResource: true, isRequired: true, isList: true }

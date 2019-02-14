@@ -42,7 +42,7 @@ export function resolveRef(itemRef: any) {
   const path = getRefPath(itemRef.$ref);
   const expr = getRefExpr(itemRef.$ref);
 
-  const datafile: any = datafiles.get(path);
+  const datafile: any = datafiles[path];
 
   if (typeof (datafile) === 'undefined') {
     console.log(`Error retrieving datafile '${path}'.`);
