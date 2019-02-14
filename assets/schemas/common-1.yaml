@@ -1,0 +1,69 @@
+$schema: http://json-schema.org/draft-04/schema
+version: '1.0'
+type: object
+definitions:
+  labels:
+    type: object
+    additionalProperties:
+      type: string
+  identifier:
+    type: string
+    pattern: ^[A-Za-z0-9][A-Za-z0-9-_]{0,30}[A-Za-z0-9]$
+  version:
+    type: string
+    pattern: ^(0|[1-9]\d*)\.(0|[1-9]\d*)$
+  stableIndexList:
+    type: array
+    items:
+      type: object
+      properties:
+        state:
+          type: string
+          enum:
+          - deleted
+          - active
+          default: active
+          description: List items must never be removed. To signal that a list item
+            should be deleted the state should be set to deleted and downstream integrations
+            will remove the corresponding object if it exists.
+  stableIdentifierList:
+    type: object
+    properties:
+      items:
+        type: array
+      stableIdentifierField:
+        type: string
+    required:
+    - items
+    - stableIdentifierField
+  serviceLevel:
+    type: number
+    minimum: 90
+    maximum: 100
+    exclusiveMaximum: true
+  crossref:
+    type: object
+    properties:
+      $ref:
+        type: string
+        format: uri-reference
+    required:
+    - $ref
+    additionalProperties: false
+  vaultSecret:
+    additionalProperties: false
+    type: object
+    properties:
+      path:
+        type: string
+      field:
+        type: string
+      format:
+        type: string
+        enum:
+        - plain
+        - base64
+        default: plain
+    required:
+    - path
+    - field
