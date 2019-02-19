@@ -11,12 +11,13 @@ properties:
     - /vault-config/auth-1.yml
   labels:
     "$ref": "/common-1.json#/definitions/labels"
-  path:
+  path_ugly:
     type: string
     pattern: '.+\/$'
   type:
     type: string
     enum:
+    - approle
     - github
   settings:
     type: object
@@ -32,20 +33,17 @@ properties:
             type: string
           max_ttl:
             type: string
-            pattern: '^\d+(h|m|s|d)$'
+            pattern: '^(?:\d+h)?(?:(?!\n)\s)?(?:\d+m?)?(?:(?!\n)\s)?(?:\d+s)?$'
           ttl:
             type: string
-            pattern: '^\d+(h|m|s|d)$'
+            pattern: '^(?:\d+h)?(?:(?!\n)\s)?(?:\d+m?)?(?:(?!\n)\s)?(?:\d+s)?$'
         required:
         - organization
         - base_url
         - max_ttl
         - ttl
-    required:
-    - settings
 required:
 - "$schema"
 - labels
-- path
+- path_ugly
 - type
-- settings

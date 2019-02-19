@@ -1,0 +1,317 @@
+roles:
+ - name: "ansible_secrets_reader"
+   type: "approle"
+   mount: "approle/"
+   options:
+     bind_secret_id: "true"
+     bound_cidr_list: []
+     local_secret_ids: "false"
+     period: "0s"
+     policies:
+       - ansible-secrets-reader-policy
+     secret_id_bound_cidrs: []
+     secret_id_num_uses: "0"
+     secret_id_ttl: "0s"
+     token_bound_cidrs: []
+     token_max_ttl: "30m"
+     token_num_uses: "2"
+     token_ttl: "30m"
+     token_type: "default"
+ - name: "app-interface"
+   type: "approle"
+   mount: "approle/"
+   options:
+     bind_secret_id: "true"
+     bound_cidr_list: []
+     local_secret_ids: "false"
+     period: "0s"
+     policies:
+       - app-interface-approle-policy
+     secret_id_bound_cidrs: []
+     secret_id_num_uses: "0"
+     secret_id_ttl: "0s"
+     token_bound_cidrs: []
+     token_max_ttl: "30m"
+     token_num_uses: "1"
+     token_ttl: "30m"
+     token_type: "default"
+ - name: "cico_approle"
+   type: "approle"
+   mount: "approle/"
+   options:
+     bind_secret_id: "true"
+     bound_cidr_list: []
+     local_secret_ids: "false"
+     period: "0s"
+     policies:
+       - cico-approle-policy
+     secret_id_bound_cidrs: []
+     secret_id_num_uses: "0"
+     secret_id_ttl: "0s"
+     token_bound_cidrs: []
+     token_max_ttl: "30m"
+     token_num_uses: "1"
+     token_ttl: "30m"
+     token_type: "default"
+ - name: "core_kb_role"
+   type: "approle"
+   mount: "approle/"
+   options:
+     bind_secret_id: "true"
+     bound_cidr_list: []
+     local_secret_ids: "false"
+     period: "0s"
+     policies:
+       - core_kb_approle_policy
+     secret_id_bound_cidrs: []
+     secret_id_num_uses: "0"
+     secret_id_ttl: "0s"
+     token_bound_cidrs: []
+     token_max_ttl: "30m"
+     token_num_uses: "1"
+     token_ttl: "30m"
+     token_type: "default"
+ - name: "hsd_ci_approle"
+   type: "approle"
+   mount: "approle/"
+   options:
+     bind_secret_id: "true"
+     bound_cidr_list: []
+     local_secret_ids: "false"
+     period: "0s"
+     policies:
+       - app-sre-ci-approle-policy
+     secret_id_bound_cidrs: []
+     secret_id_num_uses: "0"
+     secret_id_ttl: "0s"
+     token_bound_cidrs: []
+     token_max_ttl: "30m"
+     token_num_uses: "1"
+     token_ttl: "30m"
+     token_type: "default"
+ - name: "hsd_ci_ext_approle"
+   type: "approle"
+   mount: "approle/"
+   options:
+     bind_secret_id: "true"
+     bound_cidr_list: []
+     local_secret_ids: "false"
+     period: "0s"
+     policies:
+       - app-sre-ci-ext-approle-policy
+     secret_id_bound_cidrs: []
+     secret_id_num_uses: "0"
+     secret_id_ttl: "0s"
+     token_bound_cidrs: []
+     token_max_ttl: "30m"
+     token_num_uses: "1"
+     token_ttl: "30m"
+     token_type: "default"
+ - name: "osd-sre-admin"
+   type: "approle"
+   mount: "approle/"
+   options:
+     bind_secret_id: "true"
+     bound_cidr_list: []
+     local_secret_ids: "false"
+     period: "0s"
+     policies:
+       - osd-sre-policy
+     secret_id_bound_cidrs: []
+     secret_id_num_uses: "0"
+     secret_id_ttl: "0s"
+     token_bound_cidrs: []
+     token_max_ttl: "1h"
+     token_num_uses: "2"
+     token_ttl: "1h"
+     token_type: "default"
+ - name: "vault_manager"
+   type: "approle"
+   mount: "approle/"
+   options:
+     bind_secret_id: "true"
+     bound_cidr_list: []
+     local_secret_ids: "false"
+     period: "0s"
+     policies:
+       - vault-manager-policy
+     secret_id_bound_cidrs: []
+     secret_id_num_uses: "0"
+     secret_id_ttl: "0s"
+     token_bound_cidrs: []
+     token_max_ttl: "30m"
+     token_num_uses: "1"
+     token_ttl: "30m"
+     token_type: "default"
+policies:
+ - name: "devtools-osio-ci-policy"
+   rules: |
+     #policy for managing CICO secrets
+     # this policy applied to default team in GH org
+     path "devtools-osio-ci/*" {
+       capabilities = ["create", "list", "update", "delete"]
+     }
+     # Even though we allowed devtools-osio-ci/*, this rule explicitly denies
+     # devtools-osio-ci/hsd This takes precedence.
+     # deny access to hsd folder for default team
+     path "devtools-osio-ci/hsd/*" {
+       capabilities = ["deny"]
+     }
+ - name: "app-sre-policy"
+   rules: |
+     path "devtools-osio-ci/*" {
+       capabilities = ["create", "read", "update", "delete", "list"]
+     }
+     path "app-sre/*" {
+       capabilities = ["create", "read", "update", "delete", "list"]
+     }
+     #allow vault seal/unseal
+     path "/sys/seal" {
+       policy = "sudo"
+     }
+     path "/sys/unseal" {
+       policy = "sudo"
+     }
+ - name: "core_kb"
+   rules: |
+     path "core_kb/*" {
+       capabilities = ["create", "read", "update", "delete", "list"]
+     }
+ - name: "cico-approle-policy"
+   rules: |
+     #policy for CICO vault plugin
+     path "devtools-osio-ci/*" {
+       capabilities = ["read"]
+     }
+ - name: "core_kb_approle_policy"
+   rules: |
+     #policy for core kb ci vault plugin
+     path "core_kb/*" {
+       capabilities = ["read"]
+     }
+
+ - name: "app-sre-ci-approle-policy"
+   rules: |
+     #policy for app-sre ci vault plugin
+     path "app-sre/*" {
+       capabilities = ["read"]
+     }
+
+     path "sd-uhc/*" {
+       capabilities = ["read"]
+     }
+
+ - name: "app-sre-ci-ext-approle-policy"
+   rules: |
+     path "app-sre/ci-ext/*" {
+       capabilities = ["read"]
+     }
+
+     path "app-sre/quay/*" {
+       capabilities = ["read"]
+     }
+
+     path "sd-uhc/ci-ext/*" {
+       capabilities = ["read"]
+     }
+
+ - name: "vault-manager-policy"
+   rules: |
+     #manage audit
+     path "/sys/audit" {
+       policy = "sudo"
+       capabilities = ["create", "update", "delete"]
+     }
+     #manage auth
+     path "/auth/*" {
+       capabilities = ["create", "read", "update", "delete", "list"]
+     }
+     #manage github
+     #note '/auth/github*' allows to have multiple GH orgs
+     #path "/auth/github*" {
+     #  capabilities = ["create", "read", "update", "delete", "list"]
+     #}
+     #manage policies
+     #allow CRUD on policies
+     path "/sys/policy/*" {
+       capabilities = ["create", "read", "update", "delete"]
+     }
+     #allow LIST policies
+     path "/sys/policy" {
+       capabilities = ["read","list"]
+     }
+     #allow CRUD policies on web UI
+     path "/sys/policies/acl/*" {
+       capabilities = ["create", "read", "update", "delete","list"]
+     }
+     #manage secret-engines
+     #allow CRUD on mounts
+     path "sys/mounts/*" {
+       capabilities = ["create", "read", "update", "delete"]
+     }
+     #allow LIST mounts
+     path "sys/mounts" {
+       capabilities = ["read","list"]
+     }
+     #manage auth-backends
+     #allow CRUD on auth
+     path "/sys/auth/*" {
+       policy = "sudo"
+       capabilities = ["create", "read", "update", "delete"]
+     }
+     #allow LIST auth
+     path "/sys/auth" {
+       policy = "sudo"
+       capabilities = ["read","list"]
+     }
+ - name: "ansible-secrets-reader-policy"
+   rules: |
+     path "app-sre/ansible/*" {
+       capabilities = ["read"]
+     }
+ - name: "sd-uhc-policy"
+   rules: |
+     path "sd-uhc/*" {
+       capabilities = ["create", "read", "update", "delete", "list"]
+     }
+ - name: "osd-sre-policy"
+   rules: |
+     path "osd-sre/*" {
+       capabilities = ["create", "read", "update", "delete", "list"]
+     }
+ - name: "app-interface-approle-policy"
+   rules: |
+     path "app-sre/creds/*" {
+       capabilities = ["read"]
+     }
+policies-mapping:
+ - entity-name: "vault-devtools-osio"
+   auth-type: "github"
+   auth-mount: "github"
+   entity-group: "map/teams"
+   policies: "devtools-osio-ci-policy"
+ - entity-name: "vault-app-sre"
+   auth-type: "github"
+   auth-mount: "github"
+   entity-group: "map/teams"
+   policies: "app-sre-policy"
+ - entity-name: "vault-sd-uhc"
+   auth-type: "github"
+   auth-mount: "github"
+   entity-group: "map/teams"
+   policies: "sd-uhc-policy"
+ - entity-name: "vault-sd-sre"
+   auth-type: "github"
+   auth-mount: "github"
+   entity-group: "map/teams"
+   policies: "osd-sre-policy"
+ - entity-name: "kbsingh"
+   auth-type: "github"
+   auth-mount: "github"
+   entity-group: "map/users"
+   policies: "core_kb"
+ - entity-name: "riuvshin"
+   auth-type: "github"
+   auth-mount: "github"
+   entity-group: "map/users"
+   policies: "vault-manager-policy,core_kb"
