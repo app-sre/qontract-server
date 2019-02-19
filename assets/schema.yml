@@ -218,3 +218,4 @@
   - { name: namespaces, type: Namespace, isList: true, datafileSchema: /openshift/namespace-1.yml }
   - { name: quay_orgs, type: QuayOrg, isList: true, datafileSchema: /dependencies/quay-org-1.yml }
   - { name: apps, type: App, isList: true, datafileSchema: /app-sre/app-1.yml }
+  - { name: resources, type: Resource, isResource: true, isRequired: true, isList: true }
