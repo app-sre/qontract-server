@@ -69,4 +69,24 @@ describe('server', () => {
         done();
       });
   });
+
+  it('can retrieve a resource', (done) => {
+    const query = `{
+          resources(path: "/resource1.yml") {
+              content
+              sha256sum
+              path
+          }
+      }`;
+
+    chai.request(server)
+      .get('/graphql')
+      .query({ query })
+      .end((err: any, res: any) => {
+        validateGraphQLResponse(res);
+        const resource = res.body.data.resources[0];
+        resource.content.should.equal('test resource');
+        done();
+      });
+  });
 });

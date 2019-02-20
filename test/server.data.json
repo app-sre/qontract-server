@@ -1,5 +1,11 @@
 {
-    "resources": {},
+    "resources": {
+        "/resource1.yml": {
+            "path": "/resource1.yml",
+            "content": "test resource",
+            "sha256sum": "ff"
+        }
+    },
     "data": {
         "/role-A.yml": {
             "$schema": "/access/role-1.yml",
