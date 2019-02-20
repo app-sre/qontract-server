@@ -20,19 +20,6 @@ properties:
     "$ref": "/common-1.json#/definitions/vaultSecret"
   description:
     type: string
-  managedRoles:
-    type: array
-    items:
-      type: object
-      additionalProperties: false
-      properties:
-        namespace:
-          type: string
-        role:
-          type: string
-      required:
-      - namespace
-      - role
 required:
 - "$schema"
 - labels

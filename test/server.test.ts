@@ -29,7 +29,7 @@ describe('server', () => {
 
   it('resolves item refs', (done) => {
     const query = `{
-          role {
+          roles {
               name
               permissions {
                   service
@@ -42,7 +42,7 @@ describe('server', () => {
       .query({ query })
       .end((err: any, res: any) => {
         validateGraphQLResponse(res);
-        const permissionsName: any = res.body.data.role[0].permissions[0].service;
+        const permissionsName: any = res.body.data.roles[0].permissions[0].service;
         permissionsName.should.equal('github-org-team');
         done();
       });
@@ -50,7 +50,7 @@ describe('server', () => {
 
   it('resolves object refs', (done) => {
     const query = `{
-          app {
+          apps {
               quayRepos {
                   org {
                       name
@@ -64,8 +64,28 @@ describe('server', () => {
       .query({ query })
       .end((err: any, res: any) => {
         validateGraphQLResponse(res);
-        const orgResponse = res.body.data.app[0].quayRepos[0].org.name;
+        const orgResponse = res.body.data.apps[0].quayRepos[0].org.name;
         orgResponse.should.equal('quay-org-A');
+        done();
+      });
+  });
+
+  it('can retrieve a resource', (done) => {
+    const query = `{
+          resources(path: "/resource1.yml") {
+              content
+              sha256sum
+              path
+          }
+      }`;
+
+    chai.request(server)
+      .get('/graphql')
+      .query({ query })
+      .end((err: any, res: any) => {
+        validateGraphQLResponse(res);
+        const resource = res.body.data.resources[0];
+        resource.content.should.equal('test resource');
         done();
       });
   });

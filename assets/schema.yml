@@ -1,3 +1,10 @@
+- name: Resource
+  version: '1'
+  fields:
+  - { name: path, type: string, isRequired: true}
+  - { name: content, type: string, isRequired: true}
+  - { name: sha256sum, type: string, isRequired: true}
+
 - name: VaultSecret
   version: '1'
   fields:
@@ -16,12 +23,6 @@
   - { name: managedTeams, type: string, isList: true, isRequired: true }
   - { name: automationToken, type: VaultSecret }
 
-- name: ClusterManagedRole
-  version: '1'
-  fields:
-  - { name: namespace, type: string, isRequired: true }
-  - { name: role, type: string, isRequired: true }
-
 - name: Cluster
   version: '1'
   fields:
@@ -32,7 +33,37 @@
   - { name: description, type: string, isRequired: true }
   - { name: serverUrl, type: string, isRequired: true }
   - { name: automationToken, type: VaultSecret }
-  - { name: managedRoles, type: ClusterManagedRole, isList: true }
+
+- name: NamespaceOpenshiftResource
+  version: '1'
+  isInterface: true
+  interfaceResolve:
+    strategy: fieldMap
+    field: provider
+    fieldMap:
+      resource: NamespaceOpenshiftResourceResource
+  fields:
+  - { name: provider, type: string, isRequired: true }
+
+- name: NamespaceOpenshiftResourceResource
+  version: '1'
+  interface: NamespaceOpenshiftResource
+  fields:
+  - { name: provider, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+
+- name: Namespace
+  version: '1'
+  fields:
+  - { name: schema, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+  - { name: labels, type: json }
+  - { name: name, type: string, isRequired: true }
+  - { name: description, type: string, isRequired: true }
+  - { name: cluster, type: Cluster, isRequired: true }
+  - { name: managedRoles, type: string, isList: true}
+  - { name: managedResourceTypes, type: string, isList: true}
+  - { name: openshiftResources, type: NamespaceOpenshiftResource, isList: true, isInterface: true}
 
 - name: AppServiceOwner
   version: '1'
@@ -180,9 +211,11 @@
 
 - name: Query
   fields:
-  - { name: user, type: User, isList: true, datafileSchema: /access/user-1.yml }
-  - { name: bot, type: Bot, isList: true, datafileSchema: /access/bot-1.yml }
-  - { name: role, type: Role, isList: true, datafileSchema: /access/role-1.yml }
-  - { name: cluster, type: Cluster, isList: true, datafileSchema: /openshift/cluster-1.yml }
-  - { name: quay_org, type: QuayOrg, isList: true, datafileSchema: /dependencies/quay-org-1.yml }
-  - { name: app, type: App, isList: true, datafileSchema: /app-sre/app-1.yml }
+  - { name: users, type: User, isList: true, datafileSchema: /access/user-1.yml }
+  - { name: bots, type: Bot, isList: true, datafileSchema: /access/bot-1.yml }
+  - { name: roles, type: Role, isList: true, datafileSchema: /access/role-1.yml }
+  - { name: clusters, type: Cluster, isList: true, datafileSchema: /openshift/cluster-1.yml }
+  - { name: namespaces, type: Namespace, isList: true, datafileSchema: /openshift/namespace-1.yml }
+  - { name: quay_orgs, type: QuayOrg, isList: true, datafileSchema: /dependencies/quay-org-1.yml }
+  - { name: apps, type: App, isList: true, datafileSchema: /app-sre/app-1.yml }
+  - { name: resources, type: Resource, isResource: true, isRequired: true, isList: true }

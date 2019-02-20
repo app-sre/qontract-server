@@ -11,12 +11,23 @@ interface IDatafile {
   path: string;
 }
 
+interface IResource {
+  path: string;
+  content: string;
+  sha256sum: string;
+}
+
 interface IDatafilesDict {
+  [key: string]: any;
+}
+
+interface IResourcesDict {
   [key: string]: any;
 }
 
 // module variables
 let datafiles: IDatafilesDict = new Map<string, IDatafile>();
+let resources: IResourcesDict = new Map<string, IResource>();
 let sha256sum: string = '';
 
 // utils
@@ -26,11 +37,6 @@ const getRefExpr = (ref: string): string => {
   const m = /[$#].*/.exec(ref);
   return m ? m[0] : '';
 };
-
-// filters
-export function getDatafilesBySchema(schema: string): IDatafile[] {
-  return Object.values(datafiles).filter((d: any) => d.$schema === schema);
-}
 
 export function resolveRef(itemRef: any) {
   const path = getRefPath(itemRef.$ref);
@@ -51,6 +57,20 @@ export function resolveRef(itemRef: any) {
   return resolvedData;
 }
 
+// filters
+export function getDatafilesBySchema(schema: string): IDatafile[] {
+  return Object.values(datafiles).filter((d: any) => d.$schema === schema);
+}
+
+export function getResource(path: string): IResource {
+  return resources[path];
+}
+
+export function getResources(): IResource[] {
+  return Object.values(resources);
+}
+
+// loader
 function validateDatafile(d: any) {
   const datafilePath: any = d[0];
   const datafileData: any = d[1];
@@ -64,17 +84,33 @@ function validateDatafile(d: any) {
     !('$schema' in datafileData)) {
     throw new Error('Invalid datafileData object');
   }
+}
 
+function validateResource(d: any) {
+  const resourcePath: string = d[0];
+  const resourceData: IResource = d[1];
+
+  if (typeof (resourcePath) !== 'string') {
+    throw new Error('Expecting string for resourcePath');
+  }
+
+  if (typeof (resourceData) !== 'object' ||
+    Object.keys(resourceData).length === 0 ||
+    !('path' in resourceData) ||
+    !('content' in resourceData) ||
+    !('sha256sum' in resourceData)) {
+    throw new Error('Invalid datafileData object');
+  }
 }
 // datafile Loading functions
 function loadUnpack(raw: string) {
   const dbDatafilesNew: any = {};
-
-  const bundle = JSON.parse(raw);
+  const dbResourcesNew: any = {};
 
   const sha256hex = forgeMd.sha256.create().update(raw).digest().toHex();
+  const bundle = JSON.parse(raw);
 
-  Object.entries(bundle).forEach((d) => {
+  Object.entries(bundle.data).forEach((d) => {
     validateDatafile(d);
 
     const datafilePath: string = d[0];
@@ -85,7 +121,19 @@ function loadUnpack(raw: string) {
     dbDatafilesNew[datafilePath] = datafileData;
   });
 
+  Object.entries(bundle.resources).forEach((d) => {
+    validateResource(d);
+
+    const resourcePath: string = d[0];
+    const resourceData: any = d[1];
+
+    resourceData.path = resourcePath;
+
+    dbResourcesNew[resourcePath] = resourceData;
+  });
+
   datafiles = dbDatafilesNew;
+  resources = dbResourcesNew;
   sha256sum = sha256hex;
 
   console.log(`End datafile reload: ${new Date()}`);

@@ -1,9 +1,12 @@
 {
-    "/cluster.yml": {
-        "name": "example cluster",
-        "labels": {},
-        "serverUrl": "https://example.com",
-        "$schema": "/openshift/cluster-1.yml",
-        "description": "example cluster"
+    "resources":  {},
+    "data": {
+        "/cluster.yml": {
+            "name": "example cluster",
+            "labels": {},
+            "serverUrl": "https://example.com",
+            "$schema": "/openshift/cluster-1.yml",
+            "description": "example cluster"
+        }
     }
 }
