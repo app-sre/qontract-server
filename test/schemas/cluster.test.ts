@@ -18,7 +18,7 @@ describe('clusters', () => {
       .query({ query: '{ clusters { name } }' })
       .end((err, res) => {
         res.should.have.status(200);
-        res.body.data.cluster[0].name.should.equal('example cluster');
+        res.body.data.clusters[0].name.should.equal('example cluster');
         done();
       });
   });
