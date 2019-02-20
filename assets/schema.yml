@@ -5,11 +5,11 @@
     strategy: fieldMap
     field: _type
     fieldMap:
-      file: VaultAuditFileOptions
+      file: VaultAuditOptionsFile
   fields:
   - { name: _type, type: string, isRequired: true }
 
-- name: VaultAuditFileOptions
+- name: VaultAuditOptionsFile
   version: '1'
   interface: VaultAuditOptions
   fields:
@@ -31,9 +31,22 @@
 
 #################
 
-- name: VaultAuthGithubConfig
+- name: VaultAuthConfig
   version: '1'
+  isInterface: true
+  interfaceResolve:
+    strategy: fieldMap
+    field: _type
+    fieldMap:
+      github: VaultAuthConfigGithub
   fields:
+  - { name: _type, type: string, isRequired: true }
+
+- name: VaultAuthConfigGithub
+  version: '1'
+  interface: VaultAuthConfig
+  fields:
+  - { name: _type, type: string, isRequired: true }
   - { name: organization, type: string, isRequired: true }
   - { name: base_url, type: string, isRequired: true }
   - { name: max_ttl, type: string, isRequired: true }
@@ -42,13 +55,14 @@
 - name: VaultAuthSettings
   version: '1'
   fields:
-  - { name: config, type: VaultAuthGithubConfig }
+  - { name: config, type: VaultAuthConfig, isInterface: true, isRequired: true }
 
 - name: VaultAuth
   version: '1'
   fields:
   - { name: path_ugly, type: string, isRequired: true }
   - { name: type, type: string, isRequired: true }
+  - { name: description, type: string, isRequired: true }
   - { name: settings, type: VaultAuthSettings }
 
 #################

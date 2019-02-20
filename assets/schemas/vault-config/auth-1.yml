@@ -19,31 +19,38 @@ properties:
     enum:
     - approle
     - github
+  description:
+    type: string
   settings:
     type: object
     additionalProperties: false
     properties:
       config:
         type: object
-        additionalProperties: false
-        properties:
-          organization:
-            type: string
-          base_url:
-            type: string
-          max_ttl:
-            type: string
-            pattern: '^(?:\d+h)?(?:(?!\n)\s)?(?:\d+m?)?(?:(?!\n)\s)?(?:\d+s)?$'
-          ttl:
-            type: string
-            pattern: '^(?:\d+h)?(?:(?!\n)\s)?(?:\d+m?)?(?:(?!\n)\s)?(?:\d+s)?$'
-        required:
-        - organization
-        - base_url
-        - max_ttl
-        - ttl
+        oneOf:
+        - properties:
+            _type:
+              type: string
+              enum:
+              - github
+            organization:
+              type: string
+            base_url:
+              type: string
+            max_ttl:
+              type: string
+              pattern: '^(?:\d+h)?(?:(?!\n)\s)?(?:\d+m?)?(?:(?!\n)\s)?(?:\d+s)?$'
+            ttl:
+              type: string
+              pattern: '^(?:\d+h)?(?:(?!\n)\s)?(?:\d+m?)?(?:(?!\n)\s)?(?:\d+s)?$'
+          required:
+          - organization
+          - base_url
+          - max_ttl
+          - ttl
 required:
 - "$schema"
 - labels
 - path_ugly
 - type
+- description
