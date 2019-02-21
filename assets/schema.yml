@@ -89,15 +89,11 @@
   - { name: description, type: string, isRequired: true}
   - { name: options, type: VaultSecretEngineOptions, isInterface: true, isRequired: true }
 
-#################
-
 - name: VaultPolicy
   version: '1'
   fields:
   - { name: name, type: string, isRequired: true }
   - { name: rules, type: string, isRequired: true }
-
-#################
 
 - name: VaultRoleOptions
   version: '1'
