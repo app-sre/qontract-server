@@ -29,8 +29,6 @@
   - { name: description, type: string, isRequired: true }
   - { name: options, type: VaultAuditOptions, isInterface: true, isRequired: true }
 
-#################
-
 - name: VaultAuthConfig
   version: '1'
   isInterface: true
@@ -65,11 +63,22 @@
   - { name: description, type: string, isRequired: true }
   - { name: settings, type: VaultAuthSettings }
 
-#################
-
-- name: VaultKVSecretEngineOptions
+- name: VaultSecretEngineOptions
   version: '1'
+  isInterface: true
+  interfaceResolve:
+    strategy: fieldMap
+    field: _type
+    fieldMap:
+      kv: VaultSecretEngineOptionsKV
   fields:
+  - { name: _type, type: string, isRequired: true }
+
+- name: VaultSecretEngineOptionsKV
+  version: '1'
+  interface: VaultSecretEngineOptions
+  fields:
+  - { name: _type, type: string, isRequired: true }
   - { name: version, type: string, isRequired: true }
 
 - name: VaultSecretEngine
@@ -78,7 +87,7 @@
   - { name: path_ugly, type: string, isRequired: true }
   - { name: type, type: string, isRequired: true }
   - { name: description, type: string, isRequired: true}
-  - { name: options, type: VaultKVSecretEngineOptions }
+  - { name: options, type: VaultSecretEngineOptions, isInterface: true, isRequired: true }
 
 #################
 
