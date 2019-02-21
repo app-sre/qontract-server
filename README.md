@@ -58,28 +58,31 @@ yarn build
 # Start the server
 LOAD_METHOD=fs DATAFILES_FILE=<data-bundle-json> yarn run server
 ```
-## Creating the data and schema bundles
+## Creating the schema, data and resources bundle
 
 The bundles are required to run the validation and to start the server.
 
 ```sh
-docker pull quay.io/app-sre/qontract-validator:latest
-docker run --rm -v $DATA_DIR:/data:z quay.io/app-sre/qontract-validator:latest qontract-bundler /data > data.json
-docker run --rm -v $SCHEMAS_DIR:/schemas:z quay.io/app-sre/qontract-validator:latest qontract-bundler /schemas > schemas.json
+mkdir -p $BUNDLES_DIR
+docker run --rm \
+    -v $SCHEMAS_DIR:/schemas:z \
+    -v $DATA_DIR:/data:z \
+    -v $RESOURCES_DIR:/resources:z \
+    quay.io/app-sre/qontract-validator:latest
+    qontract-bundler /schemas /data /resources > $BUNDLES_DIR/bundle.json
 ```
 
-As of right now, the `$SCHEMAS_DIR` is `assets/schemas/` dir in the
-`qontract-server` git repository, although in the future it will be removed from
-this repository.
+* `SCHEMAS_DIR` - `assets/schemas/` dir in the `qontract-server` git repository
+    * in the future it will be removed from this repository
+* `DATA_DIR` - `/data` dir in the `app-interface` git repository
+* `RESOURCES_DIR` - `/resources` dir in the `app-interface` git repository
+* `$BUNDLES_DIR` - a directory that will contain the created `bundle.json` file
 
-## Validating the data against the schemas
+## Validating the bundle
 
 ```sh
-docker run --rm -v $BUNDLES_DIR:/bundles:z quay.io/app-sre/qontract-validator:latest qontract-validator --only-errors /bundles/schemas.json /bundles/data.json
+docker run --rm -v $BUNDLES_DIR:/bundle:z quay.io/app-sre/qontract-validator:latest qontract-validator --only-errors /bundle/bundle.json
 ```
-
-The `$BUNDLES_DIR` is a directory that must contain the `data.json` and
-`schemas.json` file created in the previous section.
 
 ## Style
 
