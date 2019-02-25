@@ -134,7 +134,18 @@ const createSchemaType = function (schemaTypes: any, interfaceTypes: any, conf: 
 
       if (fieldInfo.datafileSchema) {
         // schema
-        fieldDef['resolve'] = () => db.getDatafilesBySchema(fieldInfo.datafileSchema);
+        fieldDef['args'] = { path: { type: GraphQLString } };
+        fieldDef['resolve'] = (root: any, args: any) => {
+          const datafiles = db.getDatafilesBySchema(fieldInfo.datafileSchema);
+          if (args.path) {
+            return datafiles.filter((e) => {
+              if (e.path === args.path) {
+                return e;
+              }
+            });
+          }
+          return datafiles;
+        };
       } else if (fieldInfo.synthetic) {
         // synthetic
         fieldDef['resolve'] = (root: any) => resolveSyntheticField(
