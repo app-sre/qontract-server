@@ -3,7 +3,8 @@
     "src/server.ts"
   ],
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "test/**/*.ts"
   ],
   "compilerOptions": {
     "module": "commonjs",

@@ -1,33 +1,40 @@
+import * as http from 'http';
+import * as util from 'util';
+
+import * as chai from 'chai';
+
+// Chai is bad with types. See:
+// https://github.com/DefinitelyTyped/DefinitelyTyped/issues/19480
+import chaiHttp = require('chai-http');
+chai.use(chaiHttp);
+
 import * as server from '../src/server';
 import * as db from '../src/db';
 
-// https://github.com/DefinitelyTyped/DefinitelyTyped/issues/19480
-import * as chai from 'chai';
-import chaiHttp = require('chai-http');
-chai.use(chaiHttp);
 const should = chai.should();
+const expect = chai.expect;
 
-function validateGraphQLResponse(res: any) {
+const responseIsNotAnError = (res: any) => {
   res.should.have.status(200);
   res.body.should.not.have.any.keys('errors');
   res.body.should.have.all.keys('data');
-}
+};
 
-describe('server', () => {
-  before(() => {
-    db.loadFromFile('test/server.data.json');
+describe('server', async() => {
+  // Setup and teardown the GraphQL HTTP server.
+  let srv: http.Server;
+  before(async() => {
+    const app = await server.appFromBundle(db.bundleFromDisk('test/server.data.json'));
+    srv = app.listen({ port: 4000 });
+  });
+  after(async() => await util.promisify(srv.close));
+
+  it('GET /sha256 returns a valid sha256', async() => {
+    const response = await chai.request(srv).get('/sha256');
+    return response.text.length.should.equal(64);
   });
 
-  it('GET /sha256 returns a valid sha256', (done) => {
-    chai.request(server)
-          .get('/sha256')
-          .end((err: any, res: any) => {
-            res.text.length.should.equal(64);
-            done();
-          });
-  });
-
-  it('resolves item refs', (done) => {
+  it('resolves item refs', async() => {
     const query = `{
           roles {
               name
@@ -37,18 +44,12 @@ describe('server', () => {
           }
         }`;
 
-    chai.request(server)
-      .get('/graphql')
-      .query({ query })
-      .end((err: any, res: any) => {
-        validateGraphQLResponse(res);
-        const permissionsName: any = res.body.data.roles[0].permissions[0].service;
-        permissionsName.should.equal('github-org-team');
-        done();
-      });
+    const response = await chai.request(srv).get('/graphql').query({ query });
+    responseIsNotAnError(response);
+    return response.body.data.roles[0].permissions[0].service.should.equal('github-org-team');
   });
 
-  it('resolves object refs', (done) => {
+  it('resolves object refs', async() => {
     const query = `{
           apps {
               quayRepos {
@@ -59,34 +60,23 @@ describe('server', () => {
           }
       }`;
 
-    chai.request(server)
-      .get('/graphql')
-      .query({ query })
-      .end((err: any, res: any) => {
-        validateGraphQLResponse(res);
-        const orgResponse = res.body.data.apps[0].quayRepos[0].org.name;
-        orgResponse.should.equal('quay-org-A');
-        done();
-      });
+    const response = await chai.request(srv).get('/graphql').query({ query });
+    responseIsNotAnError(response);
+    return response.body.data.apps[0].quayRepos[0].org.name.should.equal('quay-org-A');
   });
 
-  it('can retrieve a resource', (done) => {
+  it('can retrieve a resource', async() => {
     const query = `{
           resources(path: "/resource1.yml") {
-              content
-              sha256sum
-              path
+            content
+            sha256sum
+            path
           }
       }`;
 
-    chai.request(server)
-      .get('/graphql')
-      .query({ query })
-      .end((err: any, res: any) => {
-        validateGraphQLResponse(res);
-        const resource = res.body.data.resources[0];
-        resource.content.should.equal('test resource');
-        done();
-      });
+    const response = await chai.request(srv).get('/graphql').query({ query });
+    console.log(response);
+    responseIsNotAnError(response);
+    return response.body.data.resources[0].content.should.equal('test resource');
   });
 });
