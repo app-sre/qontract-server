@@ -75,7 +75,6 @@ describe('server', async() => {
       }`;
 
     const response = await chai.request(srv).get('/graphql').query({ query });
-    console.log(response);
     responseIsNotAnError(response);
     return response.body.data.resources[0].content.should.equal('test resource');
   });
