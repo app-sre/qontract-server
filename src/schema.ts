@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 
 import * as express from 'express';
-import * as im from 'immutable';
 import * as yaml from 'js-yaml';
 
 import {
@@ -154,7 +153,6 @@ const createSchemaType = (bundle: db.Bundle, schemaTypes: any, interfaceTypes: a
         );
       } else if (fieldInfo.isResource) {
         // resource
-        bundle.resourcefiles.map(x => console.log(x));
         fieldDef['args'] = { path: { type: GraphQLString } };
         fieldDef['resolve'] = (root: any, args: any) => {
           return args.path ?
