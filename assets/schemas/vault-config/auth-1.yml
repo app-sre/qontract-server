@@ -48,6 +48,39 @@ properties:
           - base_url
           - max_ttl
           - ttl
+  policy_mappings:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      properties:
+        github_team:
+          "$ref": "/common-1.json#/definitions/crossref"
+          "$schemaRef":
+            type: object
+            properties:
+              '$schema':
+                type: string
+                enum:
+                - /access/permission-1.yml
+              service:
+                type: string
+                enum:
+                - github-org-team
+        policies:
+          type: array
+          items:
+            "$ref": "/common-1.json#/definitions/crossref"
+            "$schemaRef":
+              type: object
+              properties:
+                '$schema':
+                  type: string
+                  enum:
+                  - /vault-config/policy-1.yml
+      required:
+      - github_team
+      - policies
 required:
 - "$schema"
 - labels

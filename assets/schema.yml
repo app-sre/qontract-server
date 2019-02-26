@@ -55,14 +55,6 @@
   fields:
   - { name: config, type: VaultAuthConfig, isInterface: true, isRequired: true }
 
-- name: VaultAuth
-  version: '1'
-  fields:
-  - { name: path_ugly, type: string, isRequired: true }
-  - { name: type, type: string, isRequired: true }
-  - { name: description, type: string, isRequired: true }
-  - { name: settings, type: VaultAuthSettings }
-
 - name: VaultSecretEngineOptions
   version: '1'
   isInterface: true
@@ -126,6 +118,12 @@
   - { name: type, type: string, isRequired: true }
   - { name: mount, type: string, isRequired: true }
   - { name: options, type: VaultRoleOptions, isInterface: true, isRequired: true }
+
+- name: VaultPolicy
+  version: '1'
+  fields:
+  - { name: name, type: string, isRequired: true }
+  - { name: rules, type: string, isRequired: true }
 
 - name: Resource
   version: '1'
@@ -283,12 +281,20 @@
   - { name: org, type: string, isRequired: true }
   - { name: team, type: string, isRequired: true }
 
-- name: VaultPolicy
+- name: VaultPolicyMapping
   version: '1'
   fields:
-  - { name: name, type: string, isRequired: true }
-  - { name: rules, type: string, isRequired: true }
-  - { name: github_team_mappings, type: PermissionGithubOrgTeam, isList: true }
+  - { name: github_team, type: PermissionGithubOrgTeam, isRequired: true }
+  - { name: policies, type: VaultPolicy, isList: true, isRequired: true }
+
+- name: VaultAuth
+  version: '1'
+  fields:
+  - { name: path_ugly, type: string, isRequired: true }
+  - { name: type, type: string, isRequired: true }
+  - { name: description, type: string, isRequired: true }
+  - { name: settings, type: VaultAuthSettings }
+  - { name: policy_mappings, type: VaultPolicyMapping, isList: true }
 
 - name: PermissionOpenshiftRolebinding
   version: '1'
