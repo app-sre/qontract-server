@@ -15,24 +15,8 @@ properties:
     type: string
   rules:
     type: string
-  github_team_mappings:
-    type: array
-    items:
-      "$ref": "/common-1.json#/definitions/crossref"
-      "$schemaRef":
-        type: object
-        properties:
-          '$schema':
-            type: string
-            enum:
-            - /access/permission-1.yml
-          service:
-            type: string
-            enum:
-            - github-org-team
 required:
 - "$schema"
 - labels
 - name
 - rules
-- github_team_mappings
