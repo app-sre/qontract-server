@@ -1,36 +1,31 @@
-import { readFileSync } from 'fs';
-import { S3 } from 'aws-sdk';
+import * as fs from 'fs';
+import * as util from 'util';
+
+import * as aws from 'aws-sdk';
+import * as im from 'immutable';
 import { md as forgeMd } from 'node-forge';
 
 // cannot use `import` (old package with no associated types)
 const jsonpointer = require('jsonpointer');
 
-// interfaces
-interface IDatafile {
+export type Datafile = {
   $schema: string;
   path: string;
-}
+  [key: string]: any;
+};
 
-interface IResource {
+export type Resourcefile = {
   path: string;
   content: string;
-  sha256sum: string;
-}
+  shasum256: string;
+};
 
-interface IDatafilesDict {
-  [key: string]: any;
-}
+export type Bundle = {
+  datafiles: im.Map<string, Datafile>;
+  resourcefiles: im.Map<string, Resourcefile>;
+  fileHash: string;
+};
 
-interface IResourcesDict {
-  [key: string]: any;
-}
-
-// module variables
-let datafiles: IDatafilesDict = new Map<string, IDatafile>();
-let resources: IResourcesDict = new Map<string, IResource>();
-let sha256sum: string = '';
-
-// utils
 const getRefPath = (ref: string): string => /^[^$]*/.exec(ref)[0];
 
 const getRefExpr = (ref: string): string => {
@@ -38,157 +33,112 @@ const getRefExpr = (ref: string): string => {
   return m ? m[0] : '';
 };
 
-export function resolveRef(itemRef: any) {
+export type Referencing = {
+  $ref: string;
+};
+
+export const resolveRef = (bundle: Bundle, itemRef: Referencing) : any => {
   const path = getRefPath(itemRef.$ref);
   const expr = getRefExpr(itemRef.$ref);
 
-  const datafile: any = datafiles[path];
-
+  const datafile = bundle.datafiles.get(path);
   if (typeof (datafile) === 'undefined') {
     console.log(`Error retrieving datafile '${path}'.`);
+    return null;
   }
 
   const resolvedData = jsonpointer.get(datafile, expr);
-
   if (typeof (resolvedData) === 'undefined') {
     console.log(`Error resolving ref: datafile: '${JSON.stringify(datafile)}', expr: '${expr}'.`);
+    return null;
   }
 
   return resolvedData;
-}
+};
 
-// filters
-export function getDatafilesBySchema(schema: string): IDatafile[] {
-  return Object.values(datafiles).filter((d: any) => d.$schema === schema);
-}
+const parseBundle = (contents: string) : Bundle => {
+  const parsedContents = JSON.parse(contents);
 
-export function getResource(path: string): IResource {
-  return resources[path];
-}
+  return {
+    datafiles: parseDatafiles(parsedContents.data),
+    resourcefiles: parseResourcefiles(parsedContents.resources),
+    fileHash: hashDatafile(contents),
+  } as Bundle;
+};
 
-export function getResources(): IResource[] {
-  return Object.values(resources);
-}
+const parseDatafiles = (jsonData: object) : im.Map<string, Datafile> => {
+  return Object.entries(jsonData).reduce(
+    (acc: im.Map<string, Datafile>, [path, data]: [string, Datafile]) => {
+      validateObject(path, data, ['$schema']);
+      data.path = path;
+      return acc.set(path, data);
+    },
+    im.Map());
+};
 
-// loader
-function validateDatafile(d: any) {
-  const datafilePath: any = d[0];
-  const datafileData: any = d[1];
+const validateObject = (path: string, data: object, requiredFields: string[]) : void => {
+  if (typeof path !== 'string') { throw new Error('Expecting string for path'); }
+  if (typeof data !== 'object') { throw new Error('Expecting object for data'); }
 
-  if (typeof (datafilePath) !== 'string') {
-    throw new Error('Expecting string for datafilePath');
+  const fields = Object.keys(data);
+  if (fields.length === 0) {
+    throw new Error('Expected keys in data');
   }
 
-  if (typeof (datafileData) !== 'object' ||
-    Object.keys(datafileData).length === 0 ||
-    !('$schema' in datafileData)) {
-    throw new Error('Invalid datafileData object');
-  }
-}
-
-function validateResource(d: any) {
-  const resourcePath: string = d[0];
-  const resourceData: IResource = d[1];
-
-  if (typeof (resourcePath) !== 'string') {
-    throw new Error('Expecting string for resourcePath');
-  }
-
-  if (typeof (resourceData) !== 'object' ||
-    Object.keys(resourceData).length === 0 ||
-    !('path' in resourceData) ||
-    !('content' in resourceData) ||
-    !('sha256sum' in resourceData)) {
-    throw new Error('Invalid datafileData object');
-  }
-}
-// datafile Loading functions
-function loadUnpack(raw: string) {
-  const dbDatafilesNew: any = {};
-  const dbResourcesNew: any = {};
-
-  const sha256hex = forgeMd.sha256.create().update(raw).digest().toHex();
-  const bundle = JSON.parse(raw);
-
-  Object.entries(bundle.data).forEach((d) => {
-    validateDatafile(d);
-
-    const datafilePath: string = d[0];
-    const datafileData: any = d[1];
-
-    datafileData.path = datafilePath;
-
-    dbDatafilesNew[datafilePath] = datafileData;
-  });
-
-  Object.entries(bundle.resources).forEach((d) => {
-    validateResource(d);
-
-    const resourcePath: string = d[0];
-    const resourceData: any = d[1];
-
-    resourceData.path = resourcePath;
-
-    dbResourcesNew[resourcePath] = resourceData;
-  });
-
-  datafiles = dbDatafilesNew;
-  resources = dbResourcesNew;
-  sha256sum = sha256hex;
-
-  console.log(`End datafile reload: ${new Date()}`);
-}
-
-function loadFromS3() {
-  const s3 = new S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION,
-  });
-
-  const s3params = {
-    Bucket: process.env.AWS_S3_BUCKET,
-    Key: process.env.AWS_S3_KEY,
-  };
-
-  s3.getObject(s3params, (err: any, data: any) => {
-    if (err) {
-      console.log(err, err.stack);
-    } else {
-      loadUnpack(data.Body.toString('utf-8'));
+  requiredFields.forEach((field) => {
+    if (!fields.includes(field)) {
+      throw new Error(`Expecting ${field} in data`);
     }
   });
-}
+};
 
-export function loadFromFile(path: string) {
-  let loadPath: string;
+const parseResourcefiles = (jsonData: object) : im.Map<string, Resourcefile> => {
+  return Object.entries(jsonData).reduce(
+    (acc: im.Map<string, Resourcefile>, [path, data]: [string, Resourcefile]) => {
+      validateObject(path, data, ['path', 'content', 'sha256sum']);
+      data.path = path;
+      return acc.set(path, data);
+    },
+    im.Map());
+};
 
-  if (typeof (path) === 'undefined') {
-    loadPath = process.env.DATAFILES_FILE;
-  } else {
-    loadPath = path;
-  }
+const hashDatafile = (contents: string) => {
+  return forgeMd.sha256.create().update(contents).digest().toHex();
+};
 
-  const raw = readFileSync(loadPath);
-  loadUnpack(String(raw));
-}
+const bundleFromS3 = async(accessKeyId: string, secretAccessKey: string, region: string,
+                           bucket: string, key: string) => {
+  const s3 = new aws.S3({ accessKeyId, secretAccessKey, region });
+  const getObject = util.promisify(s3.getObject.bind(s3));
+  const response = await getObject({ Bucket: bucket, Key: key });
+  const contents = response.Body.toString('utf-8');
 
-export function load() {
-  console.log(`Start datafile reload: ${new Date()}`);
+  return parseBundle(contents);
+};
 
+export const bundleFromDisk = async(path: string) => {
+  const loadPath = typeof (path) === 'undefined' ? process.env.DATAFILES_FILE : path;
+  const readFile = util.promisify(fs.readFile);
+  const contents = String(await readFile(path));
+
+  return parseBundle(contents);
+};
+
+export const bundleFromEnvironment = async() => {
   switch (process.env.LOAD_METHOD) {
     case 'fs':
-      console.log('Loading from fs.');
-      loadFromFile(undefined);
-      break;
+      return bundleFromDisk(process.env.DATAFILES_FILE);
     case 's3':
-      console.log('Loading from s3.');
-      loadFromS3();
-      break;
+      return bundleFromS3(process.env.AWS_ACCESS_KEY_ID,
+                          process.env.AWS_SECRET_ACCESS_KEY,
+                          process.env.AWS_REGION,
+                          process.env.AWS_S3_BUCKET,
+                          process.env.AWS_S3_KEY);
     default:
-      console.log('Skip data loading.');
+      return {
+        datafiles: im.Map<string, Datafile>(),
+        resourcefiles: im.Map<string, Resourcefile>(),
+        fileHash: '',
+      } as Bundle;
   }
-}
-
-export const sha256 = (): string => sha256sum;
-export const datafilesLength = (): number => Object.keys(datafiles).length;
+};
