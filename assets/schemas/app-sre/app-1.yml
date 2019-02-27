@@ -109,6 +109,35 @@ properties:
       required:
       - org
       - items
+  escalations:
+    type: object
+    additionalProperties: false
+    properties:
+      default: &escalations_default
+        type: object
+        additionalProperties: false
+        properties:
+          labels:
+            type: array
+            items:
+              type: string
+          slackRecipients:
+            type: array
+            items:
+              type: string
+          emailRecipients:
+            type: array
+            items:
+              type: string
+          mattermostRecipients:
+            type: array
+            items:
+              type: string
+      warning: *escalations_default
+      critical: *escalations_default
+    required:
+    - warning
+    - critical
 
 required:
 - title

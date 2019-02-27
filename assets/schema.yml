@@ -111,6 +111,22 @@
   - { name: serviceOwner, type: AppServiceOwner, isRequired: true }
   - { name: dependencies, type: AppDependencies, isList: true }
   - { name: quayRepos, type: AppQuayRepos, isList: true }
+  - { name: escalations, type: Escalations, isList: true }
+
+- name: Escalations
+  version: '1'
+  fields:
+  - { name: default, type: Escalation }
+  - { name: warning, type: Escalation }
+  - { name: critical, type: Escalation }
+
+- name: Escalation
+  version: '1'
+  fields:
+  - { name: labels, type: json }
+  - { name: slackRecipients, type: string, isList: true }
+  - { name: emailRecipients, type: string, isList: true }
+  - { name: mattermostRecipients, type: string, isList: true }
 
 - name: Permission
   version: '1'
