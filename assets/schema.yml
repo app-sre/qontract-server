@@ -42,6 +42,7 @@
     field: provider
     fieldMap:
       resource: NamespaceOpenshiftResourceResource
+      vault-secret: NamespaceOpenshiftResourceVaultSecret
   fields:
   - { name: provider, type: string, isRequired: true }
 
@@ -51,6 +52,16 @@
   fields:
   - { name: provider, type: string, isRequired: true }
   - { name: path, type: string, isRequired: true }
+
+- name: NamespaceOpenshiftResourceVaultSecret
+  version: '1'
+  interface: NamespaceOpenshiftResource
+  fields:
+  - { name: provider, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+  - { name: name, type: string }
+  - { name: labels, type: json }
+  - { name: annotations, type: json }
 
 - name: Namespace
   version: '1'

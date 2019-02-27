@@ -41,6 +41,7 @@ properties:
       # oc api-resources --verbs=list --no-headers | awk '{print $NF}' | sort -u
       enum:
       - ConfigMap
+      - Secret
 
   openshiftResources:
     type: array
@@ -58,6 +59,22 @@ properties:
             - resource
           path:
             type: string
+        required:
+        - path
+      - additionalProperties: false
+        properties:
+          provider:
+            type: string
+            enum:
+            - vault-secret
+          name:
+            type: string
+          path:
+            type: string
+          labels:
+            "$ref": "/common-1.json#/definitions/labels"
+          annotations:
+            "$ref": "/common-1.json#/definitions/annotations"
         required:
         - path
       required:

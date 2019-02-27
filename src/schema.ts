@@ -1,5 +1,7 @@
-const yaml = require('js-yaml');
-const fs = require('fs');
+import * as fs from 'fs';
+
+import * as express from 'express';
+import * as yaml from 'js-yaml';
 
 import {
   GraphQLSchema,
@@ -16,37 +18,38 @@ import {
 
 import * as db from './db';
 
-const isRef = function (obj: any) {
-  if (obj.constructor === Object) {
-    if (Object.keys(obj).length === 1 && ('$ref' in obj)) {
-      return true;
-    }
-  }
-  return false;
+const isRef = (obj: Object) : boolean => {
+  return obj.constructor === Object && Object.keys(obj).length === 1 && '$ref' in obj;
 };
 
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
-const resolveSyntheticField = (root: any, schema: string, subAttr: string) =>
-  db.getDatafilesBySchema(schema).filter((e: any) => {
-    if (subAttr in e) {
-      const backrefs = e[subAttr].map((r: any) => r.$ref);
-      return backrefs.includes(root.path);
+const resolveSyntheticField = (bundle: db.Bundle,
+                               path: string,
+                               schema: string,
+                               subAttr: string) : db.Datafile[] =>
+  Array.from(bundle.datafiles.filter((datafile) => {
+    if (datafile.$schema !== schema) { return false; }
+
+    if (subAttr in datafile) {
+      const backrefs = datafile[subAttr].map((r: any) => r.$ref);
+      return backrefs.includes(path);
     }
     return false;
-  });
+  }).values());
 
-export function defaultResolver(root: any, args: any, context: any, info: any) {
-  if (info.fieldName === 'schema') {
-    return root.$schema;
-  }
+export const defaultResolver = (app: express.Express) => (root: any,
+                                                          args: any,
+                                                          context: any,
+                                                          info: any) => {
+  const bundle = app.get('bundle');
 
-  let val = root[info.fieldName];
+  if (info.fieldName === 'schema') return root.$schema;
+
+  const val = root[info.fieldName];
 
   // if the item is null, return as is
-  if (typeof (val) === 'undefined') {
-    return null;
-  }
+  if (typeof (val) === 'undefined') { return null; }
 
   if (isNonEmptyArray(val)) {
     // are all the elements of this array references?
@@ -58,7 +61,7 @@ export function defaultResolver(root: any, args: any, context: any, info: any) {
     }
 
     // resolve all the elements of the array
-    let arrayResolve = val.map(db.resolveRef);
+    let arrayResolve = val.map((x: db.Referencing) => db.resolveRef(bundle, x));
 
     // `info.returnType` has information about what the GraphQL schema expects
     // as a return type. If it starts with `[` it means that we need to return
@@ -70,15 +73,13 @@ export function defaultResolver(root: any, args: any, context: any, info: any) {
     return arrayResolve;
   }
 
-  if (isRef(val)) {
-    val = db.resolveRef(val);
-  }
-
+  if (isRef(val)) return db.resolveRef(bundle, val);
   return val;
-}
+};
+
 // ------------------ START SCHEMA ------------------
 
-const createSchemaType = function (schemaTypes: any, interfaceTypes: any, conf: any) {
+const createSchemaType = (bundle: db.Bundle, schemaTypes: any, interfaceTypes: any, conf: any) => {
   const objTypeConf: any = {};
 
   // name
@@ -134,11 +135,19 @@ const createSchemaType = function (schemaTypes: any, interfaceTypes: any, conf: 
 
       if (fieldInfo.datafileSchema) {
         // schema
-        fieldDef['resolve'] = () => db.getDatafilesBySchema(fieldInfo.datafileSchema);
+        fieldDef['args'] = { path: { type: GraphQLString } };
+        fieldDef['resolve'] = (root: any, args: any) => {
+          return Array.from(bundle.datafiles.filter(
+            (df: db.Datafile) => {
+              const sameSchema: boolean = df.$schema === fieldInfo.datafileSchema;
+              return args.path ? df.path === args.path && sameSchema : sameSchema;
+            }).values());
+        };
       } else if (fieldInfo.synthetic) {
         // synthetic
         fieldDef['resolve'] = (root: any) => resolveSyntheticField(
-          root,
+          bundle,
+          root.path,
           fieldInfo.synthetic.schema,
           fieldInfo.synthetic.subAttr,
         );
@@ -146,10 +155,9 @@ const createSchemaType = function (schemaTypes: any, interfaceTypes: any, conf: 
         // resource
         fieldDef['args'] = { path: { type: GraphQLString } };
         fieldDef['resolve'] = (root: any, args: any) => {
-          if (args.path) {
-            return [db.getResource(args.path)];
-          }
-          return db.getResources();
+          return args.path ?
+            [bundle.resourcefiles.get(args.path)] :
+            Array.from(bundle.resourcefiles.values());
         };
       }
 
@@ -213,16 +221,16 @@ const resourceType = new GraphQLObjectType({
   },
 });
 
-export function generateAppSchema(path: string): GraphQLSchema {
-  const schemaData = yaml.safeLoad(fs.readFileSync(path, 'utf8'));
+export const generateAppSchema = (app: express.Express, contents: string) : GraphQLSchema => {
+  const schemaData = yaml.safeLoad(contents);
 
   const schemaTypes: any = {};
   const interfaceTypes: any = {};
 
-  schemaData.map((t: any) => createSchemaType(schemaTypes, interfaceTypes, t));
+  schemaData.map((t: any) => createSchemaType(app.get('bundle'), schemaTypes, interfaceTypes, t));
 
   return new GraphQLSchema({
     types: Object.values(schemaTypes),
     query: schemaTypes['Query'],
   });
-}
+};
