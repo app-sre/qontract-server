@@ -1,51 +1,60 @@
 {
-    "/role-A.yml": {
-        "$schema": "/access/role-1.yml",
-        "labels": {},
-        "name": "role-A",
-        "permissions": [
-            {
-                "$ref": "/permission-A.yml"
-            }
-        ]
+    "resources": {
+        "/resource1.yml": {
+            "path": "/resource1.yml",
+            "content": "test resource",
+            "sha256sum": "ff"
+        }
     },
-    "/permission-A.yml": {
-        "$schema": "/access/permission-1.yml",
-        "name": "permission-A",
-        "service": "github-org-team",
-        "team": "team-A",
-        "org": "org-A",
-        "labels": {},
-        "description": "description permission-A"
-    },
-    "/app-A.yml": {
-        "$schema": "/app-sre/app-1.yml",
-        "labels": {},
-        "title": "app-A",
-        "serviceOwner": {
-            "name": "serviceOwnerName",
-            "email": "test@example.com"
+    "data": {
+        "/role-A.yml": {
+            "$schema": "/access/role-1.yml",
+            "labels": {},
+            "name": "role-A",
+            "permissions": [
+                {
+                    "$ref": "/permission-A.yml"
+                }
+            ]
         },
-        "quayRepos": [
-            {
-                "org": {
-                    "$ref": "/quay-org-A.yml"
-                },
-                "items": [
-                    {
-                        "name": "repoA",
-                        "description": "",
-                        "public": true
-                    }
-                ]
-            }
-        ]
-    },
-    "/quay-org-A.yml": {
-        "$schema": "/dependencies/quay-org-1.yml",
-        "labels": {},
-        "name": "quay-org-A",
-        "managedTeams": [ "teamA" ],
-        "description": "desc"
+        "/permission-A.yml": {
+            "$schema": "/access/permission-1.yml",
+            "name": "permission-A",
+            "service": "github-org-team",
+            "team": "team-A",
+            "org": "org-A",
+            "labels": {},
+            "description": "description permission-A"
+        },
+        "/app-A.yml": {
+            "$schema": "/app-sre/app-1.yml",
+            "labels": {},
+            "title": "app-A",
+            "serviceOwner": {
+                "name": "serviceOwnerName",
+                "email": "test@example.com"
+            },
+            "quayRepos": [
+                {
+                    "org": {
+                        "$ref": "/quay-org-A.yml"
+                    },
+                    "items": [
+                        {
+                            "name": "repoA",
+                            "description": "",
+                            "public": true
+                        }
+                    ]
+                }
+            ]
+        },
+        "/quay-org-A.yml": {
+            "$schema": "/dependencies/quay-org-1.yml",
+            "labels": {},
+            "name": "quay-org-A",
+            "managedTeams": [ "teamA" ],
+            "description": "desc"
+        }
     }
 }

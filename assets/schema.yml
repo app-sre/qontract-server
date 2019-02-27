@@ -161,6 +161,33 @@
   - { name: serverUrl, type: string, isRequired: true }
   - { name: automationToken, type: VaultSecret }
 
+- name: NamespaceOpenshiftResource
+  version: '1'
+  isInterface: true
+  interfaceResolve:
+    strategy: fieldMap
+    field: provider
+    fieldMap:
+      resource: NamespaceOpenshiftResourceResource
+      vault-secret: NamespaceOpenshiftResourceVaultSecret
+  fields:
+  - { name: provider, type: string, isRequired: true }
+
+- name: NamespaceOpenshiftResourceResource
+  version: '1'
+  interface: NamespaceOpenshiftResource
+  fields:
+  - { name: provider, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+
+- name: NamespaceOpenshiftResourceVaultSecret
+  version: '1'
+  interface: NamespaceOpenshiftResource
+  fields:
+  - { name: provider, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+  - { name: name, type: string, isRequired: true }
+
 - name: Namespace
   version: '1'
   fields:
@@ -172,6 +199,7 @@
   - { name: cluster, type: Cluster, isRequired: true }
   - { name: managedRoles, type: string, isList: true}
   - { name: managedResourceTypes, type: string, isList: true}
+  - { name: openshiftResources, type: NamespaceOpenshiftResource, isList: true, isInterface: true}
 
 - name: AppServiceOwner
   version: '1'
@@ -209,30 +237,6 @@
   - { name: org, type: QuayOrg, isRequired: true }
   - { name: items, type: AppQuayReposItems, isRequired: true, isList: true }
 
-- name: AppOpenshiftResourcesResource
-  version: '1'
-  isInterface: true
-  interfaceResolve:
-    strategy: fieldMap
-    field: provider
-    fieldMap:
-      resource: AppOpenshiftResourcesResourceResource
-  fields:
-  - { name: provider, type: string, isRequired: true }
-
-- name: AppOpenshiftResourcesResourceResource
-  version: '1'
-  interface: AppOpenshiftResourcesResource
-  fields:
-  - { name: provider, type: string, isRequired: true }
-  - { name: path, type: string, isRequired: true }
-
-- name: AppOpenshiftResources
-  version: '1'
-  fields:
-  - { name: resource, type: AppOpenshiftResourcesResource, isRequired: true, isInterface: true}
-  - { name: namespace, type: Namespace, isRequired: true}
-
 - name: App
   version: '1'
   fields:
@@ -243,7 +247,6 @@
   - { name: serviceOwner, type: AppServiceOwner, isRequired: true }
   - { name: dependencies, type: AppDependencies, isList: true }
   - { name: quayRepos, type: AppQuayRepos, isList: true }
-  - { name: openshiftResources, type: AppOpenshiftResources, isList: true }
 
 - name: Permission
   version: '1'
