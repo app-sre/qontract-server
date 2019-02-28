@@ -38,22 +38,22 @@ properties:
           - 'false'
         period:
           type: string
-          pattern: '^(?:\d+h)?(?:(?!\n)\s)?(?:\d+m?)?(?:(?!\n)\s)?(?:\d+s)?$'
+          pattern: '^(\d+(h|m|s))+$'
         secret_id_num_uses:
           type: string
           pattern: '^\d+$'
         secret_id_ttl:
           type: string
-          pattern: '^(?:\d+h)?(?:(?!\n)\s)?(?:\d+m?)?(?:(?!\n)\s)?(?:\d+s)?$'
+          pattern: '^(\d+(h|m|s))+$'
         token_max_ttl:
           type: string
-          pattern: '^(?:\d+h)?(?:(?!\n)\s)?(?:\d+m?)?(?:(?!\n)\s)?(?:\d+s)?$'
+          pattern: '^(\d+(h|m|s))+$'
         token_num_uses:
           type: string
           pattern: '^\d+$'
         token_ttl:
           type: string
-          pattern: '^(?:\d+h)?(?:(?!\n)\s)?(?:\d+m?)?(?:(?!\n)\s)?(?:\d+s)?$'
+          pattern: '^(\d+(h|m|s))+$'
         token_type:
           type: string
         bound_cidr_list:

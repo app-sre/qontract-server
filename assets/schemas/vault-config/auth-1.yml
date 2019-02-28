@@ -11,7 +11,7 @@ properties:
     - /vault-config/auth-1.yml
   labels:
     "$ref": "/common-1.json#/definitions/labels"
-  path_ugly:
+  _path:
     type: string
     pattern: '.+\/$'
   type:
@@ -39,10 +39,10 @@ properties:
               type: string
             max_ttl:
               type: string
-              pattern: '^(?:\d+h)?(?:(?!\n)\s)?(?:\d+m?)?(?:(?!\n)\s)?(?:\d+s)?$'
+              pattern: '^(\d+(h|m|s))+$'
             ttl:
               type: string
-              pattern: '^(?:\d+h)?(?:(?!\n)\s)?(?:\d+m?)?(?:(?!\n)\s)?(?:\d+s)?$'
+              pattern: '^(\d+(h|m|s))+$'
           required:
           - organization
           - base_url
@@ -84,6 +84,6 @@ properties:
 required:
 - "$schema"
 - labels
-- path_ugly
+- _path
 - type
 - description

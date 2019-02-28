@@ -24,7 +24,7 @@
 - name: VaultAudit
   version: '1'
   fields:
-  - { name: path_ugly, type: string, isRequired: true }
+  - { name: _path, type: string, isRequired: true }
   - { name: type, type: string, isRequired: true }
   - { name: description, type: string, isRequired: true }
   - { name: options, type: VaultAuditOptions, isInterface: true, isRequired: true }
@@ -76,7 +76,7 @@
 - name: VaultSecretEngine
   version: '1'
   fields:
-  - { name: path_ugly, type: string, isRequired: true }
+  - { name: _path, type: string, isRequired: true }
   - { name: type, type: string, isRequired: true }
   - { name: description, type: string, isRequired: true}
   - { name: options, type: VaultSecretEngineOptions, isInterface: true, isRequired: true }
@@ -293,7 +293,7 @@
 - name: VaultAuth
   version: '1'
   fields:
-  - { name: path_ugly, type: string, isRequired: true }
+  - { name: _path, type: string, isRequired: true }
   - { name: type, type: string, isRequired: true }
   - { name: description, type: string, isRequired: true }
   - { name: settings, type: VaultAuthSettings }
