@@ -1,0 +1,70 @@
+---
+"$schema": /metaschema-1.json
+version: '1.0'
+
+type: object
+additionalProperties: false
+properties:
+  "$schema":
+    type: string
+    enum:
+    - /vault-config/audit-1.yml
+  labels:
+    "$ref": "/common-1.json#/definitions/labels"
+  _path:
+    type: string
+    pattern: '.+\/$'
+  type:
+    type: string
+    enum:
+    - file
+    - syslog
+    - socket
+  description:
+    type: string
+  options:
+    type: object
+    oneOf:
+    - properties:
+        _type:
+          type: string
+          enum:
+          - file
+        file_path:
+          type: string
+        log_raw:
+          type: string
+          enum:
+          - 'true'
+          - 'false'
+        hmac_accessor:
+          type: string
+          enum:
+          - 'true'
+          - 'false'
+        mode:
+          type: string
+          pattern: '^\d+$'
+        format:
+          type: string
+          enum:
+          - "json"
+          - "jsonx"
+        prefix:
+          type: string
+      required:
+      - file_path
+      - log_raw
+      - hmac_accessor
+      - mode
+      - format
+      - prefix
+    required:
+    - _type
+required:
+- "$schema"
+- labels
+- _path
+- type
+- description
+- options

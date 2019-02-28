@@ -1,0 +1,89 @@
+---
+"$schema": /metaschema-1.json
+version: '1.0'
+
+type: object
+additionalProperties: false
+properties:
+  "$schema":
+    type: string
+    enum:
+    - /vault-config/auth-1.yml
+  labels:
+    "$ref": "/common-1.json#/definitions/labels"
+  _path:
+    type: string
+    pattern: '.+\/$'
+  type:
+    type: string
+    enum:
+    - approle
+    - github
+  description:
+    type: string
+  settings:
+    type: object
+    additionalProperties: false
+    properties:
+      config:
+        type: object
+        oneOf:
+        - properties:
+            _type:
+              type: string
+              enum:
+              - github
+            organization:
+              type: string
+            base_url:
+              type: string
+            max_ttl:
+              type: string
+              pattern: '^(\d+(h|m|s))+$'
+            ttl:
+              type: string
+              pattern: '^(\d+(h|m|s))+$'
+          required:
+          - organization
+          - base_url
+          - max_ttl
+          - ttl
+  policy_mappings:
+    type: array
+    items:
+      type: object
+      additionalProperties: false
+      properties:
+        github_team:
+          "$ref": "/common-1.json#/definitions/crossref"
+          "$schemaRef":
+            type: object
+            properties:
+              '$schema':
+                type: string
+                enum:
+                - /access/permission-1.yml
+              service:
+                type: string
+                enum:
+                - github-org-team
+        policies:
+          type: array
+          items:
+            "$ref": "/common-1.json#/definitions/crossref"
+            "$schemaRef":
+              type: object
+              properties:
+                '$schema':
+                  type: string
+                  enum:
+                  - /vault-config/policy-1.yml
+      required:
+      - github_team
+      - policies
+required:
+- "$schema"
+- labels
+- _path
+- type
+- description

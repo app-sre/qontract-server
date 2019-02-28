@@ -1,0 +1,97 @@
+---
+"$schema": /metaschema-1.json
+version: '1.0'
+
+type: object
+additionalProperties: false
+properties:
+  "$schema":
+    type: string
+    enum:
+    - /vault-config/role-1.yml
+  labels:
+    "$ref": "/common-1.json#/definitions/labels"
+  name:
+    type: string
+  mount:
+    type: string
+    pattern: '.+\/$'
+  type:
+    type: string
+  options:
+    type: object
+    oneOf:
+    - properties:
+        _type:
+          type: string
+          enum:
+          - approle
+        bind_secret_id:
+          type: string
+          enum:
+          - 'true'
+          - 'false'
+        local_secret_ids:
+          type: string
+          enum:
+          - 'true'
+          - 'false'
+        period:
+          type: string
+          pattern: '^(\d+(h|m|s))+$'
+        secret_id_num_uses:
+          type: string
+          pattern: '^\d+$'
+        secret_id_ttl:
+          type: string
+          pattern: '^(\d+(h|m|s))+$'
+        token_max_ttl:
+          type: string
+          pattern: '^(\d+(h|m|s))+$'
+        token_num_uses:
+          type: string
+          pattern: '^\d+$'
+        token_ttl:
+          type: string
+          pattern: '^(\d+(h|m|s))+$'
+        token_type:
+          type: string
+        bound_cidr_list:
+          type: array
+          items:
+            type: string
+        policies:
+          type: array
+          items:
+            type: string
+        secret_id_bound_cidrs:
+          type: array
+          items:
+            type: string
+        token_bound_cidrs:
+          type: array
+          items:
+            type: string
+      required:
+      - bind_secret_id
+      - local_secret_ids
+      - period
+      - secret_id_num_uses
+      - secret_id_ttl
+      - token_max_ttl
+      - token_num_uses
+      - token_ttl
+      - token_type
+      - bound_cidr_list
+      - policies
+      - secret_id_bound_cidrs
+      - token_bound_cidrs
+    required:
+    - _type
+required:
+- "$schema"
+- labels
+- name
+- mount
+- type
+- options
