@@ -38,10 +38,20 @@ properties:
       type: string
       # For the moment we want to limit this list.
       # A complete list can be obtained from here:
-      # oc api-resources --verbs=list --no-headers | awk '{print $NF}' | sort -u
+      # oc api-resources --verbs=list --no-headers --namespaced=true | awk '{print $NF}' | sort -u
       enum:
       - ConfigMap
+      - CronJob
+      - Deployment
+      - HorizontalPodAutoscaler
+      - Job
+      - Role
+      - RoleBinding
+      - Route
       - Secret
+      - Service
+      - ServiceAccount
+      - StatefulSet
 
   openshiftResources:
     type: array
