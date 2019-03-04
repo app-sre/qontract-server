@@ -68,7 +68,7 @@ docker run --rm \
     -v $SCHEMAS_DIR:/schemas:z \
     -v $DATA_DIR:/data:z \
     -v $RESOURCES_DIR:/resources:z \
-    quay.io/app-sre/qontract-validator:latest
+    quay.io/app-sre/qontract-validator:latest \
     qontract-bundler /schemas /data /resources > $BUNDLES_DIR/bundle.json
 ```
 
