@@ -186,6 +186,7 @@
   fields:
   - { name: provider, type: string, isRequired: true }
   - { name: path, type: string, isRequired: true }
+  - { name: version, type: int, isRequired: true }
   - { name: name, type: string }
   - { name: labels, type: json }
   - { name: annotations, type: json }
