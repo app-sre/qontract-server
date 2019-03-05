@@ -27,9 +27,8 @@ const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 
 const resolveSyntheticField = (app: express.Express,
                                path: string,
                                schema: string,
-                               subAttr: string) : db.Datafile[] => {
-  const bundle = app.get('bundle');
-  return Array.from(bundle.datafiles.filter((datafile: any) => {
+                               subAttr: string) : db.Datafile[] =>
+  Array.from(app.get('bundle').datafiles.filter((datafile: any) => {
 
     if (datafile.$schema !== schema) { return false; }
 
@@ -39,14 +38,11 @@ const resolveSyntheticField = (app: express.Express,
     }
     return false;
   }).values());
-};
 
 export const defaultResolver = (app: express.Express) => (root: any,
                                                           args: any,
                                                           context: any,
                                                           info: any) => {
-  const bundle = app.get('bundle');
-
   if (info.fieldName === 'schema') return root.$schema;
 
   const val = root[info.fieldName];
@@ -64,7 +60,7 @@ export const defaultResolver = (app: express.Express) => (root: any,
     }
 
     // resolve all the elements of the array
-    let arrayResolve = val.map((x: db.Referencing) => db.resolveRef(bundle, x));
+    let arrayResolve = val.map((x: db.Referencing) => db.resolveRef(app.get('bundle'), x));
 
     // `info.returnType` has information about what the GraphQL schema expects
     // as a return type. If it starts with `[` it means that we need to return
@@ -76,7 +72,7 @@ export const defaultResolver = (app: express.Express) => (root: any,
     return arrayResolve;
   }
 
-  if (isRef(val)) return db.resolveRef(bundle, val);
+  if (isRef(val)) return db.resolveRef(app.get('bundle'), val);
   return val;
 };
 
@@ -144,9 +140,7 @@ const createSchemaType = (app: express.Express,
         // schema
         fieldDef['args'] = { path: { type: GraphQLString } };
         fieldDef['resolve'] = (root: any, args: any) => {
-          const bundle: db.Bundle = app.get('bundle');
-
-          return Array.from(bundle.datafiles.filter(
+          return Array.from(app.get('bundle').datafiles.filter(
             (df: db.Datafile) => {
               const sameSchema: boolean = df.$schema === fieldInfo.datafileSchema;
               return args.path ? df.path === args.path && sameSchema : sameSchema;
@@ -163,12 +157,10 @@ const createSchemaType = (app: express.Express,
       } else if (fieldInfo.isResource) {
         // resource
         fieldDef['args'] = { path: { type: GraphQLString } };
-        fieldDef['resolve'] = (root: any, args: any) => {
-          const bundle: db.Bundle = app.get('bundle');
-          return args.path ?
-            [bundle.resourcefiles.get(args.path)] :
-            Array.from(bundle.resourcefiles.values());
-        };
+        fieldDef['resolve'] = (root: any, args: any) =>
+          args.path ?
+            [app.get('bundle').resourcefiles.get(args.path)] :
+            Array.from(app.get('bundle').resourcefiles.values());
       }
 
       // return
