@@ -186,6 +186,7 @@
   fields:
   - { name: provider, type: string, isRequired: true }
   - { name: path, type: string, isRequired: true }
+  - { name: version, type: int, isRequired: true }
   - { name: name, type: string }
   - { name: labels, type: json }
   - { name: annotations, type: json }
@@ -239,6 +240,21 @@
   - { name: org, type: QuayOrg, isRequired: true }
   - { name: items, type: AppQuayReposItems, isRequired: true, isList: true }
 
+- name: AppEscalationsEscalation
+  version: '1'
+  fields:
+  - { name: labels, type: json }
+  - { name: slackRecipients, type: string, isList: true }
+  - { name: emailRecipients, type: string, isList: true }
+  - { name: mattermostRecipients, type: string, isList: true }
+
+- name: AppEscalations
+  version: '1'
+  fields:
+  - { name: default, type: AppEscalationsEscalation }
+  - { name: warning, type: AppEscalationsEscalation }
+  - { name: critical, type: AppEscalationsEscalation }
+
 - name: App
   version: '1'
   fields:
@@ -249,6 +265,7 @@
   - { name: serviceOwner, type: AppServiceOwner, isRequired: true }
   - { name: dependencies, type: AppDependencies, isList: true }
   - { name: quayRepos, type: AppQuayRepos, isList: true }
+  - { name: escalations, type: AppEscalations, isList: true }
 
 - name: Permission
   version: '1'
