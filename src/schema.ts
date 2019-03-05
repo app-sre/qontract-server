@@ -24,11 +24,13 @@ const isRef = (obj: Object) : boolean => {
 
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
-const resolveSyntheticField = (bundle: db.Bundle,
+const resolveSyntheticField = (app: express.Express,
                                path: string,
                                schema: string,
-                               subAttr: string) : db.Datafile[] =>
-  Array.from(bundle.datafiles.filter((datafile) => {
+                               subAttr: string) : db.Datafile[] => {
+  const bundle = app.get('bundle');
+  return Array.from(bundle.datafiles.filter((datafile: any) => {
+
     if (datafile.$schema !== schema) { return false; }
 
     if (subAttr in datafile) {
@@ -37,6 +39,7 @@ const resolveSyntheticField = (bundle: db.Bundle,
     }
     return false;
   }).values());
+};
 
 export const defaultResolver = (app: express.Express) => (root: any,
                                                           args: any,
@@ -79,7 +82,11 @@ export const defaultResolver = (app: express.Express) => (root: any,
 
 // ------------------ START SCHEMA ------------------
 
-const createSchemaType = (bundle: db.Bundle, schemaTypes: any, interfaceTypes: any, conf: any) => {
+const createSchemaType = (app: express.Express,
+                          schemaTypes: any,
+                          interfaceTypes: any,
+                          conf: any) => {
+
   const objTypeConf: any = {};
 
   // name
@@ -137,6 +144,8 @@ const createSchemaType = (bundle: db.Bundle, schemaTypes: any, interfaceTypes: a
         // schema
         fieldDef['args'] = { path: { type: GraphQLString } };
         fieldDef['resolve'] = (root: any, args: any) => {
+          const bundle: db.Bundle = app.get('bundle');
+
           return Array.from(bundle.datafiles.filter(
             (df: db.Datafile) => {
               const sameSchema: boolean = df.$schema === fieldInfo.datafileSchema;
@@ -146,7 +155,7 @@ const createSchemaType = (bundle: db.Bundle, schemaTypes: any, interfaceTypes: a
       } else if (fieldInfo.synthetic) {
         // synthetic
         fieldDef['resolve'] = (root: any) => resolveSyntheticField(
-          bundle,
+          app,
           root.path,
           fieldInfo.synthetic.schema,
           fieldInfo.synthetic.subAttr,
@@ -155,6 +164,7 @@ const createSchemaType = (bundle: db.Bundle, schemaTypes: any, interfaceTypes: a
         // resource
         fieldDef['args'] = { path: { type: GraphQLString } };
         fieldDef['resolve'] = (root: any, args: any) => {
+          const bundle: db.Bundle = app.get('bundle');
           return args.path ?
             [bundle.resourcefiles.get(args.path)] :
             Array.from(bundle.resourcefiles.values());
@@ -227,7 +237,7 @@ export const generateAppSchema = (app: express.Express, contents: string) : Grap
   const schemaTypes: any = {};
   const interfaceTypes: any = {};
 
-  schemaData.map((t: any) => createSchemaType(app.get('bundle'), schemaTypes, interfaceTypes, t));
+  schemaData.map((t: any) => createSchemaType(app, schemaTypes, interfaceTypes, t));
 
   return new GraphQLSchema({
     types: Object.values(schemaTypes),

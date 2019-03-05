@@ -119,8 +119,7 @@ const bundleFromS3 = async(accessKeyId: string, secretAccessKey: string, region:
 export const bundleFromDisk = async(path: string) => {
   const loadPath = typeof (path) === 'undefined' ? process.env.DATAFILES_FILE : path;
   const readFile = util.promisify(fs.readFile);
-  const contents = String(await readFile(path));
-
+  const contents = String(await readFile(loadPath));
   return parseBundle(contents);
 };
 
