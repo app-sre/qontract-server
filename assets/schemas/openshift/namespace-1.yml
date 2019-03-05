@@ -71,12 +71,15 @@ properties:
             type: string
           path:
             type: string
+          version:
+            type: integer
           labels:
             "$ref": "/common-1.json#/definitions/labels"
           annotations:
             "$ref": "/common-1.json#/definitions/annotations"
         required:
         - path
+        - version
       required:
       - provider
 
