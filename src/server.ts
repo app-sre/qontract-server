@@ -34,8 +34,8 @@ export const appFromBundle = async(bundle: Promise<db.Bundle>) => {
 
   server.applyMiddleware({ app });
 
-  app.get('/reload', (req: express.Request, res: express.Response) => {
-    req.app.set('bundle', db.bundleFromEnvironment());
+  app.get('/reload', async (req: express.Request, res: express.Response) => {
+    req.app.set('bundle', await db.bundleFromEnvironment());
     res.send();
   });
 

@@ -24,11 +24,12 @@ const isRef = (obj: Object) : boolean => {
 
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
-const resolveSyntheticField = (bundle: db.Bundle,
+const resolveSyntheticField = (app: express.Express,
                                path: string,
                                schema: string,
                                subAttr: string) : db.Datafile[] =>
-  Array.from(bundle.datafiles.filter((datafile) => {
+  Array.from(app.get('bundle').datafiles.filter((datafile: any) => {
+
     if (datafile.$schema !== schema) { return false; }
 
     if (subAttr in datafile) {
@@ -42,8 +43,6 @@ export const defaultResolver = (app: express.Express) => (root: any,
                                                           args: any,
                                                           context: any,
                                                           info: any) => {
-  const bundle = app.get('bundle');
-
   if (info.fieldName === 'schema') return root.$schema;
 
   const val = root[info.fieldName];
@@ -61,7 +60,7 @@ export const defaultResolver = (app: express.Express) => (root: any,
     }
 
     // resolve all the elements of the array
-    let arrayResolve = val.map((x: db.Referencing) => db.resolveRef(bundle, x));
+    let arrayResolve = val.map((x: db.Referencing) => db.resolveRef(app.get('bundle'), x));
 
     // `info.returnType` has information about what the GraphQL schema expects
     // as a return type. If it starts with `[` it means that we need to return
@@ -73,13 +72,17 @@ export const defaultResolver = (app: express.Express) => (root: any,
     return arrayResolve;
   }
 
-  if (isRef(val)) return db.resolveRef(bundle, val);
+  if (isRef(val)) return db.resolveRef(app.get('bundle'), val);
   return val;
 };
 
 // ------------------ START SCHEMA ------------------
 
-const createSchemaType = (bundle: db.Bundle, schemaTypes: any, interfaceTypes: any, conf: any) => {
+const createSchemaType = (app: express.Express,
+                          schemaTypes: any,
+                          interfaceTypes: any,
+                          conf: any) => {
+
   const objTypeConf: any = {};
 
   // name
@@ -137,7 +140,7 @@ const createSchemaType = (bundle: db.Bundle, schemaTypes: any, interfaceTypes: a
         // schema
         fieldDef['args'] = { path: { type: GraphQLString } };
         fieldDef['resolve'] = (root: any, args: any) => {
-          return Array.from(bundle.datafiles.filter(
+          return Array.from(app.get('bundle').datafiles.filter(
             (df: db.Datafile) => {
               const sameSchema: boolean = df.$schema === fieldInfo.datafileSchema;
               return args.path ? df.path === args.path && sameSchema : sameSchema;
@@ -146,7 +149,7 @@ const createSchemaType = (bundle: db.Bundle, schemaTypes: any, interfaceTypes: a
       } else if (fieldInfo.synthetic) {
         // synthetic
         fieldDef['resolve'] = (root: any) => resolveSyntheticField(
-          bundle,
+          app,
           root.path,
           fieldInfo.synthetic.schema,
           fieldInfo.synthetic.subAttr,
@@ -154,11 +157,10 @@ const createSchemaType = (bundle: db.Bundle, schemaTypes: any, interfaceTypes: a
       } else if (fieldInfo.isResource) {
         // resource
         fieldDef['args'] = { path: { type: GraphQLString } };
-        fieldDef['resolve'] = (root: any, args: any) => {
-          return args.path ?
-            [bundle.resourcefiles.get(args.path)] :
-            Array.from(bundle.resourcefiles.values());
-        };
+        fieldDef['resolve'] = (root: any, args: any) =>
+          args.path ?
+            [app.get('bundle').resourcefiles.get(args.path)] :
+            Array.from(app.get('bundle').resourcefiles.values());
       }
 
       // return
@@ -227,7 +229,7 @@ export const generateAppSchema = (app: express.Express, contents: string) : Grap
   const schemaTypes: any = {};
   const interfaceTypes: any = {};
 
-  schemaData.map((t: any) => createSchemaType(app.get('bundle'), schemaTypes, interfaceTypes, t));
+  schemaData.map((t: any) => createSchemaType(app, schemaTypes, interfaceTypes, t));
 
   return new GraphQLSchema({
     types: Object.values(schemaTypes),
