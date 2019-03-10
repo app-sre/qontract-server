@@ -42,6 +42,7 @@ properties:
       enum:
       - ConfigMap
       - Secret
+      - Route
 
   openshiftResources:
     type: array
@@ -80,6 +81,20 @@ properties:
         required:
         - path
         - version
+      - additionalProperties: false
+        properties:
+          provider:
+            type: string
+            enum:
+            - route
+          path:
+            type: string
+          vault_tls_secret_path:
+            type: string
+          vault_tls_secret_version:
+            type: integer
+        required:
+        - path
       required:
       - provider
 
