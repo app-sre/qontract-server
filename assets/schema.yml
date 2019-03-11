@@ -170,6 +170,7 @@
     fieldMap:
       resource: NamespaceOpenshiftResourceResource
       vault-secret: NamespaceOpenshiftResourceVaultSecret
+      route: NamespaceOpenshiftResourceRoute
   fields:
   - { name: provider, type: string, isRequired: true }
 
@@ -190,6 +191,15 @@
   - { name: name, type: string }
   - { name: labels, type: json }
   - { name: annotations, type: json }
+
+- name: NamespaceOpenshiftResourceRoute
+  version: '1'
+  interface: NamespaceOpenshiftResource
+  fields:
+  - { name: provider, type: string, isRequired: true }
+  - { name: path, type: string, isRequired: true }
+  - { name: vault_tls_secret_path, type: string }
+  - { name: vault_tls_secret_version, type: int }
 
 - name: Namespace
   version: '1'
