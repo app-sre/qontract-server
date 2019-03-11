@@ -95,6 +95,11 @@ properties:
             type: integer
         required:
         - path
+        dependencies:
+          vault_tls_secret_path:
+          - vault_tls_secret_version
+          vault_tls_secret_version:
+          - vault_tls_secret_path
       required:
       - provider
 
