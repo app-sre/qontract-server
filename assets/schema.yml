@@ -272,6 +272,7 @@
   - { name: path, type: string, isRequired: true }
   - { name: labels, type: json }
   - { name: title, type: string, isRequired: true }
+  - { name: serviceDocs, type: string, isList: true }
   - { name: serviceOwner, type: AppServiceOwner, isRequired: true }
   - { name: dependencies, type: AppDependencies, isList: true }
   - { name: quayRepos, type: AppQuayRepos, isList: true }

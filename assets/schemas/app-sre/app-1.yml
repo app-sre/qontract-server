@@ -15,6 +15,13 @@ properties:
   title:
     type: string
 
+  serviceDocs:
+    description: List of service docs
+    type: array
+    items:
+      description: Service document link
+      type: string
+
   serviceOwner:
     description: Team or individual who is/are responsible for the running instance of the software.
     type: object
