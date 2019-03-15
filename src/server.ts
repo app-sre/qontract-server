@@ -33,12 +33,13 @@ export const appFromBundle = async(bundle: Promise<db.Bundle>) => {
 
   server.applyMiddleware({ app });
 
-  app.get('/reload', async (req: express.Request, res: express.Response) => {
-    req.app.set('bundle', await db.bundleFromEnvironment());
-
-    app.get('server').schema = generateAppSchema(req.app as express.Express);
-
-    res.send();
+  app.get('/reload', (req: express.Request, res: express.Response) => {
+    db.bundleFromEnvironment().then((bundle) => {
+      req.app.set('bundle', bundle);
+      app.get('server').schema = generateAppSchema(req.app as express.Express);
+      console.log('reloaded');
+      res.send();
+    }).catch(() => res.status(503).send('error parsing bundle, not replacing'));
   });
 
   app.get('/sha256', (req: express.Request, res: express.Response) => {
