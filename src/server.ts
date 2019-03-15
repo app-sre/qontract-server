@@ -23,10 +23,8 @@ export const appFromBundle = async(bundle: Promise<db.Bundle>) => {
     next();
   });
 
-  const schema = await readFile('assets/schema.yml');
-
   const server = new ApolloServer({
-    schema: generateAppSchema(app, String(schema)),
+    schema: generateAppSchema(app),
     playground: true,
     introspection: true,
     fieldResolver: defaultResolver(app),
