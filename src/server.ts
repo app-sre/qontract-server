@@ -29,11 +29,15 @@ export const appFromBundle = async(bundle: Promise<db.Bundle>) => {
     introspection: true,
     fieldResolver: defaultResolver(app),
   });
+  app.set('server', server);
 
   server.applyMiddleware({ app });
 
   app.get('/reload', async (req: express.Request, res: express.Response) => {
     req.app.set('bundle', await db.bundleFromEnvironment());
+
+    app.get('server').schema = generateAppSchema(req.app as express.Express);
+
     res.send();
   });
 
