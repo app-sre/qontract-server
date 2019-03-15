@@ -36,7 +36,8 @@ export const appFromBundle = async(bundle: Promise<db.Bundle>) => {
   app.get('/reload', (req: express.Request, res: express.Response) => {
     db.bundleFromEnvironment().then((bundle) => {
       req.app.set('bundle', bundle);
-      app.get('server').schema = generateAppSchema(req.app as express.Express);
+      req.app.get('server').schema = generateAppSchema(req.app as express.Express);
+
       console.log('reloaded');
       res.send();
     }).catch(() => res.status(503).send('error parsing bundle, not replacing'));
