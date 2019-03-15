@@ -73,11 +73,11 @@ docker run --rm \
     qontract-bundler /schemas /graphql/schema.yml /data /resources > $BUNDLES_DIR/bundle.json
 ```
 
-* `SCHEMAS_DIR` - `/schemas` dir that contains the JSON schemas. This is used only for validation.
-* `GRAPHQL_SCHEMA_DIR` - `/graphql` dir that contains the file `schema.yml` representing the GraphQL schema.
-* `DATA_DIR` - `/data` dir in the `app-interface` git repository
-* `RESOURCES_DIR` - `/resources` dir in the `app-interface` git repository
-* `$BUNDLES_DIR` - a directory that will contain the created `bundle.json` file
+* `SCHEMAS_DIR` - dir that contains the JSON schemas (this is not used by this server).
+* `GRAPHQL_SCHEMA_DIR` - dir that contains the file `schema.yml` representing the GraphQL schema.
+* `DATA_DIR` - dir that contains the datafiles.
+* `RESOURCES_DIR` - dir that contains the resources.
+* `$BUNDLES_DIR` - a directory that will contain the created `bundle.json` file.
 
 ## Validating the bundle
 
