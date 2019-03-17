@@ -78,6 +78,8 @@ properties:
             "$ref": "/common-1.json#/definitions/labels"
           annotations:
             "$ref": "/common-1.json#/definitions/annotations"
+          type:
+            type: string
         required:
         - path
         - version

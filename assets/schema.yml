@@ -191,6 +191,7 @@
   - { name: name, type: string }
   - { name: labels, type: json }
   - { name: annotations, type: json }
+  - { name: type, type: string }
 
 - name: NamespaceOpenshiftResourceRoute
   version: '1'
