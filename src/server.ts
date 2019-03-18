@@ -23,20 +23,27 @@ export const appFromBundle = async(bundle: Promise<db.Bundle>) => {
     next();
   });
 
-  const schema = await readFile('assets/schema.yml');
-
   const server = new ApolloServer({
-    schema: generateAppSchema(app, String(schema)),
+    schema: generateAppSchema(app),
     playground: true,
     introspection: true,
     fieldResolver: defaultResolver(app),
   });
+  app.set('server', server);
 
   server.applyMiddleware({ app });
 
   app.get('/reload', async (req: express.Request, res: express.Response) => {
-    req.app.set('bundle', await db.bundleFromEnvironment());
-    res.send();
+    try {
+      const bundle = await db.bundleFromEnvironment();
+      req.app.set('bundle', bundle);
+      req.app.get('server').schema = generateAppSchema(req.app as express.Express);
+
+      console.log('reloaded');
+      res.send();
+    } catch (e) {
+      res.status(503).send('error parsing bundle, not replacing');
+    }
   });
 
   app.get('/sha256', (req: express.Request, res: express.Response) => {

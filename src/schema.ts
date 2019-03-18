@@ -223,8 +223,8 @@ const resourceType = new GraphQLObjectType({
   },
 });
 
-export const generateAppSchema = (app: express.Express, contents: string) : GraphQLSchema => {
-  const schemaData = yaml.safeLoad(contents);
+export const generateAppSchema = (app: express.Express) : GraphQLSchema => {
+  const schemaData = app.get('bundle').schema;
 
   const schemaTypes: any = {};
   const interfaceTypes: any = {};

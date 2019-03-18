@@ -66,17 +66,18 @@ The bundles are required to run the validation and to start the server.
 mkdir -p $BUNDLES_DIR
 docker run --rm \
     -v $SCHEMAS_DIR:/schemas:z \
+    -v $GRAPHQL_SCHEMA_DIR:/graphql:z \
     -v $DATA_DIR:/data:z \
     -v $RESOURCES_DIR:/resources:z \
     quay.io/app-sre/qontract-validator:latest \
-    qontract-bundler /schemas /data /resources > $BUNDLES_DIR/bundle.json
+    qontract-bundler /schemas /graphql/schema.yml /data /resources > $BUNDLES_DIR/bundle.json
 ```
 
-* `SCHEMAS_DIR` - `assets/schemas/` dir in the `qontract-server` git repository
-    * in the future it will be removed from this repository
-* `DATA_DIR` - `/data` dir in the `app-interface` git repository
-* `RESOURCES_DIR` - `/resources` dir in the `app-interface` git repository
-* `$BUNDLES_DIR` - a directory that will contain the created `bundle.json` file
+* `SCHEMAS_DIR` - dir that contains the JSON schemas (this is not used by this server).
+* `GRAPHQL_SCHEMA_DIR` - dir that contains the file `schema.yml` representing the GraphQL schema.
+* `DATA_DIR` - dir that contains the datafiles.
+* `RESOURCES_DIR` - dir that contains the resources.
+* `$BUNDLES_DIR` - a directory that will contain the created `bundle.json` file.
 
 ## Validating the bundle
 

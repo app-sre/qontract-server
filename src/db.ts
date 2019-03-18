@@ -23,6 +23,7 @@ export type Resourcefile = {
 export type Bundle = {
   datafiles: im.Map<string, Datafile>;
   resourcefiles: im.Map<string, Resourcefile>;
+  schema: any[];
   fileHash: string;
 };
 
@@ -63,6 +64,7 @@ const parseBundle = (contents: string) : Bundle => {
     datafiles: parseDatafiles(parsedContents.data),
     resourcefiles: parseResourcefiles(parsedContents.resources),
     fileHash: hashDatafile(contents),
+    schema: parsedContents.graphql,
   } as Bundle;
 };
 
@@ -137,6 +139,7 @@ export const bundleFromEnvironment = async() => {
       return {
         datafiles: im.Map<string, Datafile>(),
         resourcefiles: im.Map<string, Resourcefile>(),
+        schema: {},
         fileHash: '',
       } as Bundle;
   }
