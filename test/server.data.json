@@ -1,1268 +1,1233 @@
 {
-    "resources": {
-        "/resource1.yml": {
-            "path": "/resource1.yml",
-            "content": "test resource",
-            "sha256sum": "ff"
-        }
-    },
-    "data": {
-        "/role-A.yml": {
-            "$schema": "/access/role-1.yml",
-            "labels": {},
-            "name": "role-A",
-            "permissions": [
-                {
-                    "$ref": "/permission-A.yml"
-                }
-            ]
-        },
-        "/permission-A.yml": {
-            "$schema": "/access/permission-1.yml",
-            "name": "permission-A",
-            "service": "github-org-team",
-            "team": "team-A",
-            "org": "org-A",
-            "labels": {},
-            "description": "description permission-A"
-        },
-        "/app-A.yml": {
-            "$schema": "/app-sre/app-1.yml",
-            "labels": {},
-            "title": "app-A",
-            "serviceOwner": {
-                "name": "serviceOwnerName",
-                "email": "test@example.com"
-            },
-            "quayRepos": [
-                {
-                    "org": {
-                        "$ref": "/quay-org-A.yml"
-                    },
-                    "items": [
-                        {
-                            "name": "repoA",
-                            "description": "",
-                            "public": true
-                        }
-                    ]
-                }
-            ]
-        },
-        "/quay-org-A.yml": {
-            "$schema": "/dependencies/quay-org-1.yml",
-            "labels": {},
-            "name": "quay-org-A",
-            "managedTeams": [ "teamA" ],
-            "description": "desc"
-        }
-    },
-    "graphql": [
-      {
-        "name": "VaultAuditOptions",
-        "version": "1",
-        "isInterface": true,
-        "interfaceResolve": {
-          "strategy": "fieldMap",
-          "field": "_type",
-          "fieldMap": {
-            "file": "VaultAuditOptionsFile"
-          }
-        },
-        "fields": [
-          {
-            "name": "_type",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
+  "data": {
+    "/app-A.yml": {
+      "$schema": "/app-sre/app-1.yml",
+      "labels": {},
+      "serviceOwner": {
+        "name": "serviceOwnerName",
+        "email": "test@example.com"
       },
-      {
-        "name": "VaultAuditOptionsFile",
-        "version": "1",
-        "interface": "VaultAuditOptions",
-        "fields": [
-          {
-            "name": "_type",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "file_path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "log_raw",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "hmac_accessor",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "mode",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "format",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "prefix",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultAudit",
-        "version": "1",
-        "fields": [
-          {
-            "name": "_path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "type",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "description",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "options",
-            "type": "VaultAuditOptions",
-            "isInterface": true,
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultAuthConfig",
-        "version": "1",
-        "isInterface": true,
-        "interfaceResolve": {
-          "strategy": "fieldMap",
-          "field": "_type",
-          "fieldMap": {
-            "github": "VaultAuthConfigGithub"
-          }
-        },
-        "fields": [
-          {
-            "name": "_type",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultAuthConfigGithub",
-        "version": "1",
-        "interface": "VaultAuthConfig",
-        "fields": [
-          {
-            "name": "_type",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "organization",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "base_url",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "max_ttl",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "ttl",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultAuthSettings",
-        "version": "1",
-        "fields": [
-          {
-            "name": "config",
-            "type": "VaultAuthConfig",
-            "isInterface": true,
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultSecretEngineOptions",
-        "version": "1",
-        "isInterface": true,
-        "interfaceResolve": {
-          "strategy": "fieldMap",
-          "field": "_type",
-          "fieldMap": {
-            "kv": "VaultSecretEngineOptionsKV"
-          }
-        },
-        "fields": [
-          {
-            "name": "_type",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultSecretEngineOptionsKV",
-        "version": "1",
-        "interface": "VaultSecretEngineOptions",
-        "fields": [
-          {
-            "name": "_type",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "version",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultSecretEngine",
-        "version": "1",
-        "fields": [
-          {
-            "name": "_path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "type",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "description",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "options",
-            "type": "VaultSecretEngineOptions",
-            "isInterface": true,
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultRoleOptions",
-        "version": "1",
-        "isInterface": true,
-        "interfaceResolve": {
-          "strategy": "fieldMap",
-          "field": "_type",
-          "fieldMap": {
-            "approle": "VaultApproleOptions"
-          }
-        },
-        "fields": [
-          {
-            "name": "_type",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultApproleOptions",
-        "version": "1",
-        "interface": "VaultRoleOptions",
-        "fields": [
-          {
-            "name": "_type",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "bind_secret_id",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "local_secret_ids",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "period",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "secret_id_num_uses",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "secret_id_ttl",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "token_max_ttl",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "token_num_uses",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "token_ttl",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "token_type",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "bound_cidr_list",
-            "type": "string",
-            "isList": true,
-            "isRequired": true
-          },
-          {
-            "name": "policies",
-            "type": "string",
-            "isList": true,
-            "isRequired": true
-          },
-          {
-            "name": "secret_id_bound_cidrs",
-            "type": "string",
-            "isList": true,
-            "isRequired": true
-          },
-          {
-            "name": "token_bound_cidrs",
-            "type": "string",
-            "isList": true,
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultRole",
-        "version": "1",
-        "fields": [
-          {
-            "name": "name",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "type",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "mount",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "options",
-            "type": "VaultRoleOptions",
-            "isInterface": true,
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultPolicy",
-        "version": "1",
-        "fields": [
-          {
-            "name": "name",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "rules",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "Resource",
-        "version": "1",
-        "fields": [
-          {
-            "name": "path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "content",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "sha256sum",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultSecret",
-        "version": "1",
-        "fields": [
-          {
-            "name": "path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "field",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "format",
-            "type": "string"
-          }
-        ]
-      },
-      {
-        "name": "QuayOrg",
-        "version": "1",
-        "fields": [
-          {
-            "name": "schema",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "labels",
-            "type": "json"
-          },
-          {
-            "name": "name",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "description",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "managedTeams",
-            "type": "string",
-            "isList": true,
-            "isRequired": true
-          },
-          {
-            "name": "automationToken",
-            "type": "VaultSecret"
-          }
-        ]
-      },
-      {
-        "name": "Cluster",
-        "version": "1",
-        "fields": [
-          {
-            "name": "schema",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "labels",
-            "type": "json"
-          },
-          {
-            "name": "name",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "description",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "serverUrl",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "automationToken",
-            "type": "VaultSecret"
-          }
-        ]
-      },
-      {
-        "name": "NamespaceOpenshiftResource",
-        "version": "1",
-        "isInterface": true,
-        "interfaceResolve": {
-          "strategy": "fieldMap",
-          "field": "provider",
-          "fieldMap": {
-            "resource": "NamespaceOpenshiftResourceResource",
-            "vault-secret": "NamespaceOpenshiftResourceVaultSecret",
-            "route": "NamespaceOpenshiftResourceRoute"
-          }
-        },
-        "fields": [
-          {
-            "name": "provider",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "NamespaceOpenshiftResourceResource",
-        "version": "1",
-        "interface": "NamespaceOpenshiftResource",
-        "fields": [
-          {
-            "name": "provider",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "path",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "NamespaceOpenshiftResourceVaultSecret",
-        "version": "1",
-        "interface": "NamespaceOpenshiftResource",
-        "fields": [
-          {
-            "name": "provider",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "version",
-            "type": "int",
-            "isRequired": true
-          },
-          {
-            "name": "name",
-            "type": "string"
-          },
-          {
-            "name": "labels",
-            "type": "json"
-          },
-          {
-            "name": "annotations",
-            "type": "json"
-          }
-        ]
-      },
-      {
-        "name": "NamespaceOpenshiftResourceRoute",
-        "version": "1",
-        "interface": "NamespaceOpenshiftResource",
-        "fields": [
-          {
-            "name": "provider",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "vault_tls_secret_path",
-            "type": "string"
-          },
-          {
-            "name": "vault_tls_secret_version",
-            "type": "int"
-          }
-        ]
-      },
-      {
-        "name": "Namespace",
-        "version": "1",
-        "fields": [
-          {
-            "name": "schema",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "labels",
-            "type": "json"
-          },
-          {
-            "name": "name",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "description",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "cluster",
-            "type": "Cluster",
-            "isRequired": true
-          },
-          {
-            "name": "managedRoles",
-            "type": "string",
-            "isList": true
-          },
-          {
-            "name": "managedResourceTypes",
-            "type": "string",
-            "isList": true
-          },
-          {
-            "name": "openshiftResources",
-            "type": "NamespaceOpenshiftResource",
-            "isList": true,
-            "isInterface": true
-          }
-        ]
-      },
-      {
-        "name": "AppServiceOwner",
-        "version": "1",
-        "fields": [
-          {
-            "name": "name",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "email",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "AppPerformanceParameters",
-        "version": "1",
-        "fields": [
-          {
-            "name": "SLO",
-            "type": "float",
-            "isRequired": true
-          },
-          {
-            "name": "SLA",
-            "type": "float"
-          },
-          {
-            "name": "statusPage",
-            "type": "string"
-          }
-        ]
-      },
-      {
-        "name": "AppDependencies",
-        "version": "1",
-        "fields": [
-          {
-            "name": "name",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "statefulness",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "opsModel",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "statusPage",
-            "type": "string"
-          },
-          {
-            "name": "SLA",
-            "type": "float",
-            "isRequired": true
-          },
-          {
-            "name": "dependencyFailureImpact",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "AppQuayReposItems",
-        "version": "1",
-        "fields": [
-          {
-            "name": "name",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "description",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "public",
-            "type": "boolean",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "AppQuayRepos",
-        "version": "1",
-        "fields": [
-          {
-            "name": "org",
-            "type": "QuayOrg",
-            "isRequired": true
-          },
-          {
-            "name": "items",
-            "type": "AppQuayReposItems",
-            "isRequired": true,
-            "isList": true
-          }
-        ]
-      },
-      {
-        "name": "AppEscalationsEscalation",
-        "version": "1",
-        "fields": [
-          {
-            "name": "labels",
-            "type": "json"
-          },
-          {
-            "name": "slackRecipients",
-            "type": "string",
-            "isList": true
-          },
-          {
-            "name": "emailRecipients",
-            "type": "string",
-            "isList": true
-          },
-          {
-            "name": "mattermostRecipients",
-            "type": "string",
-            "isList": true
-          }
-        ]
-      },
-      {
-        "name": "AppEscalations",
-        "version": "1",
-        "fields": [
-          {
-            "name": "default",
-            "type": "AppEscalationsEscalation"
-          },
-          {
-            "name": "warning",
-            "type": "AppEscalationsEscalation"
-          },
-          {
-            "name": "critical",
-            "type": "AppEscalationsEscalation"
-          }
-        ]
-      },
-      {
-        "name": "App",
-        "version": "1",
-        "fields": [
-          {
-            "name": "schema",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "labels",
-            "type": "json"
-          },
-          {
-            "name": "title",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "serviceDocs",
-            "type": "string",
-            "isList": true
-          },
-          {
-            "name": "serviceOwner",
-            "type": "AppServiceOwner",
-            "isRequired": true
-          },
-          {
-            "name": "dependencies",
-            "type": "AppDependencies",
-            "isList": true
-          },
-          {
-            "name": "quayRepos",
-            "type": "AppQuayRepos",
-            "isList": true
-          },
-          {
-            "name": "escalations",
-            "type": "AppEscalations",
-            "isList": true
-          }
-        ]
-      },
-      {
-        "name": "Permission",
-        "version": "1",
-        "isInterface": true,
-        "interfaceResolve": {
-          "strategy": "fieldMap",
-          "field": "service",
-          "fieldMap": {
-            "aws-analytics": "PermissionAWSAnalytics",
-            "github-org": "PermissionGithubOrg",
-            "github-org-team": "PermissionGithubOrgTeam",
-            "openshift-rolebinding": "PermissionOpenshiftRolebinding",
-            "quay-membership": "PermissionQuayOrgTeam"
-          }
-        },
-        "fields": [
-          {
-            "name": "service",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "PermissionAWSAnalytics",
-        "version": "1",
-        "interface": "Permission",
-        "fields": [
-          {
-            "name": "service",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "PermissionGithubOrg",
-        "version": "1",
-        "interface": "Permission",
-        "fields": [
-          {
-            "name": "service",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "org",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "PermissionGithubOrgTeam",
-        "version": "1",
-        "interface": "Permission",
-        "fields": [
-          {
-            "name": "service",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "org",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "team",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultPolicyMapping",
-        "version": "1",
-        "fields": [
-          {
-            "name": "github_team",
-            "type": "PermissionGithubOrgTeam",
-            "isRequired": true
-          },
-          {
-            "name": "policies",
-            "type": "VaultPolicy",
-            "isList": true,
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "VaultAuth",
-        "version": "1",
-        "fields": [
-          {
-            "name": "_path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "type",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "description",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "settings",
-            "type": "VaultAuthSettings"
-          },
-          {
-            "name": "policy_mappings",
-            "type": "VaultPolicyMapping",
-            "isList": true
-          }
-        ]
-      },
-      {
-        "name": "PermissionOpenshiftRolebinding",
-        "version": "1",
-        "interface": "Permission",
-        "fields": [
-          {
-            "name": "service",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "cluster",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "namespace",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "role",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "PermissionQuayOrgTeam",
-        "version": "1",
-        "interface": "Permission",
-        "fields": [
-          {
-            "name": "service",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "org",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "team",
-            "type": "string",
-            "isRequired": true
-          }
-        ]
-      },
-      {
-        "name": "User",
-        "version": "1",
-        "fields": [
-          {
-            "name": "schema",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "labels",
-            "type": "json"
-          },
-          {
-            "name": "name",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "redhat_username",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "github_username",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "quay_username",
-            "type": "string"
-          }
-        ]
-      },
-      {
-        "name": "Bot",
-        "version": "1",
-        "fields": [
-          {
-            "name": "schema",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "labels",
-            "type": "json"
-          },
-          {
-            "name": "name",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "github_username",
-            "type": "string"
-          },
-          {
-            "name": "quay_username",
-            "type": "string"
-          },
-          {
-            "name": "owner",
-            "type": "User"
-          }
-        ]
-      },
-      {
-        "name": "Role",
-        "version": "1",
-        "datafile": "/access/role-1.yml",
-        "fields": [
-          {
-            "name": "schema",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "path",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "labels",
-            "type": "json"
-          },
-          {
-            "name": "name",
-            "type": "string",
-            "isRequired": true
-          },
-          {
-            "name": "permissions",
-            "type": "Permission",
-            "isList": true,
-            "isInterface": true
-          },
-          {
-            "name": "users",
-            "type": "User",
-            "isList": true,
-            "synthetic": {
-              "schema": "/access/user-1.yml",
-              "subAttr": "roles"
+      "quayRepos": [
+        {
+          "org": {
+            "$ref": "/quay-org-A.yml"
+          },
+          "items": [
+            {
+              "description": "",
+              "public": true,
+              "name": "repoA"
             }
-          },
-          {
-            "name": "bots",
-            "type": "Bot",
-            "isList": true,
-            "synthetic": {
-              "schema": "/access/bot-1.yml",
-              "subAttr": "roles"
-            }
-          }
-        ]
-      },
-      {
-        "name": "Query",
-        "fields": [
-          {
-            "name": "users",
-            "type": "User",
-            "isList": true,
-            "datafileSchema": "/access/user-1.yml"
-          },
-          {
-            "name": "bots",
-            "type": "Bot",
-            "isList": true,
-            "datafileSchema": "/access/bot-1.yml"
-          },
-          {
-            "name": "roles",
-            "type": "Role",
-            "isList": true,
-            "datafileSchema": "/access/role-1.yml"
-          },
-          {
-            "name": "clusters",
-            "type": "Cluster",
-            "isList": true,
-            "datafileSchema": "/openshift/cluster-1.yml"
-          },
-          {
-            "name": "namespaces",
-            "type": "Namespace",
-            "isList": true,
-            "datafileSchema": "/openshift/namespace-1.yml"
-          },
-          {
-            "name": "quay_orgs",
-            "type": "QuayOrg",
-            "isList": true,
-            "datafileSchema": "/dependencies/quay-org-1.yml"
-          },
-          {
-            "name": "apps",
-            "type": "App",
-            "isList": true,
-            "datafileSchema": "/app-sre/app-1.yml"
-          },
-          {
-            "name": "resources",
-            "type": "Resource",
-            "isResource": true,
-            "isRequired": true,
-            "isList": true
-          },
-          {
-            "name": "vault_audit_backends",
-            "type": "VaultAudit",
-            "isList": true,
-            "datafileSchema": "/vault-config/audit-1.yml"
-          },
-          {
-            "name": "vault_auth_backends",
-            "type": "VaultAuth",
-            "isList": true,
-            "datafileSchema": "/vault-config/auth-1.yml"
-          },
-          {
-            "name": "vault_secret_engines",
-            "type": "VaultSecretEngine",
-            "isList": true,
-            "datafileSchema": "/vault-config/secret-engine-1.yml"
-          },
-          {
-            "name": "vault_roles",
-            "type": "VaultRole",
-            "isList": true,
-            "datafileSchema": "/vault-config/role-1.yml"
-          },
-          {
-            "name": "vault_policies",
-            "type": "VaultPolicy",
-            "isList": true,
-            "datafileSchema": "/vault-config/policy-1.yml"
-          }
-        ]
+          ]
+        }
+      ],
+      "title": "app-A"
+    },
+    "/permission-A.yml": {
+      "name": "permission-A",
+      "service": "github-org-team",
+      "labels": {},
+      "team": "team-A",
+      "org": "org-A",
+      "$schema": "/access/permission-1.yml",
+      "description": "description permission-A"
+    },
+    "/role-A.yml": {
+      "$schema": "/access/role-1.yml",
+      "labels": {},
+      "name": "role-A",
+      "permissions": [
+        {
+          "$ref": "/permission-A.yml"
+        }
+      ]
+    },
+    "/quay-org-A.yml": {
+      "$schema": "/dependencies/quay-org-1.yml",
+      "labels": {},
+      "managedTeams": [
+        "teamA"
+      ],
+      "description": "desc",
+      "name": "quay-org-A"
+    }
+  },
+  "graphql": [
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "_type"
+        }
+      ],
+      "isInterface": true,
+      "name": "VaultAuditOptions_v1",
+      "interfaceResolve": {
+        "field": "_type",
+        "fieldMap": {
+          "file": "VaultAuditOptionsFile_v1"
+        },
+        "strategy": "fieldMap"
       }
-    ]
+    },
+    {
+      "interface": "VaultAuditOptions_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "_type"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "file_path"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "log_raw"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "hmac_accessor"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "mode"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "format"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "prefix"
+        }
+      ],
+      "name": "VaultAuditOptionsFile_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "_path"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "type"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "isRequired": true,
+          "isInterface": true,
+          "type": "VaultAuditOptions_v1",
+          "name": "options"
+        }
+      ],
+      "name": "VaultAudit_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "_type"
+        }
+      ],
+      "isInterface": true,
+      "name": "VaultAuthConfig_v1",
+      "interfaceResolve": {
+        "field": "_type",
+        "fieldMap": {
+          "github": "VaultAuthConfigGithub_v1"
+        },
+        "strategy": "fieldMap"
+      }
+    },
+    {
+      "interface": "VaultAuthConfig_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "_type"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "organization"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "base_url"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "max_ttl"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "ttl"
+        }
+      ],
+      "name": "VaultAuthConfigGithub_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "isInterface": true,
+          "type": "VaultAuthConfig_v1",
+          "name": "config"
+        }
+      ],
+      "name": "VaultAuthSettings_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "_type"
+        }
+      ],
+      "isInterface": true,
+      "name": "VaultSecretEngineOptions_v1",
+      "interfaceResolve": {
+        "field": "_type",
+        "fieldMap": {
+          "kv": "VaultSecretEngineOptionsKV_v1"
+        },
+        "strategy": "fieldMap"
+      }
+    },
+    {
+      "interface": "VaultSecretEngineOptions_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "_type"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "version"
+        }
+      ],
+      "name": "VaultSecretEngineOptionsKV_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "_path"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "type"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "isRequired": true,
+          "isInterface": true,
+          "type": "VaultSecretEngineOptions_v1",
+          "name": "options"
+        }
+      ],
+      "name": "VaultSecretEngine_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "_type"
+        }
+      ],
+      "isInterface": true,
+      "name": "VaultRoleOptions_v1",
+      "interfaceResolve": {
+        "field": "_type",
+        "fieldMap": {
+          "approle": "VaultApproleOptions_v1"
+        },
+        "strategy": "fieldMap"
+      }
+    },
+    {
+      "interface": "VaultRoleOptions_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "_type"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "bind_secret_id"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "local_secret_ids"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "period"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "secret_id_num_uses"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "secret_id_ttl"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "token_max_ttl"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "token_num_uses"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "token_ttl"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "token_type"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "bound_cidr_list",
+          "isList": true
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "policies",
+          "isList": true
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "secret_id_bound_cidrs",
+          "isList": true
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "token_bound_cidrs",
+          "isList": true
+        }
+      ],
+      "name": "VaultApproleOptions_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "type"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "mount"
+        },
+        {
+          "isRequired": true,
+          "isInterface": true,
+          "type": "VaultRoleOptions_v1",
+          "name": "options"
+        }
+      ],
+      "name": "VaultRole_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "rules"
+        }
+      ],
+      "name": "VaultPolicy_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "content"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "sha256sum"
+        }
+      ],
+      "name": "Resource_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "field"
+        },
+        {
+          "type": "string",
+          "name": "format"
+        }
+      ],
+      "name": "VaultSecret_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "schema"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "type": "json",
+          "name": "labels"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "managedTeams",
+          "isList": true
+        },
+        {
+          "type": "VaultSecret_v1",
+          "name": "automationToken"
+        }
+      ],
+      "name": "QuayOrg_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "schema"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "type": "json",
+          "name": "labels"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "serverUrl"
+        },
+        {
+          "type": "VaultSecret_v1",
+          "name": "automationToken"
+        }
+      ],
+      "name": "Cluster_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "provider"
+        }
+      ],
+      "isInterface": true,
+      "name": "NamespaceOpenshiftResource_v1",
+      "interfaceResolve": {
+        "field": "provider",
+        "fieldMap": {
+          "route": "NamespaceOpenshiftResourceRoute_v1",
+          "resource": "NamespaceOpenshiftResourceResource_v1",
+          "vault-secret": "NamespaceOpenshiftResourceVaultSecret_v1"
+        },
+        "strategy": "fieldMap"
+      }
+    },
+    {
+      "interface": "NamespaceOpenshiftResource_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "provider"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        }
+      ],
+      "name": "NamespaceOpenshiftResourceResource_v1"
+    },
+    {
+      "interface": "NamespaceOpenshiftResource_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "provider"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "isRequired": true,
+          "type": "int",
+          "name": "version"
+        },
+        {
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "type": "json",
+          "name": "labels"
+        },
+        {
+          "type": "json",
+          "name": "annotations"
+        },
+        {
+          "type": "string",
+          "name": "type"
+        }
+      ],
+      "name": "NamespaceOpenshiftResourceVaultSecret_v1"
+    },
+    {
+      "interface": "NamespaceOpenshiftResource_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "provider"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "type": "string",
+          "name": "vault_tls_secret_path"
+        },
+        {
+          "type": "int",
+          "name": "vault_tls_secret_version"
+        }
+      ],
+      "name": "NamespaceOpenshiftResourceRoute_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "schema"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "type": "json",
+          "name": "labels"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "isRequired": true,
+          "type": "Cluster_v1",
+          "name": "cluster"
+        },
+        {
+          "type": "string",
+          "name": "managedRoles",
+          "isList": true
+        },
+        {
+          "type": "string",
+          "name": "managedResourceTypes",
+          "isList": true
+        },
+        {
+          "isInterface": true,
+          "type": "NamespaceOpenshiftResource_v1",
+          "name": "openshiftResources",
+          "isList": true
+        }
+      ],
+      "name": "Namespace_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "email"
+        }
+      ],
+      "name": "AppServiceOwner_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "float",
+          "name": "SLO"
+        },
+        {
+          "type": "float",
+          "name": "SLA"
+        },
+        {
+          "type": "string",
+          "name": "statusPage"
+        }
+      ],
+      "name": "AppPerformanceParameters_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "statefulness"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "opsModel"
+        },
+        {
+          "type": "string",
+          "name": "statusPage"
+        },
+        {
+          "isRequired": true,
+          "type": "float",
+          "name": "SLA"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "dependencyFailureImpact"
+        }
+      ],
+      "name": "AppDependencies_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "isRequired": true,
+          "type": "boolean",
+          "name": "public"
+        }
+      ],
+      "name": "AppQuayReposItems_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "QuayOrg_v1",
+          "name": "org"
+        },
+        {
+          "isRequired": true,
+          "type": "AppQuayReposItems_v1",
+          "name": "items",
+          "isList": true
+        }
+      ],
+      "name": "AppQuayRepos_v1"
+    },
+    {
+      "fields": [
+        {
+          "type": "json",
+          "name": "labels"
+        },
+        {
+          "type": "string",
+          "name": "slackRecipients",
+          "isList": true
+        },
+        {
+          "type": "string",
+          "name": "emailRecipients",
+          "isList": true
+        },
+        {
+          "type": "string",
+          "name": "mattermostRecipients",
+          "isList": true
+        }
+      ],
+      "name": "AppEscalationsEscalation_v1"
+    },
+    {
+      "fields": [
+        {
+          "type": "AppEscalationsEscalation_v1",
+          "name": "default"
+        },
+        {
+          "type": "AppEscalationsEscalation_v1",
+          "name": "warning"
+        },
+        {
+          "type": "AppEscalationsEscalation_v1",
+          "name": "critical"
+        }
+      ],
+      "name": "AppEscalations_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "schema"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "type": "json",
+          "name": "labels"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "title"
+        },
+        {
+          "type": "string",
+          "name": "serviceDocs",
+          "isList": true
+        },
+        {
+          "isRequired": true,
+          "type": "AppServiceOwner_v1",
+          "name": "serviceOwner"
+        },
+        {
+          "type": "AppDependencies_v1",
+          "name": "dependencies",
+          "isList": true
+        },
+        {
+          "type": "AppQuayRepos_v1",
+          "name": "quayRepos",
+          "isList": true
+        },
+        {
+          "type": "AppEscalations_v1",
+          "name": "escalations",
+          "isList": true
+        }
+      ],
+      "name": "App_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "service"
+        }
+      ],
+      "isInterface": true,
+      "name": "Permission_v1",
+      "interfaceResolve": {
+        "field": "service",
+        "fieldMap": {
+          "github-org-team": "PermissionGithubOrgTeam_v1",
+          "quay-membership": "PermissionQuayOrgTeam_v1",
+          "aws-analytics": "PermissionAWSAnalytics_v1",
+          "github-org": "PermissionGithubOrg_v1",
+          "openshift-rolebinding": "PermissionOpenshiftRolebinding_v1"
+        },
+        "strategy": "fieldMap"
+      }
+    },
+    {
+      "interface": "Permission_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "service"
+        }
+      ],
+      "name": "PermissionAWSAnalytics_v1"
+    },
+    {
+      "interface": "Permission_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "service"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "org"
+        }
+      ],
+      "name": "PermissionGithubOrg_v1"
+    },
+    {
+      "interface": "Permission_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "service"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "org"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "team"
+        }
+      ],
+      "name": "PermissionGithubOrgTeam_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "PermissionGithubOrgTeam_v1",
+          "name": "github_team"
+        },
+        {
+          "isRequired": true,
+          "type": "VaultPolicy_v1",
+          "name": "policies",
+          "isList": true
+        }
+      ],
+      "name": "VaultPolicyMapping_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "_path"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "type"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "type": "VaultAuthSettings_v1",
+          "name": "settings"
+        },
+        {
+          "type": "VaultPolicyMapping_v1",
+          "name": "policy_mappings",
+          "isList": true
+        }
+      ],
+      "name": "VaultAuth_v1"
+    },
+    {
+      "interface": "Permission_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "service"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "cluster"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "namespace"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "role"
+        }
+      ],
+      "name": "PermissionOpenshiftRolebinding_v1"
+    },
+    {
+      "interface": "Permission_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "service"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "org"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "team"
+        }
+      ],
+      "name": "PermissionQuayOrgTeam_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "schema"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "type": "json",
+          "name": "labels"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "redhat_username"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "github_username"
+        },
+        {
+          "type": "string",
+          "name": "quay_username"
+        }
+      ],
+      "name": "User_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "schema"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "type": "json",
+          "name": "labels"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "type": "string",
+          "name": "github_username"
+        },
+        {
+          "type": "string",
+          "name": "quay_username"
+        },
+        {
+          "type": "User_v1",
+          "name": "owner"
+        }
+      ],
+      "name": "Bot_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "schema"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "type": "json",
+          "name": "labels"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isInterface": true,
+          "type": "Permission_v1",
+          "name": "permissions",
+          "isList": true
+        },
+        {
+          "synthetic": {
+            "subAttr": "roles",
+            "schema": "/access/user-1.yml"
+          },
+          "type": "User_v1",
+          "name": "users",
+          "isList": true
+        },
+        {
+          "synthetic": {
+            "subAttr": "roles",
+            "schema": "/access/bot-1.yml"
+          },
+          "type": "Bot_v1",
+          "name": "bots",
+          "isList": true
+        }
+      ],
+      "datafile": "/access/role-1.yml",
+      "name": "Role_v1"
+    },
+    {
+      "fields": [
+        {
+          "type": "User_v1",
+          "name": "users_v1",
+          "isList": true,
+          "datafileSchema": "/access/user-1.yml"
+        },
+        {
+          "type": "Bot_v1",
+          "name": "bots_v1",
+          "isList": true,
+          "datafileSchema": "/access/bot-1.yml"
+        },
+        {
+          "type": "Role_v1",
+          "name": "roles_v1",
+          "isList": true,
+          "datafileSchema": "/access/role-1.yml"
+        },
+        {
+          "type": "Cluster_v1",
+          "name": "clusters_v1",
+          "isList": true,
+          "datafileSchema": "/openshift/cluster-1.yml"
+        },
+        {
+          "type": "Namespace_v1",
+          "name": "namespaces_v1",
+          "isList": true,
+          "datafileSchema": "/openshift/namespace-1.yml"
+        },
+        {
+          "type": "QuayOrg_v1",
+          "name": "quay_orgs_v1",
+          "isList": true,
+          "datafileSchema": "/dependencies/quay-org-1.yml"
+        },
+        {
+          "type": "App_v1",
+          "name": "apps_v1",
+          "isList": true,
+          "datafileSchema": "/app-sre/app-1.yml"
+        },
+        {
+          "isRequired": true,
+          "isResource": true,
+          "type": "Resource_v1",
+          "name": "resources_v1",
+          "isList": true
+        },
+        {
+          "type": "VaultAudit_v1",
+          "name": "vault_audit_backends_v1",
+          "isList": true,
+          "datafileSchema": "/vault-config/audit-1.yml"
+        },
+        {
+          "type": "VaultAuth_v1",
+          "name": "vault_auth_backends_v1",
+          "isList": true,
+          "datafileSchema": "/vault-config/auth-1.yml"
+        },
+        {
+          "type": "VaultSecretEngine_v1",
+          "name": "vault_secret_engines_v1",
+          "isList": true,
+          "datafileSchema": "/vault-config/secret-engine-1.yml"
+        },
+        {
+          "type": "VaultRole_v1",
+          "name": "vault_roles_v1",
+          "isList": true,
+          "datafileSchema": "/vault-config/role-1.yml"
+        },
+        {
+          "type": "VaultPolicy_v1",
+          "name": "vault_policies_v1",
+          "isList": true,
+          "datafileSchema": "/vault-config/policy-1.yml"
+        }
+      ],
+      "name": "Query"
+    }
+  ],
+  "resources": {
+    "/resource1.yml": {
+      "content": "test resource",
+      "path": "/resource1.yml",
+      "sha256sum": "ff"
+    }
+  }
 }

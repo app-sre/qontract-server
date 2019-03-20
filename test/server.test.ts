@@ -36,7 +36,7 @@ describe('server', async() => {
 
   it('resolves item refs', async() => {
     const query = `{
-          roles {
+          roles: roles_v1 {
               name
               permissions {
                   service
@@ -51,7 +51,7 @@ describe('server', async() => {
 
   it('resolves object refs', async() => {
     const query = `{
-          apps {
+          apps: apps_v1 {
               quayRepos {
                   org {
                       name
@@ -67,7 +67,7 @@ describe('server', async() => {
 
   it('can retrieve a resource', async() => {
     const query = `{
-          resources(path: "/resource1.yml") {
+          resources: resources_v1(path: "/resource1.yml") {
             content
             sha256sum
             path
