@@ -86,11 +86,7 @@ const createSchemaType = (app: express.Express,
   const objTypeConf: any = {};
 
   // name
-  if (conf.version) {
-    objTypeConf['name'] = `${conf.name}_v${conf.version}`;
-  } else {
-    objTypeConf['name'] = conf.name;
-  }
+  objTypeConf['name'] = conf.name;
 
   // fields
   objTypeConf['fields'] = conf.fields.reduce(
