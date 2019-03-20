@@ -23,12 +23,19 @@ export const appFromBundle = async(bundle: Promise<db.Bundle>) => {
     next();
   });
 
-  const server = new ApolloServer({
-    schema: generateAppSchema(app),
-    playground: true,
-    introspection: true,
-    fieldResolver: defaultResolver(app),
-  });
+  let server;
+  try {
+    server = new ApolloServer({
+      schema: generateAppSchema(app),
+      playground: true,
+      introspection: true,
+      fieldResolver: defaultResolver(app),
+    });
+  } catch (e) {
+    console.error(`error creating server: ${e}`);
+    process.exit(1);
+  }
+
   app.set('server', server);
 
   server.applyMiddleware({ app });

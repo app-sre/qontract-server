@@ -122,6 +122,10 @@ const createSchemaType = (app: express.Express,
         }
       }
 
+      if (typeof(t) === 'undefined') {
+        throw `fieldInfo type is undefined: ${JSON.stringify(fieldInfo)}`;
+      }
+
       if (fieldInfo.isRequired) {
         t = new GraphQLNonNull(t);
       }
@@ -208,15 +212,6 @@ const createSchemaType = (app: express.Express,
 const jsonType = new GraphQLScalarType({
   name: 'JSON',
   serialize: JSON.stringify,
-});
-
-const resourceType = new GraphQLObjectType({
-  name: 'Resource_v1',
-  fields: {
-    sha256sum: { type: new GraphQLNonNull(GraphQLString) },
-    path: { type: new GraphQLNonNull(GraphQLString) },
-    content: { type: new GraphQLNonNull(GraphQLString) },
-  },
 });
 
 export const generateAppSchema = (app: express.Express) : GraphQLSchema => {
