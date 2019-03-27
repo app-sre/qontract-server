@@ -86,11 +86,7 @@ const createSchemaType = (app: express.Express,
   const objTypeConf: any = {};
 
   // name
-  if (conf.version) {
-    objTypeConf['name'] = `${conf.name}_v${conf.version}`;
-  } else {
-    objTypeConf['name'] = conf.name;
-  }
+  objTypeConf['name'] = conf.name;
 
   // fields
   objTypeConf['fields'] = conf.fields.reduce(
@@ -124,6 +120,10 @@ const createSchemaType = (app: express.Express,
               t = schemaTypes[t];
             }
         }
+      }
+
+      if (typeof(t) === 'undefined') {
+        throw `fieldInfo type is undefined: ${JSON.stringify(fieldInfo)}`;
       }
 
       if (fieldInfo.isRequired) {
@@ -212,15 +212,6 @@ const createSchemaType = (app: express.Express,
 const jsonType = new GraphQLScalarType({
   name: 'JSON',
   serialize: JSON.stringify,
-});
-
-const resourceType = new GraphQLObjectType({
-  name: 'Resource_v1',
-  fields: {
-    sha256sum: { type: new GraphQLNonNull(GraphQLString) },
-    path: { type: new GraphQLNonNull(GraphQLString) },
-    content: { type: new GraphQLNonNull(GraphQLString) },
-  },
 });
 
 export const generateAppSchema = (app: express.Express) : GraphQLSchema => {

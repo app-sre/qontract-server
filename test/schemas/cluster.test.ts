@@ -20,7 +20,9 @@ describe('clusters', async() => {
   });
 
   it('serves a basic graphql query', async() => {
-    const resp = await chai.request(srv).get('/graphql').query({ query: '{ clusters { name } }' });
+    const resp = await chai.request(srv).get('/graphql').query(
+      { query: '{ clusters: clusters_v1 { name } }' }
+    );
     resp.should.have.status(200);
     return resp.body.data.clusters[0].name.should.equal('example cluster');
   });
