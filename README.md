@@ -38,7 +38,7 @@ LOAD_METHOD=fs DATAFILES_FILE=your_test_datafile yarn run server
 Specific instructions for CentOS 7:
 
 ```sh
-# Install node10 and install yarn (as root)
+# Install node10
 sudo yum install centos-release-scl-rh
 sudo yum install rh-nodejs10
 
