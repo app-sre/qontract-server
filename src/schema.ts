@@ -54,7 +54,7 @@ const resolveSyntheticField = (app: express.Express,
       const subAttrVal = datafile[subAttr];
 
       // the attribute is a list of $refs
-      if (Array.isArray(subAttr)) {
+      if (Array.isArray(subAttrVal)) {
         const backrefs = datafile[subAttr].map((r: any) => r.$ref);
         return backrefs.includes(path);
       }
