@@ -22,6 +22,24 @@ const isRef = (obj: Object) : boolean => {
   return obj.constructor === Object && Object.keys(obj).length === 1 && '$ref' in obj;
 };
 
+const addObjectType = (app: express.Express, name: string, obj: any) => {
+  const t: any = {};
+  t[name] = obj;
+  app.set('objectTypes', Object.assign(app.get('objectTypes'), t));
+};
+
+const getObjectType = (app: express.Express, name: string) =>
+  app.get('objectTypes')[name];
+
+const addInterfaceType = (app: express.Express, name: string, obj: any) => {
+  const t: any = {};
+  t[name] = obj;
+  app.set('objectInterfaces', Object.assign(app.get('objectInterfaces'), t));
+};
+
+const getInterfaceType = (app: express.Express, name: string) =>
+  app.get('objectInterfaces')[name];
+
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
 const resolveSyntheticField = (app: express.Express,
@@ -33,8 +51,18 @@ const resolveSyntheticField = (app: express.Express,
     if (datafile.$schema !== schema) { return false; }
 
     if (subAttr in datafile) {
-      const backrefs = datafile[subAttr].map((r: any) => r.$ref);
-      return backrefs.includes(path);
+      const subAttrVal = datafile[subAttr];
+
+      // the attribute is a list of $refs
+      if (Array.isArray(subAttrVal)) {
+        const backrefs = datafile[subAttr].map((r: any) => r.$ref);
+        return backrefs.includes(path);
+      }
+
+      // the attribute is a single $ref
+      if (subAttrVal.$ref === path) {
+        return true;
+      }
     }
     return false;
   }).values());
@@ -78,18 +106,14 @@ export const defaultResolver = (app: express.Express) => (root: any,
 
 // ------------------ START SCHEMA ------------------
 
-const createSchemaType = (app: express.Express,
-                          schemaTypes: any,
-                          interfaceTypes: any,
-                          conf: any) => {
-
+const createSchemaType = (app: express.Express, conf: any) => {
   const objTypeConf: any = {};
 
   // name
   objTypeConf['name'] = conf.name;
 
   // fields
-  objTypeConf['fields'] = conf.fields.reduce(
+  objTypeConf['fields'] = () => conf.fields.reduce(
     (objFields: any, fieldInfo: any) => {
       const fieldDef: any = {};
 
@@ -115,9 +139,9 @@ const createSchemaType = (app: express.Express,
             break;
           default:
             if (fieldInfo.isInterface) {
-              t = interfaceTypes[t];
+              t = getInterfaceType(app, t);
             } else {
-              t = schemaTypes[t];
+              t = getObjectType(app, t);
             }
         }
       }
@@ -172,7 +196,7 @@ const createSchemaType = (app: express.Express,
 
   // interface
   if (conf.interface) {
-    objTypeConf['interfaces'] = [interfaceTypes[conf.interface]];
+    objTypeConf['interfaces'] = () => [getInterfaceType(app, conf.interface)];
   }
 
   // generate resolveType for interfaces
@@ -186,7 +210,7 @@ const createSchemaType = (app: express.Express,
           const fieldValue = source[field];
 
           const fieldMap = conf.interfaceResolve.fieldMap;
-          return schemaTypes[fieldMap[fieldValue]];
+          return getObjectType(app, fieldMap[fieldValue]);
         };
         break;
       default:
@@ -200,10 +224,10 @@ const createSchemaType = (app: express.Express,
 
   if (conf.isInterface) {
     objType = new GraphQLInterfaceType(objTypeConf);
-    interfaceTypes[conf.name] = objType;
+    addInterfaceType(app, conf.name, objType);
   } else {
     objType = new GraphQLObjectType(objTypeConf);
-    schemaTypes[conf.name] = objType;
+    addObjectType(app, conf.name, objType);
   }
 
   return objType;
@@ -217,13 +241,13 @@ const jsonType = new GraphQLScalarType({
 export const generateAppSchema = (app: express.Express) : GraphQLSchema => {
   const schemaData = app.get('bundle').schema;
 
-  const schemaTypes: any = {};
-  const interfaceTypes: any = {};
+  app.set('objectTypes', {});
+  app.set('objectInterfaces', {});
 
-  schemaData.map((t: any) => createSchemaType(app, schemaTypes, interfaceTypes, t));
+  schemaData.map((t: any) => createSchemaType(app, t));
 
   return new GraphQLSchema({
-    types: Object.values(schemaTypes),
-    query: schemaTypes['Query'],
+    types: Object.values(app.get('objectTypes')),
+    query: getObjectType(app, 'Query'),
   });
 };
