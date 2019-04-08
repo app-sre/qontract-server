@@ -1,10 +1,25 @@
-# qontract-server
+# qontract
 
 qontract (Queryable cONTRACT) is a collection of tools used to SREs to expose
-available managed services to application developer teams. This repository
-compromises the server component, which is implemented as a GraphQL API.
+available managed services to application developer teams.
+
+## Overview
 
 ![qontract overview](images/qontract.png?raw=true "Qontract overview")
+
+This repository comprises the server component, which is a GraphQL API server implemented in Typescript with the [apollo-server-express](https://www.npmjs.com/package/apollo-server-express) package.
+
+The [JSON Schema Validation](https://github.com/app-sre/qontract-validator) lives in a [separate repo](https://github.com/app-sre/qontract-validator).
+
+The Reconcile loop is implementation specific. Any tool that conforms with the following patterns is considered a qontract reconcile tool:
+
+- Retrieves desired state from the GraphQL API.
+- Can retrieve the current state by inspecting the service to that needs to be configured.
+- Is able to reconcile the service into the desired state from the discovered current state.
+- Is idempotent.
+- It can run with an option that only simulates what would happen, this called a plan or a dry-run.
+
+An example of an implementation reconcile tools can be obtained from here: [https://github.com/app-sre/qontract-reconcile](qontract-reconcile).
 
 ## Development Environment
 
