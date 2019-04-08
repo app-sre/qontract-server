@@ -4,6 +4,8 @@ qontract (Queryable cONTRACT) is a collection of tools used to SREs to expose
 available managed services to application developer teams. This repository
 compromises the server component, which is implemented as a GraphQL API.
 
+![qontract overview](images/qontract.png?raw=true "Qontract overview")
+
 ## Development Environment
 
 Although it is not required, it's recommended that you use [yarn] for install
