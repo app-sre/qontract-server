@@ -1,4 +1,4 @@
-.PHONY: bundle build push
+.PHONY: bundle build push docker-run
 
 IMAGE_NAME := quay.io/app-sre/qontract-server
 IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
@@ -35,6 +35,14 @@ bundle:
 
 run:
 	LOAD_METHOD=fs DATAFILES_FILE=$(BUNDLE_DIR)/$(BUNDLE_FILENAME) yarn run server
+
+docker-run:
+	@docker run --rm \
+		-v $(BUNDLE_DIR):/bundle:z \
+		-p 4000:4000 \
+		-e LOAD_METHOD=fs \
+		-e DATAFILES_FILE=/bundle/$(BUNDLE_FILENAME) \
+		$(IMAGE_NAME):$(IMAGE_TAG)
 
 build:
 	@docker build -t $(IMAGE_NAME):latest .
