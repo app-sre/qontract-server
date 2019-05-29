@@ -45,6 +45,16 @@ Or alternatively, you can run the TypeScript compilation once:
 ```sh
 yarn build
 ```
+Creating and validating the bundle
+
+The data files bundle is required to start the server.
+
+```sh
+make bundle
+```
+
+* `APP_INTERFACE_PATH` - (optional) path to a local app-interface repo (Default: `$PWD/../../service/app-interface`).
+
 
 To run an instance of the qontract GraphQL console:
 
@@ -75,16 +85,6 @@ yarn build
 # Start the server
 make run
 ```
-## Creating and validating the bundle
-
-The bundle is required to start the server.
-
-```sh
-make bundle
-```
-
-* `APP_INTERFACE_PATH` - (optional) path to a local app-interface repo (Default: `$PWD/../../service/app-interface`).
-
 ## Style
 
 All code should follow the [airbnb style guide], which is enforced by this
