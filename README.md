@@ -85,6 +85,12 @@ make bundle
 
 * `APP_INTERFACE_PATH` - (optional) path to a local app-interface repo (Default: `$PWD/../../service/app-interface`).
 
+Example: To generate the bundle with a specific app-interface path:
+
+```sh
+make bundle APP_INTERFACE_PATH=/home/myuser/app-interface/
+```
+
 ## Style
 
 All code should follow the [airbnb style guide], which is enforced by this
