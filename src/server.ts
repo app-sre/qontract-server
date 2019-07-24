@@ -7,6 +7,26 @@ import * as express from 'express';
 import * as db from './db';
 import { generateAppSchema, defaultResolver  } from './schema';
 
+import prometheusClient = require('prom-client');
+
+// enable prom-client to expose default application metrics
+const collectDefaultMetrics = prometheusClient.collectDefaultMetrics;
+
+// Probe every 5th second.
+collectDefaultMetrics({ prefix: 'qontract_server_' });
+
+// Create metric stores
+const reloadCounter = new prometheusClient.Counter({
+  name: 'qontract_server_reloads_total',
+  help: 'Number of reloads for qontract server'
+});
+
+const datafilesGuage = new prometheusClient.Gauge({
+  name: 'qontract_server_datafiles',
+  help: 'Number of datafiles for a specific schema',
+  labelNames: ['schema']
+});
+
 const readFile = util.promisify(fs.readFile);
 
 export const appFromBundle = async(bundle: Promise<db.Bundle>) => {
@@ -46,6 +66,19 @@ export const appFromBundle = async(bundle: Promise<db.Bundle>) => {
       req.app.set('bundle', bundle);
       req.app.get('server').schema = generateAppSchema(req.app as express.Express);
 
+      // Count number of files for each schema type
+      let schema_count = bundle.datafiles.reduce((acc, d) => {
+        if (!(d.$schema in acc)) {
+            acc[d.$schema] = 0;
+        }
+        acc[d.$schema]++;
+        return acc;
+      }, {});
+      // Set the Guage based on counted metrics
+      Object.keys(schema_count).map(function(schemaName,_){
+        datafilesGuage.set({schema: schemaName}, schema_count[schemaName]);
+      })
+      reloadCounter.inc(1, Date.now())
       console.log('reloaded');
       res.send();
     } catch (e) {
@@ -56,6 +89,10 @@ export const appFromBundle = async(bundle: Promise<db.Bundle>) => {
   app.get('/sha256', (req: express.Request, res: express.Response) => {
     const hash = req.app.get('bundle').fileHash;
     res.send(hash);
+  });
+
+  app.get('/metrics', (req: express.Request, res: express.Response) => {
+    res.send(prometheusClient.register.metrics());
   });
 
   app.get('/healthz', (req: express.Request, res: express.Response) => { res.send(); });
