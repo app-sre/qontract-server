@@ -59,6 +59,12 @@ Note that this requires Docker to be running on the host.
 Optionally, if you want to specify the path for the app-interface repo on your local filesystem, you can use the parameter:
 * `APP_INTERFACE_PATH` - (optional) path to a local app-interface repo (Default: `$PWD/../../service/app-interface`).
 
+Example: To generate the bundle with a specific app-interface path:
+
+```sh
+make bundle APP_INTERFACE_PATH=/home/myuser/app-interface/
+```
+
 ### Running the Qontract GraphQL server
 
 To run an instance of the qontract GraphQL console:
