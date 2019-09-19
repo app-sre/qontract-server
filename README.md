@@ -23,6 +23,8 @@ An example of an implementation reconcile tools can be obtained from here: [http
 
 ## Development Environment
 
+### Setting up yarn
+
 Although it is not required, it's recommended that you use [yarn] for install
 dependencies and running development scripts.
 
@@ -45,6 +47,25 @@ Or alternatively, you can run the TypeScript compilation once:
 ```sh
 yarn build
 ```
+### Creating and validating the bundle
+
+The data files bundle is required to start the server. Once you're in the `qontract-server` directory, run:
+
+```sh
+make bundle
+```
+Note that this requires Docker to be running on the host. 
+
+Optionally, if you want to specify the path for the app-interface repo on your local filesystem, you can use the parameter:
+* `APP_INTERFACE_PATH` - (optional) path to a local app-interface repo (Default: `$PWD/../../service/app-interface`).
+
+Example: To generate the bundle with a specific app-interface path:
+
+```sh
+make bundle APP_INTERFACE_PATH=/home/myuser/app-interface/
+```
+
+### Running the Qontract GraphQL server
 
 To run an instance of the qontract GraphQL console:
 
@@ -75,16 +96,6 @@ yarn build
 # Start the server
 make run
 ```
-## Creating and validating the bundle
-
-The bundle is required to start the server.
-
-```sh
-make bundle
-```
-
-* `APP_INTERFACE_PATH` - (optional) path to a local app-interface repo (Default: `$PWD/../../service/app-interface`).
-
 ## Style
 
 All code should follow the [airbnb style guide], which is enforced by this

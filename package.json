@@ -24,7 +24,7 @@
     "fs": "0.0.1-security",
     "graphql": "^14.0.2",
     "immutable": "^4.0.0-rc.12",
-    "js-yaml": "^3.12.1",
+    "js-yaml": "^3.13.1",
     "jsonpointer": "^4.0.1",
     "node-forge": "^0.7.6",
     "path": "^0.12.7",
