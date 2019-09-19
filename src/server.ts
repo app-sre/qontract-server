@@ -5,9 +5,13 @@ import { ApolloServer, gql } from 'apollo-server-express';
 import * as express from 'express';
 
 import * as db from './db';
-import { generateAppSchema, defaultResolver  } from './schema';
+import { generateAppSchema, defaultResolver } from './schema';
 
 import prometheusClient = require('prom-client');
+
+interface IAcct {
+  [key: string]: number;
+}
 
 // enable prom-client to expose default application metrics
 const collectDefaultMetrics = prometheusClient.collectDefaultMetrics;
@@ -29,7 +33,7 @@ const datafilesGuage = new prometheusClient.Gauge({
 
 const readFile = util.promisify(fs.readFile);
 
-export const appFromBundle = async(bundle: Promise<db.Bundle>) => {
+export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
   const app: express.Express = express();
 
   app.set('bundle', await bundle);
@@ -67,16 +71,17 @@ export const appFromBundle = async(bundle: Promise<db.Bundle>) => {
       req.app.get('server').schema = generateAppSchema(req.app as express.Express);
 
       // Count number of files for each schema type
-      let schema_count = bundle.datafiles.reduce((acc, d) => {
+      let schema_count: IAcct = bundle.datafiles.reduce((acc: IAcct, d) => {
         if (!(d.$schema in acc)) {
-            acc[d.$schema] = 0;
+          acc[d.$schema] = 0;
         }
         acc[d.$schema]++;
         return acc;
       }, {});
+
       // Set the Guage based on counted metrics
-      Object.keys(schema_count).map(function(schemaName,_){
-        datafilesGuage.set({schema: schemaName}, schema_count[schemaName]);
+      Object.keys(schema_count).map(function (schemaName, _) {
+        datafilesGuage.set({ schema: schemaName }, schema_count[schemaName]);
       })
       reloadCounter.inc(1, Date.now())
       console.log('reloaded');
