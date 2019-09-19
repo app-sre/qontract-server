@@ -85,7 +85,8 @@ objects:
                     key: aws.secret.access.key
                     name: app-interface
           ports:
-          - containerPort: 4000
+          - name: app-interface
+            containerPort: 4000
           livenessProbe:
             httpGet:
               path: /healthz
