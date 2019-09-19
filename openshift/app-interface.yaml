@@ -121,6 +121,7 @@ objects:
   kind: Service
   metadata:
     name: app-interface
+    app: app-interface
   spec:
     ports:
       - protocol: TCP
