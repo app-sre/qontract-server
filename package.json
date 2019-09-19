@@ -28,6 +28,7 @@
     "jsonpointer": "^4.0.1",
     "node-forge": "^0.7.6",
     "path": "^0.12.7",
+    "prom-client": "^11.5.3",
     "utf-8-validate": "^5.0.2"
   },
   "devDependencies": {
