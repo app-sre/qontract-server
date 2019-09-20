@@ -128,6 +128,7 @@ objects:
       - protocol: TCP
         port: 80
         targetPort: 4000
+        name: app-interface
     selector:
       deploymentconfig: app-interface
 parameters:
