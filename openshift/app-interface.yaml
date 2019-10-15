@@ -50,6 +50,38 @@ objects:
           resources:
             limits:
               memory: ${GATE_MEMORY_LIMIT}
+        - image: ${IMAGE_RELOADER}:${IMAGE_RELOADER_TAG}
+          imagePullPolicy: Always
+          name: s3-reloader
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                    key: aws.access.key.id
+                    name: app-interface
+            - name: AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                    key: aws.region
+                    name: app-interface
+            - name: AWS_S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                    key: aws.s3.bucket
+                    name: app-interface
+            - name: AWS_S3_KEY
+              valueFrom:
+                secretKeyRef:
+                    key: aws.s3.key
+                    name: app-interface
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                    key: aws.secret.access.key
+                    name: app-interface
+          args:
+          - -s3-path=s3://${AWS_S3_BUCKET}/${AWS_S3_KEY}
+          - -webhook-url=http://localhost:4000/reload
         - image: ${IMAGE}:${IMAGE_TAG}
           imagePullPolicy: Always
           name: app-interface
@@ -152,3 +184,7 @@ parameters:
   description: App interface nginx gate version which defaults to latest
 - name: GATE_MEMORY_LIMIT
   value: 256Mi
+- name: IMAGE_RELOADER
+  value: app-sre/s3-reload
+- name: IMAGE_RELOADER_TAG
+  value: 0bc8c97
