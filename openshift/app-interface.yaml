@@ -185,6 +185,6 @@ parameters:
 - name: GATE_MEMORY_LIMIT
   value: 256Mi
 - name: IMAGE_RELOADER
-  value: maorfr/s3-reload
+  value: app-sre/s3-reload
 - name: IMAGE_RELOADER_TAG
-  value: v0.1.0
+  value: 0bc8c97
