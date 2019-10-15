@@ -80,7 +80,7 @@ objects:
                     key: aws.secret.access.key
                     name: app-interface
           args:
-          - -s3-path=s3://${AWS_S3_BUCKET}/${AWS_S3_KEY}
+          - -s3-path=s3://$(AWS_S3_BUCKET)/$(AWS_S3_KEY)
           - -webhook-url=http://localhost:4000/reload
         - image: ${IMAGE}:${IMAGE_TAG}
           imagePullPolicy: Always
