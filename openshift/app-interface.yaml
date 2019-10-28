@@ -48,8 +48,12 @@ objects:
           - name: nginx-gate-port
             containerPort: 8080
           resources:
+            requests:
+              memory: ${GATE_MEMORY_REQUESTS}
+              cpu: ${GATE_CPU_REQUESTS}
             limits:
               memory: ${GATE_MEMORY_LIMIT}
+              cpu: ${GATE_CPU_LIMIT}
         - image: ${IMAGE_RELOADER}:${IMAGE_RELOADER_TAG}
           imagePullPolicy: Always
           name: s3-reloader
@@ -82,6 +86,13 @@ objects:
           args:
           - -s3-path=s3://$(AWS_S3_BUCKET)/$(AWS_S3_KEY)
           - -webhook-url=http://localhost:4000/reload
+          resources:
+            requests:
+              memory: ${S3RELOADER_MEMORY_REQUESTS}
+              cpu: ${S3RELOADER_CPU_REQUESTS}
+            limits:
+              memory: ${S3RELOADER_MEMORY_LIMIT}
+              cpu: ${S3RELOADER_CPU_LIMIT}
         - image: ${IMAGE}:${IMAGE_TAG}
           imagePullPolicy: Always
           name: app-interface
@@ -134,8 +145,12 @@ objects:
             periodSeconds: 10
             timeoutSeconds: 3
           resources:
+            requests:
+              memory: ${MEMORY_REQUESTS}
+              cpu: ${CPU_REQUESTS}
             limits:
               memory: ${MEMORY_LIMIT}
+              cpu: ${CPU_LIMIT}
     triggers:
     - type: ConfigChange
 - apiVersion: v1
@@ -172,19 +187,43 @@ parameters:
   value: latest
   displayName: App interface version
   description: App interface version which defaults to latest
-- name: MEMORY_LIMIT
-  value: 512Mi
-  displayName: Memory Limit
-  description: Maximum amount of memory the container can use. Defaults 512Mi
 - name: IMAGE_GATE
   value: quay.io/app-sre/nginx-gate
 - name: IMAGE_GATE_TAG
   value: latest
   displayName: App interface nginx gate version
   description: App interface nginx gate version which defaults to latest
-- name: GATE_MEMORY_LIMIT
-  value: 256Mi
 - name: IMAGE_RELOADER
   value: quay.io/app-sre/s3-reload
 - name: IMAGE_RELOADER_TAG
   value: 0bc8c97
+
+# container 'app-interface' resources
+- name: MEMORY_REQUESTS
+  value: 175Mi
+- name: MEMORY_LIMIT
+  value: 512Mi
+- name: CPU_REQUESTS
+  value: 30m
+- name: CPU_LIMIT
+  value: 60m
+
+# container 'app-interface-nginx-gate' resources
+- name: GATE_MEMORY_REQUESTS
+  value: 20Mi
+- name: GATE_MEMORY_LIMIT
+  value: 40Mi
+- name: GATE_CPU_REQUESTS
+  value: 10m
+- name: GATE_CPU_LIMIT
+  value: 20m
+
+# container 's3-reloader' resources
+- name: S3RELOADER_MEMORY_REQUESTS
+  value: 20Mi
+- name: S3RELOADER_MEMORY_LIMIT
+  value: 40Mi
+- name: S3RELOADER_CPU_REQUESTS
+  value: 5m
+- name: S3RELOADER_CPU_LIMIT
+  value: 10m
