@@ -44,7 +44,8 @@ describe('server', async() => {
           }
         }`;
 
-    const response = await chai.request(srv).get('/graphql').query({ query });
+    const sha_response = await chai.request(srv).get('/sha256');
+    const response = await chai.request(srv).get('/graphql' + sha_response.text).query({ query });
     responseIsNotAnError(response);
     return response.body.data.roles[0].permissions[0].service.should.equal('github-org-team');
   });
@@ -60,7 +61,8 @@ describe('server', async() => {
           }
       }`;
 
-    const response = await chai.request(srv).get('/graphql').query({ query });
+    const sha_response = await chai.request(srv).get('/sha256');
+    const response = await chai.request(srv).get('/graphql' + sha_response.text).query({ query });
     responseIsNotAnError(response);
     return response.body.data.apps[0].quayRepos[0].org.name.should.equal('quay-org-A');
   });
@@ -74,7 +76,8 @@ describe('server', async() => {
           }
       }`;
 
-    const response = await chai.request(srv).get('/graphql').query({ query });
+    const sha_response = await chai.request(srv).get('/sha256');
+    const response = await chai.request(srv).get('/graphql' + sha_response.text).query({ query });
     responseIsNotAnError(response);
     return response.body.data.resources[0].content.should.equal('test resource');
   });
