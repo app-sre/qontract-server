@@ -62,7 +62,11 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
 
   app.set('server', server);
 
-  server.applyMiddleware({ app });
+  const hash = app.get('bundle').fileHash;
+  server.applyMiddleware({
+    app,
+    path: '/graphql/' + hash
+  });
 
   app.post('/reload', async (req: express.Request, res: express.Response) => {
     try {
@@ -102,6 +106,10 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
 
   app.get('/healthz', (req: express.Request, res: express.Response) => { res.send(); });
   app.get('/', (req: express.Request, res: express.Response) => { res.redirect('/graphql'); });
+  app.get('/graphql', (req: express.Request, res: express.Response) => {
+    const hash = req.app.get('bundle').fileHash;
+    res.redirect('/graphql/' + hash);
+  });
 
   return app;
 };
