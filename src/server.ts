@@ -46,6 +46,18 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
     }
     next();
   });
+  // Register a middleware that will redirect requests from graphql/<sha> to /graphql
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const hash = req.app.get('bundle').fileHash;
+    if (req.url.startsWith("/graphqlsha/")) {
+      if (req.url == "/graphqlsha/" + hash) {
+        req.url = '/graphql'
+      } else {
+        res.status(409).send('Current sha is: ' + hash);
+      }
+    }
+    next();
+  });
 
   let server;
   try {
