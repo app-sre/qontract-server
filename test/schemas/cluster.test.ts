@@ -20,8 +20,7 @@ describe('clusters', async() => {
   });
 
   it('serves a basic graphql query', async() => {
-    const sha_response = await chai.request(srv).get('/sha256');
-    const resp = await chai.request(srv).get('/graphql/' + sha_response.text).query(
+    const resp = await chai.request(srv).get('/graphql').query(
       { query: '{ clusters: clusters_v1 { name } }' }
     );
     resp.should.have.status(200);

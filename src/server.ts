@@ -46,6 +46,18 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
     }
     next();
   });
+  // Register a middleware that will redirect requests from graphql/<sha> to /graphql
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const hash = req.app.get('bundle').fileHash;
+    if (req.url.startsWith("/graphqlsha/")) {
+      if (req.url == "/graphqlsha/" + hash) {
+        req.url = '/graphql'
+      } else {
+        res.status(404).send('Current sha is: ' + hash);
+      }
+    }
+    next();
+  });
 
   let server;
   try {
@@ -62,11 +74,7 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
 
   app.set('server', server);
 
-  const hash = app.get('bundle').fileHash;
-  server.applyMiddleware({
-    app,
-    path: '/graphql/' + hash
-  });
+  server.applyMiddleware({ app });
 
   app.post('/reload', async (req: express.Request, res: express.Response) => {
     try {
@@ -106,10 +114,15 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
 
   app.get('/healthz', (req: express.Request, res: express.Response) => { res.send(); });
   app.get('/', (req: express.Request, res: express.Response) => { res.redirect('/graphql'); });
-  app.get('/graphql', (req: express.Request, res: express.Response) => {
-    const hash = req.app.get('bundle').fileHash;
-    res.redirect('/graphql/' + hash);
-  });
+
+  // app.get('/graphqlsha/:hash', (req: express.Request, res: express.Response) => {
+  //   const hash = req.app.get('bundle').fileHash;
+  //   if (req.params['hash'] == hash) {
+  //     res.redirect('/graphql');
+  //   } else {
+  //     res.status(404).send('Current sha is: ' + hash);
+  //   }
+  // });
 
   return app;
 };
