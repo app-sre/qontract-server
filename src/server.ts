@@ -115,15 +115,6 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
   app.get('/healthz', (req: express.Request, res: express.Response) => { res.send(); });
   app.get('/', (req: express.Request, res: express.Response) => { res.redirect('/graphql'); });
 
-  // app.get('/graphqlsha/:hash', (req: express.Request, res: express.Response) => {
-  //   const hash = req.app.get('bundle').fileHash;
-  //   if (req.params['hash'] == hash) {
-  //     res.redirect('/graphql');
-  //   } else {
-  //     res.status(404).send('Current sha is: ' + hash);
-  //   }
-  // });
-
   return app;
 };
 
