@@ -53,7 +53,7 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
       if (req.url == "/graphqlsha/" + hash) {
         req.url = '/graphql'
       } else {
-        res.status(404).send('Current sha is: ' + hash);
+        res.status(409).send('Current sha is: ' + hash);
       }
     }
     next();
