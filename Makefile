@@ -39,7 +39,7 @@ run:
 	LOAD_METHOD=fs DATAFILES_FILE=$(BUNDLE_DIR)/$(BUNDLE_FILENAME) yarn run server
 
 docker-run:
-	@docker run --rm \
+	@docker run -it --rm \
 		-v $(BUNDLE_DIR):/bundle:z \
 		-p 4000:4000 \
 		-e LOAD_METHOD=fs \
