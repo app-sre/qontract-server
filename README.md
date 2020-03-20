@@ -19,7 +19,7 @@ The Reconcile loop is implementation specific. Any tool that conforms with the f
 - Is idempotent.
 - It can run with an option that only simulates what would happen, this called a plan or a dry-run.
 
-An example of an implementation reconcile tools can be obtained from here: [https://github.com/app-sre/qontract-reconcile](qontract-reconcile).
+An example of an implementation reconcile tools can be obtained from here: [qontract-reconcile](https://github.com/app-sre/qontract-reconcile).
 
 ## Development Environment
 
