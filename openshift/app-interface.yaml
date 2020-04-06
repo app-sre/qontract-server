@@ -11,7 +11,7 @@ objects:
       app: app-interface
     name: app-interface
   spec:
-    replicas: 1
+    replicas: ${{REPLICAS}}
     selector:
       app: app-interface
       deploymentconfig: app-interface
@@ -187,6 +187,8 @@ parameters:
   value: latest
   displayName: App interface version
   description: App interface version which defaults to latest
+- name: REPLICAS
+  value: "1"
 - name: IMAGE_GATE
   value: quay.io/app-sre/nginx-gate
 - name: IMAGE_GATE_TAG
