@@ -8,12 +8,21 @@ import * as db from './db';
 import { generateAppSchema, defaultResolver } from './schema';
 
 import prometheusClient = require('prom-client');
+const promBundle = require("express-prom-bundle");
 
 interface IAcct {
   [key: string]: number;
 }
 
-// enable prom-client to expose default application metrics
+const metricsMiddleware = promBundle({
+  includeMethod: true,
+  includePath: true,
+  normalizePath: [
+    ['^/graphqlsha/.*', '/graphqlsha/#sha'],
+  ],
+});
+
+// enable prom-cli
 const collectDefaultMetrics = prometheusClient.collectDefaultMetrics;
 
 // Probe every 5th second.
@@ -38,6 +47,8 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
 
   app.set('bundle', await bundle);
 
+  app.use(metricsMiddleware);
+
   // Register a middleware that will 503 if we haven't loaded a Bundle yet.
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     if ((!['/', '/reload'].includes(req.url)) && (req.app.get('bundle').datafiles.size === 0)) {
@@ -46,6 +57,7 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
     }
     next();
   });
+
   // Register a middleware that will redirect requests from graphql/<sha> to /graphql
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const hash = req.app.get('bundle').fileHash;
@@ -96,6 +108,7 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
         datafilesGuage.set({ schema: schemaName }, schema_count[schemaName]);
       })
       reloadCounter.inc(1, Date.now())
+
       console.log('reloaded');
       res.send();
     } catch (e) {
