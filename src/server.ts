@@ -20,6 +20,7 @@ const metricsMiddleware = promBundle({
   normalizePath: [
     ['^/graphqlsha/.*', '/graphqlsha/#sha'],
   ],
+  formatStatusCode: (res: express.Response) => Math.floor(res.statusCode / 100) + 'xx',
 });
 
 // enable prom-cli
