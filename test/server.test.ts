@@ -11,6 +11,9 @@ chai.use(chaiHttp);
 import * as server from '../src/server';
 import * as db from '../src/db';
 
+process.env.LOAD_METHOD = 'fs';
+process.env.DATAFILES_FILE = 'test/server.data.json';
+
 const should = chai.should();
 const expect = chai.expect;
 
@@ -24,7 +27,7 @@ describe('server', async() => {
   // Setup and teardown the GraphQL HTTP server.
   let srv: http.Server;
   before(async() => {
-    const app = await server.appFromBundle(db.bundleFromDisk('test/server.data.json'));
+    const app = await server.appFromBundle(db.bundleFromEnvironment());
     srv = app.listen({ port: 4000 });
   });
   after(async() => await util.promisify(srv.close));
@@ -77,5 +80,32 @@ describe('server', async() => {
     const response = await chai.request(srv).get('/graphql').query({ query });
     responseIsNotAnError(response);
     return response.body.data.resources[0].content.should.equal('test resource');
+  });
+
+  it('can retrieve a field from an interface', async() => {
+    const query = `{
+      roles: roles_v1(path: "/role-A.yml") {
+        permissions {
+          service
+          ... on PermissionGithubOrgTeam_v1 {
+            org
+          }
+        }
+      }
+    }
+    `;
+
+    const response1 = await chai.request(srv).get('/graphql').query({ query });
+    responseIsNotAnError(response1);
+    response1.body.data.roles[0].permissions[0].org.should.equal('org-A');
+
+    // check that it continues to work after a reload
+    await chai.request(srv).post('/reload');
+
+    const response2 = await chai.request(srv).get('/graphql').query({ query });
+    responseIsNotAnError(response2);
+
+    const perm = response2.body.data.roles[0].permissions[0];
+    expect(perm.org).to.equal('org-A');
   });
 });
