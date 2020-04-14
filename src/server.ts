@@ -1,34 +1,35 @@
 import * as util from 'util';
 import * as fs from 'fs';
 
-import { ApolloServer, gql } from 'apollo-server-express';
+import { ApolloServer } from 'apollo-server-express';
 import * as express from 'express';
 
 import * as db from './db';
 import { generateAppSchema, defaultResolver } from './schema';
 
-import prometheusClient = require('prom-client');
+import promClient = require('prom-client');
+import { GraphQLSchema } from 'graphql';
 
 interface IAcct {
   [key: string]: number;
 }
 
 // enable prom-client to expose default application metrics
-const collectDefaultMetrics = prometheusClient.collectDefaultMetrics;
+const collectDefaultMetrics = promClient.collectDefaultMetrics;
 
 // Probe every 5th second.
 collectDefaultMetrics({ prefix: 'qontract_server_' });
 
 // Create metric stores
-const reloadCounter = new prometheusClient.Counter({
+const reloadCounter = new promClient.Counter({
   name: 'qontract_server_reloads_total',
-  help: 'Number of reloads for qontract server'
+  help: 'Number of reloads for qontract server',
 });
 
-const datafilesGuage = new prometheusClient.Gauge({
+const datafilesGuage = new promClient.Gauge({
   name: 'qontract_server_datafiles',
   help: 'Number of datafiles for a specific schema',
-  labelNames: ['schema']
+  labelNames: ['schema'],
 });
 
 const readFile = util.promisify(fs.readFile);
@@ -49,17 +50,18 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
   // Register a middleware that will redirect requests from graphql/<sha> to /graphql
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const hash = req.app.get('bundle').fileHash;
-    if (req.url.startsWith("/graphqlsha/")) {
-      if (req.url == "/graphqlsha/" + hash) {
-        req.url = '/graphql'
+    if (req.url.startsWith('/graphqlsha/')) {
+      if (req.url === `/graphqlsha/${hash}`) {
+        req.url = '/graphql';
       } else {
-        res.status(409).send('Current sha is: ' + hash);
+        res.status(409).send(`Current sha is: ${hash}`);
       }
     }
     next();
   });
 
-  let server;
+  let server: ApolloServer;
+
   try {
     server = new ApolloServer({
       schema: generateAppSchema(app),
@@ -79,23 +81,29 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
   app.post('/reload', async (req: express.Request, res: express.Response) => {
     try {
       const bundle = await db.bundleFromEnvironment();
+
       req.app.set('bundle', bundle);
-      req.app.get('server').schema = generateAppSchema(req.app as express.Express);
+
+      const schema: GraphQLSchema = generateAppSchema(req.app as express.Express);
+      req.app.get('server').schema = schema;
 
       // Count number of files for each schema type
-      let schema_count: IAcct = bundle.datafiles.reduce((acc: IAcct, d) => {
+      const reducer = (acc: IAcct, d: any) => {
         if (!(d.$schema in acc)) {
           acc[d.$schema] = 0;
         }
-        acc[d.$schema]++;
+        acc[d.$schema] += 1;
         return acc;
-      }, {});
+      };
+      const schemaCount: IAcct = bundle.datafiles.reduce(reducer, {});
 
       // Set the Guage based on counted metrics
-      Object.keys(schema_count).map(function (schemaName, _) {
-        datafilesGuage.set({ schema: schemaName }, schema_count[schemaName]);
-      })
-      reloadCounter.inc(1, Date.now())
+      Object.keys(schemaCount).map(schemaName =>
+        datafilesGuage.set({ schema: schemaName }, schemaCount[schemaName]),
+      );
+
+      reloadCounter.inc(1);
+
       console.log('reloaded');
       res.send();
     } catch (e) {
@@ -109,7 +117,7 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
   });
 
   app.get('/metrics', (req: express.Request, res: express.Response) => {
-    res.send(prometheusClient.register.metrics());
+    res.send(promClient.register.metrics());
   });
 
   app.get('/healthz', (req: express.Request, res: express.Response) => { res.send(); });
