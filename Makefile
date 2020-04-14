@@ -50,7 +50,7 @@ docker-run-clean:
 	@docker ps -aq | xargs docker rm -f || true
 
 build:
-	@docker build -t $(IMAGE_NAME):latest .
+	@docker build --pull -t $(IMAGE_NAME):latest .
 	@docker tag $(IMAGE_NAME):latest $(IMAGE_NAME):$(IMAGE_TAG)
 
 push:
