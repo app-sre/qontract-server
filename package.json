@@ -22,7 +22,7 @@
     "dotenv": "^8.2.0",
     "express": "^4.16.4",
     "fs": "0.0.1-security",
-    "graphql": "^15.0.0",
+    "graphql": "^14.0.0",
     "immutable": "^4.0.0-rc.12",
     "js-yaml": "^3.13.1",
     "jsonpointer": "^4.0.1",
