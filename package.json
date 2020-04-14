@@ -21,6 +21,7 @@
     "bufferutil": "^4.0.1",
     "dotenv": "^8.2.0",
     "express": "^4.16.4",
+    "express-prom-bundle": "^6.0.0",
     "fs": "0.0.1-security",
     "graphql": "^14.0.0",
     "immutable": "^4.0.0-rc.12",
