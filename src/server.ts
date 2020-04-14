@@ -8,11 +8,24 @@ import * as db from './db';
 import { generateAppSchema, defaultResolver } from './schema';
 
 import promClient = require('prom-client');
+const promBundle = require('express-prom-bundle');
+
 import { GraphQLSchema } from 'graphql';
 
 interface IAcct {
   [key: string]: number;
 }
+
+// metrics middleware for express-prom-bundle
+const metricsMiddleware = promBundle({
+  includeMethod: true,
+  includePath: true,
+  normalizePath: [
+    ['^/graphqlsha/.*', '/graphqlsha/#sha'],
+  ],
+  buckets: [.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10],
+  formatStatusCode: (res: express.Response) => `${Math.floor(res.statusCode / 100)}xx`,
+});
 
 // enable prom-client to expose default application metrics
 const collectDefaultMetrics = promClient.collectDefaultMetrics;
@@ -38,6 +51,8 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
   const app: express.Express = express();
 
   app.set('bundle', await bundle);
+
+  app.use(metricsMiddleware);
 
   // Register a middleware that will 503 if we haven't loaded a Bundle yet.
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
