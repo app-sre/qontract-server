@@ -85,7 +85,13 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
       req.app.set('bundle', bundle);
 
       const schema: GraphQLSchema = generateAppSchema(req.app as express.Express);
+
+      // https://github.com/apollographql/apollo-server/issues/1275#issuecomment-532183702
+      // @ts-ignore
+      const schemaDerivedData = await server.generateSchemaDerivedData(schema);
+
       req.app.get('server').schema = schema;
+      req.app.get('server').schemaDerivedData = schemaDerivedData;
 
       // Count number of files for each schema type
       const reducer = (acc: IAcct, d: any) => {
