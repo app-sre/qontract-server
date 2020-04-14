@@ -23,6 +23,7 @@ const metricsMiddleware = promBundle({
   normalizePath: [
     ['^/graphqlsha/.*', '/graphqlsha/#sha'],
   ],
+  buckets: [.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10],
   formatStatusCode: (res: express.Response) => `${Math.floor(res.statusCode / 100)}xx`,
 });
 
