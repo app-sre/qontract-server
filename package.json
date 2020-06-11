@@ -16,7 +16,7 @@
     "update-graphql-schema": "scripts/update-graphql-schema.js test/graphql_schema.json $(find test -name '*.data.json')"
   },
   "dependencies": {
-    "apollo-server-express": "^2.2.0",
+    "apollo-server-express": "^2.14.2",
     "aws-sdk": "^2.364.0",
     "bufferutil": "^4.0.1",
     "dotenv": "^8.2.0",
