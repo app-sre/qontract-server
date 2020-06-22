@@ -25,6 +25,7 @@ export type Bundle = {
   resourcefiles: im.Map<string, Resourcefile>;
   schema: any[];
   fileHash: string;
+  gitCommit: string;
 };
 
 const getRefPath = (ref: string): string => /^[^$]*/.exec(ref)[0];
@@ -64,6 +65,7 @@ const parseBundle = (contents: string) : Bundle => {
     datafiles: parseDatafiles(parsedContents.data),
     resourcefiles: parseResourcefiles(parsedContents.resources),
     fileHash: hashDatafile(contents),
+    gitCommit: parsedContents['git_commit'],
     schema: parsedContents.graphql,
   } as Bundle;
 };
@@ -141,6 +143,7 @@ export const bundleFromEnvironment = async() => {
         resourcefiles: im.Map<string, Resourcefile>(),
         schema: {},
         fileHash: '',
+        gitCommit: '',
       } as Bundle;
   }
 };

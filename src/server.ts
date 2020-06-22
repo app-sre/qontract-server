@@ -137,6 +137,11 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
     res.send(hash);
   });
 
+  app.get('/git-commit', (req: express.Request, res: express.Response) => {
+    const git_commit = req.app.get('bundle').gitCommit;
+    res.send(git_commit);
+  });
+
   app.get('/metrics', (req: express.Request, res: express.Response) => {
     res.send(promClient.register.metrics());
   });
