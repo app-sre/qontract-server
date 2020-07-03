@@ -52,7 +52,6 @@ describe('server', async() => {
 
     response.body.extensions.schemas.should.eql(['/access/role-1.yml', '/access/permission-1.yml']);
     return response.body.data.roles[0].permissions[0].service.should.equal('github-org-team');
-
   });
 
   it('resolves object refs', async() => {
