@@ -71,6 +71,17 @@ export const defaultResolver = (app: express.Express) => (root: any,
                                                           args: any,
                                                           context: any,
                                                           info: any) => {
+  // add root.$schema to the schemas extensions
+  if (typeof(root.$schema) !== 'undefined') {
+    if ('schemas' in context) {
+      if (!context.schemas.includes(root.$schema)) {
+        context['schemas'].push(root.$schema);
+      }
+    } else {
+      context['schemas'] = [root.$schema];
+    }
+  }
+
   if (info.fieldName === 'schema') return root.$schema;
 
   const val = root[info.fieldName];

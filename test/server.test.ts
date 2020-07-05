@@ -20,7 +20,7 @@ const expect = chai.expect;
 const responseIsNotAnError = (res: any) => {
   res.should.have.status(200);
   res.body.should.not.have.any.keys('errors');
-  res.body.should.have.all.keys('data');
+  res.body.should.have.all.keys('data', 'extensions');
 };
 
 describe('server', async() => {
@@ -49,6 +49,8 @@ describe('server', async() => {
 
     const response = await chai.request(srv).get('/graphql').query({ query });
     responseIsNotAnError(response);
+
+    response.body.extensions.schemas.should.eql(['/access/role-1.yml', '/access/permission-1.yml']);
     return response.body.data.roles[0].permissions[0].service.should.equal('github-org-team');
   });
 
@@ -97,6 +99,8 @@ describe('server', async() => {
 
     const response1 = await chai.request(srv).get('/graphql').query({ query });
     responseIsNotAnError(response1);
+    response1.body.extensions.schemas.should.eql(['/access/role-1.yml',
+      '/access/permission-1.yml']);
     response1.body.data.roles[0].permissions[0].org.should.equal('org-A');
 
     // check that it continues to work after a reload
@@ -105,6 +109,8 @@ describe('server', async() => {
     const response2 = await chai.request(srv).get('/graphql').query({ query });
     responseIsNotAnError(response2);
 
+    response1.body.extensions.schemas.should.eql(['/access/role-1.yml',
+      '/access/permission-1.yml']);
     const perm = response2.body.data.roles[0].permissions[0];
     expect(perm.org).to.equal('org-A');
   });
