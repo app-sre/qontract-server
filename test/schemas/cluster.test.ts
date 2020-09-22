@@ -24,6 +24,7 @@ describe('clusters', async() => {
       { query: '{ clusters: clusters_v1 { name } }' },
     );
     resp.should.have.status(200);
+    resp.body.extensions.schemas.should.eql(['/openshift/cluster-1.yml']);
     return resp.body.data.clusters[0].name.should.equal('example cluster');
   });
 });

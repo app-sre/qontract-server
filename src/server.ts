@@ -83,6 +83,17 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
       playground: true,
       introspection: true,
       fieldResolver: defaultResolver(app),
+      plugins: [
+        {
+          requestDidStart(requestContext) {
+            return {
+              willSendResponse(requestContext) {
+                requestContext.response.extensions = { schemas: requestContext.context.schemas };
+              },
+            };
+          },
+        },
+      ],
     });
   } catch (e) {
     console.error(`error creating server: ${e}`);
