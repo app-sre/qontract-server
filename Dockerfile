@@ -1,4 +1,4 @@
-FROM centos:7
+FROM quay.io/app-sre/centos:7
 
 # Set PATH, because "scl enable" does not have any effects to "docker build"
 ENV PATH /opt/rh/rh-nodejs10/root/usr/bin:$PATH
