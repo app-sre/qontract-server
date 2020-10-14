@@ -47,30 +47,44 @@ const datafilesGuage = new promClient.Gauge({
 
 const readFile = util.promisify(fs.readFile);
 
-export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
+const buildApolloServer = (app: express.Express, bundleSha: string) : ApolloServer => new ApolloServer({
+  schema: generateAppSchema(app, bundleSha),
+  playground: true,
+  introspection: true,
+  fieldResolver: defaultResolver(app, bundleSha),
+  plugins: [
+    {
+      requestDidStart(requestContext) {
+        return {
+          willSendResponse(requestContext) {
+            requestContext.response.extensions = { schemas: requestContext.context.schemas };
+          },
+        };
+      },
+    },
+  ],
+});
+
+export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
   const app: express.Express = express();
 
-  app.set('bundle', await bundle);
+  // Create the initial `bundles` object. This object will have this shape:
+  // bundles:
+  //   <bundleSha>: <bundle>
+  const bundle = await bundlePromise;
+  const bundleSha = bundle.fileHash;
+  const bundles: any = {};
+  bundles[bundleSha] = bundle;
+  app.set('bundles', bundles);
 
+  // Middleware for prom metrics
   app.use(metricsMiddleware);
 
   // Register a middleware that will 503 if we haven't loaded a Bundle yet.
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if ((!['/', '/reload'].includes(req.url)) && (req.app.get('bundle').datafiles.size === 0)) {
+    if ((!['/', '/reload'].includes(req.url)) && typeof (req.app.get('bundles')) === 'undefined') {
       res.status(503).send('No loaded data.');
       return;
-    }
-    next();
-  });
-  // Register a middleware that will redirect requests from graphql/<sha> to /graphql
-  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const hash = req.app.get('bundle').fileHash;
-    if (req.url.startsWith('/graphqlsha/')) {
-      if (req.url === `/graphqlsha/${hash}`) {
-        req.url = '/graphql';
-      } else {
-        res.status(409).send(`Current sha is: ${hash}`);
-      }
     }
     next();
   });
@@ -78,46 +92,46 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
   let server: ApolloServer;
 
   try {
-    server = new ApolloServer({
-      schema: generateAppSchema(app),
-      playground: true,
-      introspection: true,
-      fieldResolver: defaultResolver(app),
-      plugins: [
-        {
-          requestDidStart(requestContext) {
-            return {
-              willSendResponse(requestContext) {
-                requestContext.response.extensions = { schemas: requestContext.context.schemas };
-              },
-            };
-          },
-        },
-      ],
-    });
+    server = buildApolloServer(app, bundleSha);
   } catch (e) {
     console.error(`error creating server: ${e}`);
+    console.log(e.stack);
     process.exit(1);
   }
 
-  app.set('server', server);
+  app.use(server.getMiddleware({ path: '/graphql' }));
+  app.use(server.getMiddleware({ path: `/graphqlsha/${bundleSha}` }));
 
-  server.applyMiddleware({ app });
+  // TODO: remove
+  console.log(Object.keys(app.get('bundles')));
 
   app.post('/reload', async (req: express.Request, res: express.Response) => {
     try {
+      // fetch the new bundle
       const bundle = await db.bundleFromEnvironment();
 
-      req.app.set('bundle', bundle);
+      const bundleSha = bundle.fileHash;
 
-      const schema: GraphQLSchema = generateAppSchema(req.app as express.Express);
+      // store it in the `bundles` object
+      const bundles = app.get('bundles');
+      bundles[bundleSha] = bundle;
+      req.app.set('bundles', bundles);
 
-      // https://github.com/apollographql/apollo-server/issues/1275#issuecomment-532183702
-      // @ts-ignore
-      const schemaDerivedData = await server.generateSchemaDerivedData(schema);
+      let server: ApolloServer;
+      try {
+        server = buildApolloServer(app, bundleSha);
+      } catch (e) {
+        console.error(`error creating server: ${e}`);
+        console.log(e.stack);
+        process.exit(1);
+      }
 
-      req.app.get('server').schema = schema;
-      req.app.get('server').schemaDerivedData = schemaDerivedData;
+      // Expose new bundle
+      app.use(server.getMiddleware({ path: '/graphql' }));
+      app.use(server.getMiddleware({ path: `/graphqlsha/${bundleSha}` }));
+
+      // TODO: remove
+      console.log(Object.keys(app.get('bundles')));
 
       // Count number of files for each schema type
       const reducer = (acc: IAcct, d: any) => {
@@ -144,13 +158,15 @@ export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
   });
 
   app.get('/sha256', (req: express.Request, res: express.Response) => {
-    const hash = req.app.get('bundle').fileHash;
-    res.send(hash);
+    // TODO: this is broken
+    const bundle = Object.values(req.app.get('bundles'))[0] as db.Bundle;
+    res.send(bundle.fileHash);
   });
 
   app.get('/git-commit', (req: express.Request, res: express.Response) => {
-    const git_commit = req.app.get('bundle').gitCommit;
-    res.send(git_commit);
+    // TODO: this is broken
+    const bundle = Object.values(req.app.get('bundles'))[0] as db.Bundle;
+    res.send(bundle.gitCommit);
   });
 
   app.get('/metrics', (req: express.Request, res: express.Response) => {

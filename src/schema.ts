@@ -43,10 +43,11 @@ const getInterfaceType = (app: express.Express, name: string) =>
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
 const resolveSyntheticField = (app: express.Express,
+                               bundleSha: string,
                                path: string,
                                schema: string,
                                subAttr: string) : db.Datafile[] =>
-  Array.from(app.get('bundle').datafiles.filter((datafile: any) => {
+  Array.from(app.get('bundles')[bundleSha].datafiles.filter((datafile: any) => {
 
     if (datafile.$schema !== schema) { return false; }
 
@@ -67,10 +68,10 @@ const resolveSyntheticField = (app: express.Express,
     return false;
   }).values());
 
-export const defaultResolver = (app: express.Express) => (root: any,
-                                                          args: any,
-                                                          context: any,
-                                                          info: any) => {
+export const defaultResolver = (app: express.Express, bundleSha: string) => (root: any,
+                                                                             args: any,
+                                                                             context: any,
+                                                                             info: any) => {
   // add root.$schema to the schemas extensions
   if (typeof(root.$schema) !== 'undefined') {
     if ('schemas' in context) {
@@ -99,7 +100,7 @@ export const defaultResolver = (app: express.Express) => (root: any,
     }
 
     // resolve all the elements of the array
-    let arrayResolve = val.map((x: db.Referencing) => db.resolveRef(app.get('bundle'), x));
+    let arrayResolve = val.map((x: db.Referencing) => db.resolveRef(app.get('bundles')[bundleSha], x));
 
     // `info.returnType` has information about what the GraphQL schema expects
     // as a return type. If it starts with `[` it means that we need to return
@@ -111,13 +112,13 @@ export const defaultResolver = (app: express.Express) => (root: any,
     return arrayResolve;
   }
 
-  if (isRef(val)) return db.resolveRef(app.get('bundle'), val);
+  if (isRef(val)) return db.resolveRef(app.get('bundles')[bundleSha], val);
   return val;
 };
 
 // ------------------ START SCHEMA ------------------
 
-const createSchemaType = (app: express.Express, conf: any) => {
+const createSchemaType = (app: express.Express, bundleSha: string, conf: any) => {
   const objTypeConf: any = {};
 
   // name
@@ -175,7 +176,7 @@ const createSchemaType = (app: express.Express, conf: any) => {
         // schema
         fieldDef['args'] = { path: { type: GraphQLString } };
         fieldDef['resolve'] = (root: any, args: any) => {
-          return Array.from(app.get('bundle').datafiles.filter(
+          return Array.from(app.get('bundles')[bundleSha].datafiles.filter(
             (df: db.Datafile) => {
               const sameSchema: boolean = df.$schema === fieldInfo.datafileSchema;
               return args.path ? df.path === args.path && sameSchema : sameSchema;
@@ -185,6 +186,7 @@ const createSchemaType = (app: express.Express, conf: any) => {
         // synthetic
         fieldDef['resolve'] = (root: any) => resolveSyntheticField(
           app,
+          bundleSha,
           root.path,
           fieldInfo.synthetic.schema,
           fieldInfo.synthetic.subAttr,
@@ -194,8 +196,8 @@ const createSchemaType = (app: express.Express, conf: any) => {
         fieldDef['args'] = { path: { type: GraphQLString } };
         fieldDef['resolve'] = (root: any, args: any) =>
           args.path ?
-            [app.get('bundle').resourcefiles.get(args.path)] :
-            Array.from(app.get('bundle').resourcefiles.values());
+            [app.get('bundles')[bundleSha].resourcefiles.get(args.path)] :
+            Array.from(app.get('bundles')[bundleSha].resourcefiles.values());
       }
 
       // return
@@ -249,13 +251,13 @@ const jsonType = new GraphQLScalarType({
   serialize: JSON.stringify,
 });
 
-export const generateAppSchema = (app: express.Express) : GraphQLSchema => {
-  const schemaData = app.get('bundle').schema;
+export const generateAppSchema = (app: express.Express, bundleSha: string) : GraphQLSchema => {
+  const schemaData = app.get('bundles')[bundleSha].schema;
 
   app.set('objectTypes', {});
   app.set('objectInterfaces', {});
 
-  schemaData.map((t: any) => createSchemaType(app, t));
+  schemaData.map((t: any) => createSchemaType(app, bundleSha, t));
 
   return new GraphQLSchema({
     types: Object.values(app.get('objectTypes')),
