@@ -1,6 +1,3 @@
-import * as util from 'util';
-import * as fs from 'fs';
-
 import { ApolloServer } from 'apollo-server-express';
 import * as express from 'express';
 
