@@ -10,11 +10,12 @@ import { generateAppSchema, defaultResolver } from './schema';
 import promClient = require('prom-client');
 const promBundle = require('express-prom-bundle');
 
-import { GraphQLSchema } from 'graphql';
-
 interface IAcct {
   [key: string]: number;
 }
+
+// sha expiration time (in ms)
+const BUNDLE_SHA_TTL = 20 * 60 * 1000;
 
 // metrics middleware for express-prom-bundle
 const metricsMiddleware = promBundle({
@@ -45,8 +46,24 @@ const datafilesGuage = new promClient.Gauge({
   labelNames: ['schema'],
 });
 
-const readFile = util.promisify(fs.readFile);
+// registers a new ApolloServer into the app router and cache
+const registerApolloServer = (app: express.Express, bundleSha: string, server: any) => {
+  const serverMiddleware = server.getMiddleware({ path: `/graphqlsha/${bundleSha}` });
+  const expiration = Date.now() + BUNDLE_SHA_TTL;
 
+  app.use(serverMiddleware);
+
+  // add to the cache
+  app.get('bundleCache')[bundleSha] = {
+    serverMiddleware,
+    expiration,
+  };
+
+  // set as latest sha
+  app.set('latestBundleSha', bundleSha);
+};
+
+// builds the ApolloServer for the specific bundleSha
 const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServer => new ApolloServer({
   schema: generateAppSchema(app, bundleSha),
   playground: true,
@@ -77,6 +94,9 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
   bundles[bundleSha] = bundle;
   app.set('bundles', bundles);
 
+  // Create cache object
+  app.set('bundleCache', {});
+
   // Middleware for prom metrics
   app.use(metricsMiddleware);
 
@@ -92,61 +112,27 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
   // Register a middleware that sends /graphql to the latest bundle
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     if (req.url === '/graphql') {
-      // TODO: fetch latest sha instead of hardcoding it
-      req.url = '/graphqlsha/9b0b35c6243d149c37a87c41eec94472212d78d4a584b09a7410c87044d8509a';
+      const bundleSha = req.app.get('latestBundleSha');
+      req.url = `/graphqlsha/${bundleSha}`;
     }
     next();
   });
 
-  let server: ApolloServer;
-
-  try {
-    server = buildApolloServer(app, bundleSha);
-  } catch (e) {
-    console.error(`error creating server: ${e}`);
-    console.log(e.stack);
-    process.exit(1);
-  }
-
-  app.use(server.getMiddleware({ path: `/graphqlsha/${bundleSha}` }));
-
-  // TODO: remove
-  console.log(Object.keys(app.get('bundles')));
+  const server: ApolloServer = buildApolloServer(app, bundleSha);
+  registerApolloServer(app, bundleSha, server);
 
   app.post('/reload', async (req: express.Request, res: express.Response) => {
     try {
       // fetch the new bundle
       const bundle = await db.bundleFromEnvironment();
 
-      const bundleSha = bundle.fileHash;
-
       // store it in the `bundles` object
-      const bundles = app.get('bundles');
-      bundles[bundleSha] = bundle;
-      req.app.set('bundles', bundles);
+      const bundleSha = bundle.fileHash;
+      app.get('bundles')[bundleSha] = bundle;
 
-      let server: ApolloServer;
-      try {
-        server = buildApolloServer(app, bundleSha);
-      } catch (e) {
-        console.error(`error creating server: ${e}`);
-        console.log(e.stack);
-        process.exit(1);
-      }
-
-      // app._router.stack.map((e: any) => {
-      //   if (e.name === 'router') {
-      //     e.handle.stack.map((s: any) => {
-      //       console.log(s.regexp);
-      //     });
-      //   }
-      // });
-
-      // Expose new bundle
-      app.use(server.getMiddleware({ path: `/graphqlsha/${bundleSha}` }));
-
-      // TODO: remove
-      console.log(Object.keys(app.get('bundles')));
+      // register a new server exposing this bundle
+      const server = buildApolloServer(app, bundleSha);
+      registerApolloServer(app, bundleSha, server);
 
       // Count number of files for each schema type
       const reducer = (acc: IAcct, d: any) => {
@@ -173,21 +159,24 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
   });
 
   app.get('/sha256', (req: express.Request, res: express.Response) => {
-    // TODO: this is broken
-    const bundle = Object.values(req.app.get('bundles'))[0] as db.Bundle;
-    res.send(bundle.fileHash);
+    const bundleSha = req.app.get('latestBundleSha');
+    res.send(req.app.get('bundles')[bundleSha].fileHash);
   });
 
   app.get('/git-commit', (req: express.Request, res: express.Response) => {
-    // TODO: this is broken
-    const bundle = Object.values(req.app.get('bundles'))[0] as db.Bundle;
-    res.send(bundle.gitCommit);
+    const bundleSha = req.app.get('latestBundleSha');
+    res.send(req.app.get('bundles')[bundleSha].gitCommit);
+  });
+
+  app.get('/git-commit/:sha', (req: express.Request, res: express.Response) => {
+    res.send(req.app.get('bundles')[req.params.sha].gitCommit);
   });
 
   app.get('/metrics', (req: express.Request, res: express.Response) => {
     res.send(promClient.register.metrics());
   });
 
+  app.get('/cache', (req: express.Request, res: express.Response) => { res.send(req.app.get('bundleCache')); });
   app.get('/healthz', (req: express.Request, res: express.Response) => { res.send(); });
   app.get('/', (req: express.Request, res: express.Response) => { res.redirect('/graphql'); });
 
