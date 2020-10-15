@@ -14,8 +14,13 @@ interface IAcct {
   [key: string]: number;
 }
 
-// sha expiration time (in ms)
-const BUNDLE_SHA_TTL = 20 * 60 * 1000;
+interface ICacheInfo {
+  expiration: number;
+  serverMiddleware: express.Router;
+}
+
+// sha expiration time (in ms). Defaults to 1h.
+const BUNDLE_SHA_TTL = Number(process.env.BUNDLE_SHA_TTL) || 20 * 60 * 1000;
 
 // metrics middleware for express-prom-bundle
 const metricsMiddleware = promBundle({
@@ -57,7 +62,7 @@ const registerApolloServer = (app: express.Express, bundleSha: string, server: a
   app.get('bundleCache')[bundleSha] = {
     serverMiddleware,
     expiration,
-  };
+  } as ICacheInfo;
 
   // set as latest sha
   app.set('latestBundleSha', bundleSha);
@@ -109,12 +114,23 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
     next();
   });
 
-  // Register a middleware that sends /graphql to the latest bundle
+  // Register a middleware that sends /graphql to the latest bundle. This middleware also
+  // increases the expiration time for a bundle.
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // rewrite to graphqlsha/<sha>
     if (req.url === '/graphql') {
       const bundleSha = req.app.get('latestBundleSha');
       req.url = `/graphqlsha/${bundleSha}`;
     }
+
+    const graphqlshaMatch = req.url.match(/\/graphqlsha\/(.*)$/);
+    if (graphqlshaMatch) {
+      const sha = graphqlshaMatch[1];
+      if (app.get('bundleCache')[sha]) {
+        app.get('bundleCache')[sha]['expiration'] = Date.now() + BUNDLE_SHA_TTL;
+      }
+    }
+
     next();
   });
 
@@ -129,6 +145,28 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
       // store it in the `bundles` object
       const bundleSha = bundle.fileHash;
       app.get('bundles')[bundleSha] = bundle;
+
+      // remove expired bundles
+      for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
+        if (sha === app.get('latestBundleSha')) {
+          continue;
+        }
+
+        const cacheInfo = cacheInfoObj as ICacheInfo;
+        if (cacheInfo.expiration < Date.now()) {
+          // removing sha
+          console.log(`Removing expired bundle: ${sha}`);
+          delete app.get('bundles')[sha];
+
+          // remove from router. NOTE: this is not officially supported and may break in future
+          // versions of express without warning.
+          const index = app._router.stack.findIndex((m: any) => m.handle === cacheInfo.serverMiddleware);
+          app._router.stack.splice(index, 1);
+
+          // remove from bundleCache
+          delete app.get('bundleCache')[sha];
+        }
+      }
 
       // register a new server exposing this bundle
       const server = buildApolloServer(app, bundleSha);
@@ -176,7 +214,20 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
     res.send(promClient.register.metrics());
   });
 
-  app.get('/cache', (req: express.Request, res: express.Response) => { res.send(req.app.get('bundleCache')); });
+  app.get('/cache', (req: express.Request, res: express.Response) => {
+    const fullCacheInfo: any = { bundleCache: [] };
+
+    for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
+      const cacheInfo = cacheInfoObj as ICacheInfo;
+      fullCacheInfo.bundleCache.push({sha, expiration: cacheInfo.expiration});
+    }
+
+    fullCacheInfo['bundles'] = Object.keys(req.app.get('bundles'));
+    fullCacheInfo['routerStack'] = app._router.stack.length;
+
+    res.send(JSON.stringify(fullCacheInfo));
+  });
+
   app.get('/healthz', (req: express.Request, res: express.Response) => { res.send(); });
   app.get('/', (req: express.Request, res: express.Response) => { res.redirect('/graphql'); });
 
