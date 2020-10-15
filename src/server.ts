@@ -47,7 +47,7 @@ const datafilesGuage = new promClient.Gauge({
 
 const readFile = util.promisify(fs.readFile);
 
-const buildApolloServer = (app: express.Express, bundleSha: string) : ApolloServer => new ApolloServer({
+const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServer => new ApolloServer({
   schema: generateAppSchema(app, bundleSha),
   playground: true,
   introspection: true,
@@ -89,6 +89,15 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
     next();
   });
 
+  // Register a middleware that sends /graphql to the latest bundle
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.url === '/graphql') {
+      // TODO: fetch latest sha instead of hardcoding it
+      req.url = '/graphqlsha/9b0b35c6243d149c37a87c41eec94472212d78d4a584b09a7410c87044d8509a';
+    }
+    next();
+  });
+
   let server: ApolloServer;
 
   try {
@@ -99,7 +108,6 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
     process.exit(1);
   }
 
-  app.use(server.getMiddleware({ path: '/graphql' }));
   app.use(server.getMiddleware({ path: `/graphqlsha/${bundleSha}` }));
 
   // TODO: remove
@@ -126,8 +134,15 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
         process.exit(1);
       }
 
+      // app._router.stack.map((e: any) => {
+      //   if (e.name === 'router') {
+      //     e.handle.stack.map((s: any) => {
+      //       console.log(s.regexp);
+      //     });
+      //   }
+      // });
+
       // Expose new bundle
-      app.use(server.getMiddleware({ path: '/graphql' }));
       app.use(server.getMiddleware({ path: `/graphqlsha/${bundleSha}` }));
 
       // TODO: remove
