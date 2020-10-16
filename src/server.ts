@@ -89,6 +89,32 @@ const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServe
   return server;
 };
 
+// remove expired bundles
+const removeExpiredBundles = (app: express.Express) => {
+  // remove expired bundles
+  for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
+    if (sha === app.get('latestBundleSha')) {
+      continue;
+    }
+
+    const cacheInfo = cacheInfoObj as ICacheInfo;
+    if (cacheInfo.expiration < Date.now()) {
+      // removing sha
+      console.log(`Removing expired bundle: ${sha}`);
+      delete app.get('bundles')[sha];
+
+      // remove from router. NOTE: this is not officially supported and may break in future
+      // versions of express without warning.
+      const index = app._router.stack.findIndex((m: any) =>
+        m.handle === cacheInfo.serverMiddleware);
+      app._router.stack.splice(index, 1);
+
+      // remove from bundleCache
+      delete app.get('bundleCache')[sha];
+    }
+  }
+};
+
 export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
   const app: express.Express = express();
 
@@ -159,30 +185,9 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
       return;
     }
 
+    removeExpiredBundles(app);
+
     app.get('bundles')[bundleSha] = bundle;
-
-    // remove expired bundles
-    for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
-      if (sha === app.get('latestBundleSha')) {
-        continue;
-      }
-
-      const cacheInfo = cacheInfoObj as ICacheInfo;
-      if (cacheInfo.expiration < Date.now()) {
-        // removing sha
-        console.log(`Removing expired bundle: ${sha}`);
-        delete app.get('bundles')[sha];
-
-        // remove from router. NOTE: this is not officially supported and may break in future
-        // versions of express without warning.
-        const index = app._router.stack.findIndex((m: any) => m.handle === cacheInfo.serverMiddleware);
-        app._router.stack.splice(index, 1);
-
-        // remove from bundleCache
-        delete app.get('bundleCache')[sha];
-      }
-    }
-
     // register a new server exposing this bundle
     const server = buildApolloServer(app, bundleSha);
     registerApolloServer(app, bundleSha, server);
