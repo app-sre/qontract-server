@@ -22,23 +22,26 @@ const isRef = (obj: Object) : boolean => {
   return obj.constructor === Object && Object.keys(obj).length === 1 && '$ref' in obj;
 };
 
-const addObjectType = (app: express.Express, name: string, obj: any) => {
-  const t: any = {};
-  t[name] = obj;
-  app.set('objectTypes', Object.assign(app.get('objectTypes'), t));
+const addObjectType = (app: express.Express, bundleSha: string, name: string, obj: any) => {
+  if (typeof(app.get('objectTypes')[bundleSha]) === 'undefined') {
+    app.get('objectTypes')[bundleSha] = {};
+  }
+  app.get('objectTypes')[bundleSha][name] = obj;
 };
 
-const getObjectType = (app: express.Express, name: string) =>
-  app.get('objectTypes')[name];
-
-const addInterfaceType = (app: express.Express, name: string, obj: any) => {
-  const t: any = {};
-  t[name] = obj;
-  app.set('objectInterfaces', Object.assign(app.get('objectInterfaces'), t));
+const getObjectType = (app: express.Express, bundleSha: string, name: string) => {
+  return app.get('objectTypes')[bundleSha][name];
 };
 
-const getInterfaceType = (app: express.Express, name: string) =>
-  app.get('objectInterfaces')[name];
+const addInterfaceType = (app: express.Express, bundleSha: string, name: string, obj: any) => {
+  if (typeof(app.get('objectInterfaces')[bundleSha]) === 'undefined') {
+    app.get('objectInterfaces')[bundleSha] = {};
+  }
+  app.get('objectInterfaces')[bundleSha][name] = obj;
+};
+
+const getInterfaceType = (app: express.Express, bundleSha: string, name: string) =>
+  app.get('objectInterfaces')[bundleSha][name];
 
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
@@ -151,9 +154,9 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
             break;
           default:
             if (fieldInfo.isInterface) {
-              t = getInterfaceType(app, t);
+              t = getInterfaceType(app, bundleSha, t);
             } else {
-              t = getObjectType(app, t);
+              t = getObjectType(app, bundleSha, t);
             }
         }
       }
@@ -209,7 +212,7 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
 
   // interface
   if (conf.interface) {
-    objTypeConf['interfaces'] = () => [getInterfaceType(app, conf.interface)];
+    objTypeConf['interfaces'] = () => [getInterfaceType(app, bundleSha, conf.interface)];
   }
 
   // generate resolveType for interfaces
@@ -223,7 +226,7 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
           const fieldValue = source[field];
 
           const fieldMap = conf.interfaceResolve.fieldMap;
-          return getObjectType(app, fieldMap[fieldValue]);
+          return getObjectType(app, bundleSha, fieldMap[fieldValue]);
         };
         break;
       default:
@@ -237,10 +240,10 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
 
   if (conf.isInterface) {
     objType = new GraphQLInterfaceType(objTypeConf);
-    addInterfaceType(app, conf.name, objType);
+    addInterfaceType(app, bundleSha, conf.name, objType);
   } else {
     objType = new GraphQLObjectType(objTypeConf);
-    addObjectType(app, conf.name, objType);
+    addObjectType(app, bundleSha, conf.name, objType);
   }
 
   return objType;
@@ -254,13 +257,18 @@ const jsonType = new GraphQLScalarType({
 export const generateAppSchema = (app: express.Express, bundleSha: string) : GraphQLSchema => {
   const schemaData = app.get('bundles')[bundleSha].schema;
 
-  app.set('objectTypes', {});
-  app.set('objectInterfaces', {});
+  if (typeof(app.get('objectTypes')) === 'undefined') {
+    app.set('objectTypes', {});
+  }
+
+  if (typeof(app.get('objectInterfaces')) === 'undefined') {
+    app.set('objectInterfaces', {});
+  }
 
   schemaData.map((t: any) => createSchemaType(app, bundleSha, t));
 
   return new GraphQLSchema({
-    types: Object.values(app.get('objectTypes')),
-    query: getObjectType(app, 'Query'),
+    types: Object.values(app.get('objectTypes')[bundleSha]),
+    query: getObjectType(app, bundleSha, 'Query'),
   });
 };

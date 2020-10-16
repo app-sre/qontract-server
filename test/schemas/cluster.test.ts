@@ -20,9 +20,8 @@ describe('clusters', async() => {
   });
 
   it('serves a basic graphql query', async() => {
-    const resp = await chai.request(srv).get('/graphql').query(
-      { query: '{ clusters: clusters_v1 { name } }' },
-    );
+    const query = '{ clusters: clusters_v1 { name } }';
+    const resp = await chai.request(srv).post('/graphql').set('content-type', 'application/json').send({ query });
     resp.should.have.status(200);
     resp.body.extensions.schemas.should.eql(['/openshift/cluster-1.yml']);
     return resp.body.data.clusters[0].name.should.equal('example cluster');

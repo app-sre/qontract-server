@@ -66,23 +66,33 @@ const registerApolloServer = (app: express.Express, bundleSha: string, server: a
 };
 
 // builds the ApolloServer for the specific bundleSha
-const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServer => new ApolloServer({
-  schema: generateAppSchema(app, bundleSha),
-  playground: true,
-  introspection: true,
-  fieldResolver: defaultResolver(app, bundleSha),
-  plugins: [
-    {
-      requestDidStart(requestContext) {
-        return {
-          willSendResponse(requestContext) {
-            requestContext.response.extensions = { schemas: requestContext.context.schemas };
-          },
-        };
+const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServer => {
+  const schema = generateAppSchema(app, bundleSha);
+  const server = new ApolloServer({
+    schema,
+    playground: true,
+    introspection: true,
+    fieldResolver: defaultResolver(app, bundleSha),
+    plugins: [
+      {
+        requestDidStart(requestContext) {
+          return {
+            willSendResponse(requestContext) {
+              requestContext.response.extensions = { schemas: requestContext.context.schemas };
+            },
+          };
+        },
       },
-    },
-  ],
-});
+    ],
+  });
+
+  // https://github.com/apollographql/apollo-server/issues/1275#issuecomment-532183702
+  // @ts-ignore
+  // server.schemaDerivedData = server.generateSchemaDerivedData(schema);
+  // console.log(server.schemaDerivedData);
+
+  return server;
+};
 
 export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
   const app: express.Express = express();
@@ -135,62 +145,72 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
   registerApolloServer(app, bundleSha, server);
 
   app.post('/reload', async (req: express.Request, res: express.Response) => {
+    let bundle: db.Bundle;
+
     try {
       // fetch the new bundle
-      const bundle = await db.bundleFromEnvironment();
-
-      // store it in the `bundles` object
-      const bundleSha = bundle.fileHash;
-      app.get('bundles')[bundleSha] = bundle;
-
-      // remove expired bundles
-      for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
-        if (sha === app.get('latestBundleSha')) {
-          continue;
-        }
-
-        const cacheInfo = cacheInfoObj as ICacheInfo;
-        if (cacheInfo.expiration < Date.now()) {
-          // removing sha
-          console.log(`Removing expired bundle: ${sha}`);
-          delete app.get('bundles')[sha];
-
-          // remove from router. NOTE: this is not officially supported and may break in future
-          // versions of express without warning.
-          const index = app._router.stack.findIndex((m: any) => m.handle === cacheInfo.serverMiddleware);
-          app._router.stack.splice(index, 1);
-
-          // remove from bundleCache
-          delete app.get('bundleCache')[sha];
-        }
-      }
-
-      // register a new server exposing this bundle
-      const server = buildApolloServer(app, bundleSha);
-      registerApolloServer(app, bundleSha, server);
-
-      // Count number of files for each schema type
-      const reducer = (acc: IAcct, d: any) => {
-        if (!(d.$schema in acc)) {
-          acc[d.$schema] = 0;
-        }
-        acc[d.$schema] += 1;
-        return acc;
-      };
-      const schemaCount: IAcct = bundle.datafiles.reduce(reducer, {});
-
-      // Set the Guage based on counted metrics
-      Object.keys(schemaCount).map(schemaName =>
-        datafilesGuage.set({ schema: schemaName }, schemaCount[schemaName]),
-      );
-
-      reloadCounter.inc(1);
-
-      console.log('reloaded');
-      res.send();
+      bundle = await db.bundleFromEnvironment();
     } catch (e) {
       res.status(503).send('error parsing bundle, not replacing');
+      return;
     }
+
+    // store it in the `bundles` object
+    const bundleSha = bundle.fileHash;
+
+    if (app.get('bundles')[bundleSha]) {
+      console.log('Skipping reload, data already loaded');
+      res.send();
+      return;
+    }
+
+    app.get('bundles')[bundleSha] = bundle;
+
+    // remove expired bundles
+    for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
+      if (sha === app.get('latestBundleSha')) {
+        continue;
+      }
+
+      const cacheInfo = cacheInfoObj as ICacheInfo;
+      if (cacheInfo.expiration < Date.now()) {
+        // removing sha
+        console.log(`Removing expired bundle: ${sha}`);
+        delete app.get('bundles')[sha];
+
+        // remove from router. NOTE: this is not officially supported and may break in future
+        // versions of express without warning.
+        const index = app._router.stack.findIndex((m: any) => m.handle === cacheInfo.serverMiddleware);
+        app._router.stack.splice(index, 1);
+
+        // remove from bundleCache
+        delete app.get('bundleCache')[sha];
+      }
+    }
+
+    // register a new server exposing this bundle
+    const server = buildApolloServer(app, bundleSha);
+    registerApolloServer(app, bundleSha, server);
+
+    // Count number of files for each schema type
+    const reducer = (acc: IAcct, d: any) => {
+      if (!(d.$schema in acc)) {
+        acc[d.$schema] = 0;
+      }
+      acc[d.$schema] += 1;
+      return acc;
+    };
+    const schemaCount: IAcct = bundle.datafiles.reduce(reducer, {});
+
+    // Set the Guage based on counted metrics
+    Object.keys(schemaCount).map(schemaName =>
+      datafilesGuage.set({ schema: schemaName }, schemaCount[schemaName]),
+    );
+
+    reloadCounter.inc(1);
+
+    console.log('reloaded');
+    res.send();
   });
 
   app.get('/sha256', (req: express.Request, res: express.Response) => {
