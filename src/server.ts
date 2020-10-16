@@ -86,11 +86,6 @@ const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServe
     ],
   });
 
-  // https://github.com/apollographql/apollo-server/issues/1275#issuecomment-532183702
-  // @ts-ignore
-  // server.schemaDerivedData = server.generateSchemaDerivedData(schema);
-  // console.log(server.schemaDerivedData);
-
   return server;
 };
 
