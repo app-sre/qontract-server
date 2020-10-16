@@ -15,7 +15,7 @@ const should = chai.should();
 describe('clusters', async() => {
   let srv: http.Server;
   before(async() => {
-    const app = await server.appFromBundle(db.bundleFromDisk('test/schemas/cluster.data.json'));
+    const app = await server.appFromBundle(db.bundleFromDisk('test/schemas/schemas.data.json'));
     srv = app.listen({ port: 4000 });
   });
 
