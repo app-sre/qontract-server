@@ -1,67 +1,19 @@
 import { ApolloServer } from 'apollo-server-express';
 import * as express from 'express';
+import promClient = require('prom-client');
 
 import * as db from './db';
+import * as metrics from './metrics';
 import { generateAppSchema, defaultResolver } from './schema';
-
-import promClient = require('prom-client');
-const promBundle = require('express-prom-bundle');
-
-interface IAcct {
-  [key: string]: number;
-}
-
-interface ICacheInfo {
-  expiration: number;
-  serverMiddleware: express.Router;
-}
 
 // sha expiration time (in ms). Defaults to 1h.
 const BUNDLE_SHA_TTL = Number(process.env.BUNDLE_SHA_TTL) || 20 * 60 * 1000;
 
-// metrics middleware for express-prom-bundle
-const metricsMiddleware = promBundle({
-  includeMethod: true,
-  includePath: true,
-  normalizePath: [
-    ['^/graphqlsha/.*', '/graphqlsha/#sha'],
-  ],
-  buckets: [.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10],
-  formatStatusCode: (res: express.Response) => `${Math.floor(res.statusCode / 100)}xx`,
-});
-
-// enable prom-client to expose default application metrics
-const collectDefaultMetrics = promClient.collectDefaultMetrics;
-
-// Probe every 5th second.
-collectDefaultMetrics({ prefix: 'qontract_server_' });
-
-// Create metric stores
-const reloadCounter = new promClient.Counter({
-  name: 'qontract_server_reloads_total',
-  help: 'Number of reloads for qontract server',
-});
-
-const datafilesGuage = new promClient.Gauge({
-  name: 'qontract_server_datafiles',
-  help: 'Number of datafiles for a specific schema',
-  labelNames: ['schema'],
-});
-
-const routerStackGauge = new promClient.Gauge({
-  name: 'qontract_server_router_stack',
-  help: 'Number of layers in the router stack',
-});
-
-const bundleGauge = new promClient.Gauge({
-  name: 'qontract_server_cache_bundle',
-  help: 'Number of shas cached by the application in the bundle object',
-});
-
-const bundleCacheGauge = new promClient.Gauge({
-  name: 'qontract_server_cache_bundle_cache',
-  help: 'Number of shas cached by the application in the bundleCache object',
-});
+// Interfaces
+interface ICacheInfo {
+  expiration: number;
+  serverMiddleware: express.Router;
+}
 
 // registers a new ApolloServer into the app router and cache
 const registerApolloServer = (app: express.Express, bundleSha: string, server: any) => {
@@ -130,31 +82,7 @@ const removeExpiredBundles = (app: express.Express) => {
   }
 };
 
-const updateCacheMetrics = (app: express.Express) => {
-  routerStackGauge.set(app._router.stack.length);
-  bundleGauge.set(Object.keys(app.get('bundles')).length);
-  bundleCacheGauge.set(Object.keys(app.get('bundleCache')).length);
-};
-
-const updateResourceMetrics = (bundle: db.Bundle) => {
-  // Count number of files for each schema type
-  const reducer = (acc: IAcct, d: any) => {
-    if (!(d.$schema in acc)) {
-      acc[d.$schema] = 0;
-    }
-    acc[d.$schema] += 1;
-    return acc;
-  };
-  const schemaCount: IAcct = bundle.datafiles.reduce(reducer, {});
-
-  // Set the Guage based on counted metrics
-  Object.keys(schemaCount).map(schemaName =>
-    datafilesGuage.set({ schema: schemaName }, schemaCount[schemaName]),
-  );
-
-  reloadCounter.inc(1);
-};
-
+// Create application
 export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
   const app: express.Express = express();
 
@@ -171,7 +99,7 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
   app.set('bundleCache', {});
 
   // Middleware for prom metrics
-  app.use(metricsMiddleware);
+  app.use(metrics.metricsMiddleware);
 
   // Register a middleware that will 503 if we haven't loaded a Bundle yet.
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -232,8 +160,8 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
     const server = buildApolloServer(app, bundleSha);
     registerApolloServer(app, bundleSha, server);
 
-    updateResourceMetrics(bundle);
-    updateCacheMetrics(app);
+    metrics.updateResourceMetrics(bundle);
+    metrics.updateCacheMetrics(app);
 
     console.log('reloaded');
     res.send();
@@ -286,7 +214,7 @@ if (!module.parent) {
       console.log('Running at http://localhost:4000/graphql');
     });
 
-    updateCacheMetrics(app);
-    updateResourceMetrics(app.get('bundles')[app.get('latestBundleSha')]);
+    metrics.updateCacheMetrics(app);
+    metrics.updateResourceMetrics(app.get('bundles')[app.get('latestBundleSha')]);
   });
 }
