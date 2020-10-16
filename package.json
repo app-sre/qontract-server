@@ -1,6 +1,6 @@
 {
   "name": "qontract-server",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "qontract graphql server",
   "author": "Red Hat App SREs <sd-app-sre@redhat.com>",
   "license": "Apache-2.0",
