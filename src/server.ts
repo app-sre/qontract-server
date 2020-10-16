@@ -48,6 +48,21 @@ const datafilesGuage = new promClient.Gauge({
   labelNames: ['schema'],
 });
 
+const routerStackGauge = new promClient.Gauge({
+  name: 'qontract_server_router_stack',
+  help: 'Number of layers in the router stack',
+});
+
+const bundleGauge = new promClient.Gauge({
+  name: 'qontract_server_cache_bundle',
+  help: 'Number of shas cached by the application in the bundle object',
+});
+
+const bundleCacheGauge = new promClient.Gauge({
+  name: 'qontract_server_cache_bundle_cache',
+  help: 'Number of shas cached by the application in the bundleCache object',
+});
+
 // registers a new ApolloServer into the app router and cache
 const registerApolloServer = (app: express.Express, bundleSha: string, server: any) => {
   const serverMiddleware = server.getMiddleware({ path: `/graphqlsha/${bundleSha}` });
@@ -113,6 +128,31 @@ const removeExpiredBundles = (app: express.Express) => {
       delete app.get('bundleCache')[sha];
     }
   }
+};
+
+const updateCacheMetrics = (app: express.Express) => {
+  routerStackGauge.set(app._router.stack.length);
+  bundleGauge.set(Object.keys(app.get('bundles')).length);
+  bundleCacheGauge.set(Object.keys(app.get('bundleCache')).length);
+};
+
+const updateResourceMetrics = (bundle: db.Bundle) => {
+  // Count number of files for each schema type
+  const reducer = (acc: IAcct, d: any) => {
+    if (!(d.$schema in acc)) {
+      acc[d.$schema] = 0;
+    }
+    acc[d.$schema] += 1;
+    return acc;
+  };
+  const schemaCount: IAcct = bundle.datafiles.reduce(reducer, {});
+
+  // Set the Guage based on counted metrics
+  Object.keys(schemaCount).map(schemaName =>
+    datafilesGuage.set({ schema: schemaName }, schemaCount[schemaName]),
+  );
+
+  reloadCounter.inc(1);
 };
 
 export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
@@ -192,22 +232,8 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
     const server = buildApolloServer(app, bundleSha);
     registerApolloServer(app, bundleSha, server);
 
-    // Count number of files for each schema type
-    const reducer = (acc: IAcct, d: any) => {
-      if (!(d.$schema in acc)) {
-        acc[d.$schema] = 0;
-      }
-      acc[d.$schema] += 1;
-      return acc;
-    };
-    const schemaCount: IAcct = bundle.datafiles.reduce(reducer, {});
-
-    // Set the Guage based on counted metrics
-    Object.keys(schemaCount).map(schemaName =>
-      datafilesGuage.set({ schema: schemaName }, schemaCount[schemaName]),
-    );
-
-    reloadCounter.inc(1);
+    updateResourceMetrics(bundle);
+    updateCacheMetrics(app);
 
     console.log('reloaded');
     res.send();
@@ -259,5 +285,8 @@ if (!module.parent) {
     app.listen({ port: 4000 }, () => {
       console.log('Running at http://localhost:4000/graphql');
     });
+
+    updateCacheMetrics(app);
+    updateResourceMetrics(app.get('bundles')[app.get('latestBundleSha')]);
   });
 }
