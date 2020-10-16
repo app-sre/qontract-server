@@ -21,7 +21,6 @@ export const metricsMiddleware = promBundle({
 
 // enable prom-client to expose default application metrics
 promClient.collectDefaultMetrics({ prefix: 'qontract_server_' });
-export promClient;
 
 // Create metric stores
 const reloadCounter = new promClient.Counter({
