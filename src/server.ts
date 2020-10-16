@@ -236,7 +236,7 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
 
     for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
       const cacheInfo = cacheInfoObj as ICacheInfo;
-      fullCacheInfo.bundleCache.push({sha, expiration: cacheInfo.expiration});
+      fullCacheInfo.bundleCache.push({ sha, expiration: cacheInfo.expiration });
     }
 
     fullCacheInfo['bundles'] = Object.keys(req.app.get('bundles'));
