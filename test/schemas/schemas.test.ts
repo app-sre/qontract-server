@@ -12,10 +12,13 @@ import * as db from '../../src/db';
 
 const should = chai.should();
 
+
 describe('clusters', async() => {
   let srv: http.Server;
   before(async() => {
-    const app = await server.appFromBundle(db.bundleFromDisk('test/schemas/schemas.data.json'));
+    process.env.LOAD_METHOD = 'fs';
+    process.env.DATAFILES_FILE = 'test/schemas/schemas.data.json';
+    const app = await server.appFromBundle(db.bundleFromEnvironment());
     srv = app.listen({ port: 4000 });
   });
 

@@ -11,9 +11,6 @@ chai.use(chaiHttp);
 import * as server from '../src/server';
 import * as db from '../src/db';
 
-process.env.LOAD_METHOD = 'fs';
-process.env.DATAFILES_FILE = 'test/server.data.json';
-
 const should = chai.should();
 const expect = chai.expect;
 
@@ -27,6 +24,8 @@ describe('server', async () => {
   // Setup and teardown the GraphQL HTTP server.
   let srv: http.Server;
   before(async () => {
+    process.env.LOAD_METHOD = 'fs';
+    process.env.DATAFILES_FILE = 'test/server.data.json';
     const app = await server.appFromBundle(db.bundleFromEnvironment());
     srv = app.listen({ port: 4000 });
   });
