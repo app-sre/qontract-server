@@ -66,6 +66,15 @@ describe('multishas', async () => {
     resp.body.data.resources_v1[0].resourceAField.should.equal('sha1');
   });
 
+  it('serves a basic graphql query using GET', async () => {
+    const resp = await chai.request(srv)
+                        .get('/graphql')
+                        .query({ query });
+    resp.should.have.status(200);
+    resp.body.data.resources_v1[0].name.should.equal('sha1');
+    resp.body.data.resources_v1[0].resourceAField.should.equal('sha1');
+  });
+
   it('reloads and works', async () => {
     await chai.request(srv).post('/reload');
 

@@ -114,7 +114,7 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
   // increases the expiration time for a bundle.
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     // rewrite to graphqlsha/<sha>
-    if (req.url === '/graphql') {
+    if (req.path === '/graphql') {
       const bundleSha = req.app.get('latestBundleSha');
       req.url = `/graphqlsha/${bundleSha}`;
     }
