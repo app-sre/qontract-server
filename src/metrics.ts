@@ -35,17 +35,17 @@ const datafilesGuage = new promClient.Gauge({
 });
 
 const routerStackGauge = new promClient.Gauge({
-  name: 'qontract_server_router_stack',
+  name: 'qontract_server_router_stack_layers',
   help: 'Number of layers in the router stack',
 });
 
 const bundleGauge = new promClient.Gauge({
-  name: 'qontract_server_cache_bundle',
+  name: 'qontract_server_bundle_object_shas',
   help: 'Number of shas cached by the application in the bundle object',
 });
 
 const bundleCacheGauge = new promClient.Gauge({
-  name: 'qontract_server_cache_bundle_cache',
+  name: 'qontract_server_bundle_object_shas_cache',
   help: 'Number of shas cached by the application in the bundleCache object',
 });
 
