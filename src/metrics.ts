@@ -28,7 +28,7 @@ const reloadCounter = new promClient.Counter({
   help: 'Number of reloads for qontract server',
 });
 
-const datafilesGuage = new promClient.Gauge({
+const datafilesGauge = new promClient.Gauge({
   name: 'qontract_server_datafiles',
   help: 'Number of datafiles for a specific schema',
   labelNames: ['schema'],
@@ -66,9 +66,9 @@ export const updateResourceMetrics = (bundle: db.Bundle) => {
   };
   const schemaCount: IAcct = bundle.datafiles.reduce(reducer, {});
 
-  // Set the Guage based on counted metrics
+  // Set the Gauge based on counted metrics
   Object.keys(schemaCount).map(schemaName =>
-    datafilesGuage.set({ schema: schemaName }, schemaCount[schemaName]),
+    datafilesGauge.set({ schema: schemaName }, schemaCount[schemaName]),
   );
 
   reloadCounter.inc(1);
