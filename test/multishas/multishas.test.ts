@@ -76,7 +76,19 @@ describe('multishas', async () => {
   });
 
   it('reloads and works', async () => {
-    await chai.request(srv).post('/reload');
+    const reloadResp = await chai.request(srv).post('/reload');
+    reloadResp.should.have.status(200);
+
+    const resp = await gql(srv, query);
+    resp.should.have.status(200);
+    resp.body.data.resources_v1[0].name.should.equal('sha1');
+    resp.body.data.resources_v1[0].resourceAField.should.equal('sha1');
+  });
+
+  it('bad bundle reload is ignored and continues working', async () => {
+    process.env.DATAFILES_FILE = 'test/multishas/multishas-invalid.data.json';
+    const reloadResp = await chai.request(srv).post('/reload');
+    reloadResp.should.have.status(503);
 
     const resp = await gql(srv, query);
     resp.should.have.status(200);
