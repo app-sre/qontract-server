@@ -6,7 +6,7 @@ import * as db from './db';
 import * as metrics from './metrics';
 import { generateAppSchema, defaultResolver } from './schema';
 
-// sha expiration time (in ms). Defaults to 1h.
+// sha expiration time (in ms). Defaults to 20m.
 const BUNDLE_SHA_TTL = Number(process.env.BUNDLE_SHA_TTL) || 20 * 60 * 1000;
 
 // Interfaces
