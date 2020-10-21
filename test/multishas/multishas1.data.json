@@ -1,0 +1,79 @@
+{
+  "data": {
+    "/resource1.yml": {
+      "$schema": "/resource-1.yml",
+      "name": "sha1",
+      "type": "a",
+      "resourceAField": "sha1"
+    }
+  },
+  "graphql": [
+    {
+      "name": "Resource_v1",
+      "isInterface": true,
+      "interfaceResolve": {
+        "strategy": "fieldMap",
+        "field": "type",
+        "fieldMap": {
+          "a": "ResourceTypeA_v1"
+        }
+      },
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "schema"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "type"
+        }
+      ]
+    },
+    {
+      "name": "ResourceTypeA_v1",
+      "interface": "Resource_v1",
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "schema"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "type"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "resourceAField"
+        }
+      ]
+    },
+    {
+      "fields": [
+        {
+          "type": "Resource_v1",
+          "name": "resources_v1",
+          "isList": true,
+          "isInterface": true,
+          "datafileSchema": "/resource-1.yml"
+        }
+      ],
+      "name": "Query"
+    }
+  ],
+  "resources": {}
+}

@@ -1,160 +1,202 @@
-import * as util from 'util';
-import * as fs from 'fs';
-
 import { ApolloServer } from 'apollo-server-express';
 import * as express from 'express';
+import promClient = require('prom-client');
 
 import * as db from './db';
+import * as metrics from './metrics';
 import { generateAppSchema, defaultResolver } from './schema';
 
-import promClient = require('prom-client');
-const promBundle = require('express-prom-bundle');
+// sha expiration time (in ms). Defaults to 20m.
+const BUNDLE_SHA_TTL = Number(process.env.BUNDLE_SHA_TTL) || 20 * 60 * 1000;
 
-import { GraphQLSchema } from 'graphql';
-
-interface IAcct {
-  [key: string]: number;
+// Interfaces
+interface ICacheInfo {
+  expiration: number;
+  serverMiddleware: express.Router;
 }
 
-// metrics middleware for express-prom-bundle
-const metricsMiddleware = promBundle({
-  includeMethod: true,
-  includePath: true,
-  normalizePath: [
-    ['^/graphqlsha/.*', '/graphqlsha/#sha'],
-  ],
-  buckets: [.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10],
-  formatStatusCode: (res: express.Response) => `${Math.floor(res.statusCode / 100)}xx`,
-});
+// registers a new ApolloServer into the app router and cache
+const registerApolloServer = (app: express.Express, bundleSha: string, server: any) => {
+  const serverMiddleware = server.getMiddleware({ path: `/graphqlsha/${bundleSha}` });
+  const expiration = Date.now() + BUNDLE_SHA_TTL;
 
-// enable prom-client to expose default application metrics
-const collectDefaultMetrics = promClient.collectDefaultMetrics;
+  app.use(serverMiddleware);
 
-// Probe every 5th second.
-collectDefaultMetrics({ prefix: 'qontract_server_' });
+  // add to the cache
+  app.get('bundleCache')[bundleSha] = {
+    serverMiddleware,
+    expiration,
+  } as ICacheInfo;
 
-// Create metric stores
-const reloadCounter = new promClient.Counter({
-  name: 'qontract_server_reloads_total',
-  help: 'Number of reloads for qontract server',
-});
+  // set as latest sha
+  app.set('latestBundleSha', bundleSha);
+};
 
-const datafilesGuage = new promClient.Gauge({
-  name: 'qontract_server_datafiles',
-  help: 'Number of datafiles for a specific schema',
-  labelNames: ['schema'],
-});
+// builds the ApolloServer for the specific bundleSha
+const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServer => {
+  const schema = generateAppSchema(app, bundleSha);
+  const server = new ApolloServer({
+    schema,
+    playground: true,
+    introspection: true,
+    fieldResolver: defaultResolver(app, bundleSha),
+    plugins: [
+      {
+        requestDidStart(requestContext) {
+          return {
+            willSendResponse(requestContext) {
+              requestContext.response.extensions = { schemas: requestContext.context.schemas };
+            },
+          };
+        },
+      },
+    ],
+  });
 
-const readFile = util.promisify(fs.readFile);
+  return server;
+};
 
-export const appFromBundle = async (bundle: Promise<db.Bundle>) => {
+// remove expired bundles
+const removeExpiredBundles = (app: express.Express) => {
+  // remove expired bundles
+  for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
+    if (sha === app.get('latestBundleSha')) {
+      continue;
+    }
+
+    const cacheInfo = cacheInfoObj as ICacheInfo;
+    if (cacheInfo.expiration < Date.now()) {
+      // removing sha
+      console.log(`Removing expired bundle: ${sha}`);
+      delete app.get('bundles')[sha];
+
+      // remove from router. NOTE: this is not officially supported and may break in future
+      // versions of express without warning.
+      const index = app._router.stack.findIndex((m: any) =>
+        m.handle === cacheInfo.serverMiddleware);
+      app._router.stack.splice(index, 1);
+
+      // remove from bundleCache
+      delete app.get('bundleCache')[sha];
+    }
+  }
+};
+
+// Create application
+export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
   const app: express.Express = express();
 
-  app.set('bundle', await bundle);
+  // Create the initial `bundles` object. This object will have this shape:
+  // bundles:
+  //   <bundleSha>: <bundle>
+  const bundle = await bundlePromise;
+  const bundleSha = bundle.fileHash;
+  const bundles: any = {};
+  bundles[bundleSha] = bundle;
+  app.set('bundles', bundles);
 
-  app.use(metricsMiddleware);
+  // Create cache object
+  app.set('bundleCache', {});
+
+  // Middleware for prom metrics
+  app.use(metrics.metricsMiddleware);
 
   // Register a middleware that will 503 if we haven't loaded a Bundle yet.
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if ((!['/', '/reload'].includes(req.url)) && (req.app.get('bundle').datafiles.size === 0)) {
+    if ((!['/', '/reload'].includes(req.url)) && typeof (req.app.get('bundles')) === 'undefined') {
       res.status(503).send('No loaded data.');
       return;
     }
     next();
   });
-  // Register a middleware that will redirect requests from graphql/<sha> to /graphql
+
+  // Register a middleware that sends /graphql to the latest bundle. This middleware also
+  // increases the expiration time for a bundle.
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const hash = req.app.get('bundle').fileHash;
-    if (req.url.startsWith('/graphqlsha/')) {
-      if (req.url === `/graphqlsha/${hash}`) {
-        req.url = '/graphql';
-      } else {
-        res.status(409).send(`Current sha is: ${hash}`);
+    // rewrite to graphqlsha/<sha>
+    if (req.path === '/graphql') {
+      const bundleSha = req.app.get('latestBundleSha');
+      req.url = `/graphqlsha/${bundleSha}`;
+    }
+
+    const graphqlshaMatch = req.url.match(/\/graphqlsha\/(.*)$/);
+    if (graphqlshaMatch) {
+      const sha = graphqlshaMatch[1];
+      if (app.get('bundleCache')[sha]) {
+        app.get('bundleCache')[sha]['expiration'] = Date.now() + BUNDLE_SHA_TTL;
       }
     }
+
     next();
   });
 
-  let server: ApolloServer;
-
-  try {
-    server = new ApolloServer({
-      schema: generateAppSchema(app),
-      playground: true,
-      introspection: true,
-      fieldResolver: defaultResolver(app),
-      plugins: [
-        {
-          requestDidStart(requestContext) {
-            return {
-              willSendResponse(requestContext) {
-                requestContext.response.extensions = { schemas: requestContext.context.schemas };
-              },
-            };
-          },
-        },
-      ],
-    });
-  } catch (e) {
-    console.error(`error creating server: ${e}`);
-    process.exit(1);
-  }
-
-  app.set('server', server);
-
-  server.applyMiddleware({ app });
+  const server: ApolloServer = buildApolloServer(app, bundleSha);
+  registerApolloServer(app, bundleSha, server);
 
   app.post('/reload', async (req: express.Request, res: express.Response) => {
+    let bundle: db.Bundle;
+
     try {
-      const bundle = await db.bundleFromEnvironment();
-
-      req.app.set('bundle', bundle);
-
-      const schema: GraphQLSchema = generateAppSchema(req.app as express.Express);
-
-      // https://github.com/apollographql/apollo-server/issues/1275#issuecomment-532183702
-      // @ts-ignore
-      const schemaDerivedData = await server.generateSchemaDerivedData(schema);
-
-      req.app.get('server').schema = schema;
-      req.app.get('server').schemaDerivedData = schemaDerivedData;
-
-      // Count number of files for each schema type
-      const reducer = (acc: IAcct, d: any) => {
-        if (!(d.$schema in acc)) {
-          acc[d.$schema] = 0;
-        }
-        acc[d.$schema] += 1;
-        return acc;
-      };
-      const schemaCount: IAcct = bundle.datafiles.reduce(reducer, {});
-
-      // Set the Guage based on counted metrics
-      Object.keys(schemaCount).map(schemaName =>
-        datafilesGuage.set({ schema: schemaName }, schemaCount[schemaName]),
-      );
-
-      reloadCounter.inc(1);
-
-      console.log('reloaded');
-      res.send();
+      // fetch the new bundle
+      bundle = await db.bundleFromEnvironment();
     } catch (e) {
       res.status(503).send('error parsing bundle, not replacing');
+      return;
     }
+
+    // store it in the `bundles` object
+    const bundleSha = bundle.fileHash;
+
+    if (app.get('bundles')[bundleSha]) {
+      console.log('Skipping reload, data already loaded');
+      res.send();
+      return;
+    }
+
+    removeExpiredBundles(app);
+
+    app.get('bundles')[bundleSha] = bundle;
+    // register a new server exposing this bundle
+    const server = buildApolloServer(app, bundleSha);
+    registerApolloServer(app, bundleSha, server);
+
+    metrics.updateResourceMetrics(bundle);
+    metrics.updateCacheMetrics(app);
+
+    console.log('reloaded');
+    res.send();
   });
 
   app.get('/sha256', (req: express.Request, res: express.Response) => {
-    const hash = req.app.get('bundle').fileHash;
-    res.send(hash);
+    const bundleSha = req.app.get('latestBundleSha');
+    res.send(req.app.get('bundles')[bundleSha].fileHash);
   });
 
   app.get('/git-commit', (req: express.Request, res: express.Response) => {
-    const git_commit = req.app.get('bundle').gitCommit;
-    res.send(git_commit);
+    const bundleSha = req.app.get('latestBundleSha');
+    res.send(req.app.get('bundles')[bundleSha].gitCommit);
+  });
+
+  app.get('/git-commit/:sha', (req: express.Request, res: express.Response) => {
+    res.send(req.app.get('bundles')[req.params.sha].gitCommit);
   });
 
   app.get('/metrics', (req: express.Request, res: express.Response) => {
     res.send(promClient.register.metrics());
+  });
+
+  app.get('/cache', (req: express.Request, res: express.Response) => {
+    const fullCacheInfo: any = { bundleCache: [] };
+
+    for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
+      const cacheInfo = cacheInfoObj as ICacheInfo;
+      fullCacheInfo.bundleCache.push({ sha, expiration: cacheInfo.expiration });
+    }
+
+    fullCacheInfo['bundles'] = Object.keys(req.app.get('bundles'));
+    fullCacheInfo['routerStack'] = app._router.stack.length;
+
+    res.send(JSON.stringify(fullCacheInfo));
   });
 
   app.get('/healthz', (req: express.Request, res: express.Response) => { res.send(); });
@@ -171,5 +213,8 @@ if (!module.parent) {
     app.listen({ port: 4000 }, () => {
       console.log('Running at http://localhost:4000/graphql');
     });
+
+    metrics.updateCacheMetrics(app);
+    metrics.updateResourceMetrics(app.get('bundles')[app.get('latestBundleSha')]);
   });
 }

@@ -18,35 +18,39 @@ import {
 
 import * as db from './db';
 
-const isRef = (obj: Object) : boolean => {
+const isRef = (obj: Object): boolean => {
   return obj.constructor === Object && Object.keys(obj).length === 1 && '$ref' in obj;
 };
 
-const addObjectType = (app: express.Express, name: string, obj: any) => {
-  const t: any = {};
-  t[name] = obj;
-  app.set('objectTypes', Object.assign(app.get('objectTypes'), t));
+const addObjectType = (app: express.Express, bundleSha: string, name: string, obj: any) => {
+  if (typeof (app.get('objectTypes')[bundleSha]) === 'undefined') {
+    app.get('objectTypes')[bundleSha] = {};
+  }
+  app.get('objectTypes')[bundleSha][name] = obj;
 };
 
-const getObjectType = (app: express.Express, name: string) =>
-  app.get('objectTypes')[name];
-
-const addInterfaceType = (app: express.Express, name: string, obj: any) => {
-  const t: any = {};
-  t[name] = obj;
-  app.set('objectInterfaces', Object.assign(app.get('objectInterfaces'), t));
+const getObjectType = (app: express.Express, bundleSha: string, name: string) => {
+  return app.get('objectTypes')[bundleSha][name];
 };
 
-const getInterfaceType = (app: express.Express, name: string) =>
-  app.get('objectInterfaces')[name];
+const addInterfaceType = (app: express.Express, bundleSha: string, name: string, obj: any) => {
+  if (typeof (app.get('objectInterfaces')[bundleSha]) === 'undefined') {
+    app.get('objectInterfaces')[bundleSha] = {};
+  }
+  app.get('objectInterfaces')[bundleSha][name] = obj;
+};
+
+const getInterfaceType = (app: express.Express, bundleSha: string, name: string) =>
+  app.get('objectInterfaces')[bundleSha][name];
 
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
 const resolveSyntheticField = (app: express.Express,
+                               bundleSha: string,
                                path: string,
                                schema: string,
-                               subAttr: string) : db.Datafile[] =>
-  Array.from(app.get('bundle').datafiles.filter((datafile: any) => {
+                               subAttr: string): db.Datafile[] =>
+  Array.from(app.get('bundles')[bundleSha].datafiles.filter((datafile: any) => {
 
     if (datafile.$schema !== schema) { return false; }
 
@@ -67,57 +71,56 @@ const resolveSyntheticField = (app: express.Express,
     return false;
   }).values());
 
-export const defaultResolver = (app: express.Express) => (root: any,
-                                                          args: any,
-                                                          context: any,
-                                                          info: any) => {
-  // add root.$schema to the schemas extensions
-  if (typeof(root.$schema) !== 'undefined') {
-    if ('schemas' in context) {
-      if (!context.schemas.includes(root.$schema)) {
-        context['schemas'].push(root.$schema);
+export const defaultResolver = (app: express.Express, bundleSha: string) =>
+  (root: any, args: any, context: any, info: any) => {
+    // add root.$schema to the schemas extensions
+    if (typeof (root.$schema) !== 'undefined') {
+      if ('schemas' in context) {
+        if (!context.schemas.includes(root.$schema)) {
+          context['schemas'].push(root.$schema);
+        }
+      } else {
+        context['schemas'] = [root.$schema];
       }
-    } else {
-      context['schemas'] = [root.$schema];
-    }
-  }
-
-  if (info.fieldName === 'schema') return root.$schema;
-
-  const val = root[info.fieldName];
-
-  // if the item is null, return as is
-  if (typeof (val) === 'undefined') { return null; }
-
-  if (isNonEmptyArray(val)) {
-    // are all the elements of this array references?
-    const checkRefs = val.map(isRef);
-
-    // if there are elements that aren't references return the array as is
-    if (checkRefs.includes(false)) {
-      return val;
     }
 
-    // resolve all the elements of the array
-    let arrayResolve = val.map((x: db.Referencing) => db.resolveRef(app.get('bundle'), x));
+    if (info.fieldName === 'schema') return root.$schema;
 
-    // `info.returnType` has information about what the GraphQL schema expects
-    // as a return type. If it starts with `[` it means that we need to return
-    // an array.
-    if (String(info.returnType)[0] === '[') {
-      arrayResolve = arrayResolve.flat(1);
+    const val = root[info.fieldName];
+
+    // if the item is null, return as is
+    if (typeof (val) === 'undefined') { return null; }
+
+    if (isNonEmptyArray(val)) {
+      // are all the elements of this array references?
+      const checkRefs = val.map(isRef);
+
+      // if there are elements that aren't references return the array as is
+      if (checkRefs.includes(false)) {
+        return val;
+      }
+
+      // resolve all the elements of the array
+      let arrayResolve = val.map((x: db.Referencing) =>
+        db.resolveRef(app.get('bundles')[bundleSha], x));
+
+      // `info.returnType` has information about what the GraphQL schema expects
+      // as a return type. If it starts with `[` it means that we need to return
+      // an array.
+      if (String(info.returnType)[0] === '[') {
+        arrayResolve = arrayResolve.flat(1);
+      }
+
+      return arrayResolve;
     }
 
-    return arrayResolve;
-  }
-
-  if (isRef(val)) return db.resolveRef(app.get('bundle'), val);
-  return val;
-};
+    if (isRef(val)) return db.resolveRef(app.get('bundles')[bundleSha], val);
+    return val;
+  };
 
 // ------------------ START SCHEMA ------------------
 
-const createSchemaType = (app: express.Express, conf: any) => {
+const createSchemaType = (app: express.Express, bundleSha: string, conf: any) => {
   const objTypeConf: any = {};
 
   // name
@@ -150,14 +153,14 @@ const createSchemaType = (app: express.Express, conf: any) => {
             break;
           default:
             if (fieldInfo.isInterface) {
-              t = getInterfaceType(app, t);
+              t = getInterfaceType(app, bundleSha, t);
             } else {
-              t = getObjectType(app, t);
+              t = getObjectType(app, bundleSha, t);
             }
         }
       }
 
-      if (typeof(t) === 'undefined') {
+      if (typeof (t) === 'undefined') {
         throw `fieldInfo type is undefined: ${JSON.stringify(fieldInfo)}`;
       }
 
@@ -175,7 +178,7 @@ const createSchemaType = (app: express.Express, conf: any) => {
         // schema
         fieldDef['args'] = { path: { type: GraphQLString } };
         fieldDef['resolve'] = (root: any, args: any) => {
-          return Array.from(app.get('bundle').datafiles.filter(
+          return Array.from(app.get('bundles')[bundleSha].datafiles.filter(
             (df: db.Datafile) => {
               const sameSchema: boolean = df.$schema === fieldInfo.datafileSchema;
               return args.path ? df.path === args.path && sameSchema : sameSchema;
@@ -185,6 +188,7 @@ const createSchemaType = (app: express.Express, conf: any) => {
         // synthetic
         fieldDef['resolve'] = (root: any) => resolveSyntheticField(
           app,
+          bundleSha,
           root.path,
           fieldInfo.synthetic.schema,
           fieldInfo.synthetic.subAttr,
@@ -194,8 +198,8 @@ const createSchemaType = (app: express.Express, conf: any) => {
         fieldDef['args'] = { path: { type: GraphQLString } };
         fieldDef['resolve'] = (root: any, args: any) =>
           args.path ?
-            [app.get('bundle').resourcefiles.get(args.path)] :
-            Array.from(app.get('bundle').resourcefiles.values());
+            [app.get('bundles')[bundleSha].resourcefiles.get(args.path)] :
+            Array.from(app.get('bundles')[bundleSha].resourcefiles.values());
       }
 
       // return
@@ -207,7 +211,7 @@ const createSchemaType = (app: express.Express, conf: any) => {
 
   // interface
   if (conf.interface) {
-    objTypeConf['interfaces'] = () => [getInterfaceType(app, conf.interface)];
+    objTypeConf['interfaces'] = () => [getInterfaceType(app, bundleSha, conf.interface)];
   }
 
   // generate resolveType for interfaces
@@ -221,7 +225,7 @@ const createSchemaType = (app: express.Express, conf: any) => {
           const fieldValue = source[field];
 
           const fieldMap = conf.interfaceResolve.fieldMap;
-          return getObjectType(app, fieldMap[fieldValue]);
+          return getObjectType(app, bundleSha, fieldMap[fieldValue]);
         };
         break;
       default:
@@ -235,10 +239,10 @@ const createSchemaType = (app: express.Express, conf: any) => {
 
   if (conf.isInterface) {
     objType = new GraphQLInterfaceType(objTypeConf);
-    addInterfaceType(app, conf.name, objType);
+    addInterfaceType(app, bundleSha, conf.name, objType);
   } else {
     objType = new GraphQLObjectType(objTypeConf);
-    addObjectType(app, conf.name, objType);
+    addObjectType(app, bundleSha, conf.name, objType);
   }
 
   return objType;
@@ -249,16 +253,21 @@ const jsonType = new GraphQLScalarType({
   serialize: JSON.stringify,
 });
 
-export const generateAppSchema = (app: express.Express) : GraphQLSchema => {
-  const schemaData = app.get('bundle').schema;
+export const generateAppSchema = (app: express.Express, bundleSha: string): GraphQLSchema => {
+  const schemaData = app.get('bundles')[bundleSha].schema;
 
-  app.set('objectTypes', {});
-  app.set('objectInterfaces', {});
+  if (typeof (app.get('objectTypes')) === 'undefined') {
+    app.set('objectTypes', {});
+  }
 
-  schemaData.map((t: any) => createSchemaType(app, t));
+  if (typeof (app.get('objectInterfaces')) === 'undefined') {
+    app.set('objectInterfaces', {});
+  }
+
+  schemaData.map((t: any) => createSchemaType(app, bundleSha, t));
 
   return new GraphQLSchema({
-    types: Object.values(app.get('objectTypes')),
-    query: getObjectType(app, 'Query'),
+    types: Object.values(app.get('objectTypes')[bundleSha]),
+    query: getObjectType(app, bundleSha, 'Query'),
   });
 };
