@@ -45,7 +45,7 @@ const bundleGauge = new promClient.Gauge({
 });
 
 const bundleCacheGauge = new promClient.Gauge({
-  name: 'qontract_server_bundle_object_shas_cache',
+  name: 'qontract_server_bundle_cache_object_shas',
   help: 'Number of shas cached by the application in the bundleCache object',
 });
 
