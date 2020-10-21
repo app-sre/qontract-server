@@ -46,7 +46,10 @@ describe('server', async () => {
           }
         }`;
 
-    const response = await chai.request(srv).post('/graphql').set('content-type', 'application/json').send({ query });
+    const response = await chai.request(srv)
+                            .post('/graphql')
+                            .set('content-type', 'application/json')
+                            .send({ query });
     responseIsNotAnError(response);
 
     response.body.extensions.schemas.should.eql(['/access/role-1.yml', '/access/permission-1.yml']);
@@ -64,7 +67,10 @@ describe('server', async () => {
           }
       }`;
 
-    const response = await chai.request(srv).post('/graphql').set('content-type', 'application/json').send({ query });
+    const response = await chai.request(srv)
+                            .post('/graphql')
+                            .set('content-type', 'application/json')
+                            .send({ query });
     responseIsNotAnError(response);
     return response.body.data.apps[0].quayRepos[0].org.name.should.equal('quay-org-A');
   });
@@ -78,7 +84,10 @@ describe('server', async () => {
           }
       }`;
 
-    const response = await chai.request(srv).post('/graphql').set('content-type', 'application/json').send({ query });
+    const response = await chai.request(srv)
+                            .post('/graphql')
+                            .set('content-type', 'application/json')
+                            .send({ query });
     responseIsNotAnError(response);
     return response.body.data.resources[0].content.should.equal('test resource');
   });
