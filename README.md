@@ -71,6 +71,10 @@ It includes some custom metrics:
 
 In addition, it also contains the metrics exposed by the [express prometheus bundle](https://github.com/jochen-schweizer/express-prom-bundle). Note that the `/graphqlsha/<sha>` path has been normalized to avoid cardinality explosion.
 
+## Limitations
+
+- Removing SHAs from the router stack is currently being done using an unsafe mechanism: splicing the private parameter `app._router.stack` which is unsupported and may cause issues. This functionality may break if the Express version is upgraded. However, the testing suite should catch this specific regression. The right solution for this is to replace the entire router, instead of removing the middleware. This has been discussed in this issue: https://github.com/expressjs/express/issues/4436.
+
 ## Development Environment
 
 ### Setting up yarn
