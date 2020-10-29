@@ -170,6 +170,7 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
 
   app.get('/sha256', (req: express.Request, res: express.Response) => {
     const bundleSha = req.app.get('latestBundleSha');
+    logger.info('GET /sha256 requested. Replied with %s', bundleSha);
     res.send(req.app.get('bundles')[bundleSha].fileHash);
   });
 
