@@ -5,6 +5,7 @@ import promClient = require('prom-client');
 import * as db from './db';
 import * as metrics from './metrics';
 import { generateAppSchema, defaultResolver } from './schema';
+import { logger } from './logger';
 
 // sha expiration time (in ms). Defaults to 20m.
 const BUNDLE_SHA_TTL = Number(process.env.BUNDLE_SHA_TTL) || 20 * 60 * 1000;
@@ -67,7 +68,7 @@ const removeExpiredBundles = (app: express.Express) => {
     const cacheInfo = cacheInfoObj as ICacheInfo;
     if (cacheInfo.expiration < Date.now()) {
       // removing sha
-      console.log(`Removing expired bundle: ${sha}`);
+      logger.info('removing expired bundle: %s', sha);
       delete app.get('bundles')[sha];
 
       // remove from router. NOTE: this is not officially supported and may break in future
@@ -148,7 +149,7 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
     const bundleSha = bundle.fileHash;
 
     if (app.get('bundles')[bundleSha]) {
-      console.log('Skipping reload, data already loaded');
+      logger.info('skipping reload, data already loaded');
       res.send();
       return;
     }
@@ -163,7 +164,7 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
     metrics.updateResourceMetrics(bundle);
     metrics.updateCacheMetrics(app);
 
-    console.log('reloaded');
+    logger.info('bundle loaded: %s', bundleSha);
     res.send();
   });
 
@@ -211,7 +212,7 @@ if (!module.parent) {
 
   app.then((app) => {
     app.listen({ port: 4000 }, () => {
-      console.log('Running at http://localhost:4000/graphql');
+      logger.info('Running at http://localhost:4000/graphql');
     });
 
     metrics.updateCacheMetrics(app);

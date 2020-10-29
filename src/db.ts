@@ -4,6 +4,7 @@ import * as util from 'util';
 import * as aws from 'aws-sdk';
 import * as im from 'immutable';
 import { md as forgeMd } from 'node-forge';
+import { logger } from './logger';
 
 // cannot use `import` (old package with no associated types)
 const jsonpointer = require('jsonpointer');
@@ -45,13 +46,14 @@ export const resolveRef = (bundle: Bundle, itemRef: Referencing) : any => {
 
   const datafile = bundle.datafiles.get(path);
   if (typeof (datafile) === 'undefined') {
-    console.log(`Error retrieving datafile '${path}'.`);
+    logger.error('Error retrieving datafile: %s', path);
     return null;
   }
 
   const resolvedData = jsonpointer.get(datafile, expr);
   if (typeof (resolvedData) === 'undefined') {
-    console.log(`Error resolving ref: datafile: '${JSON.stringify(datafile)}', expr: '${expr}'.`);
+    logger.error('Error resolving ref: datafile: "%s", expr: "%s"',
+                 JSON.stringify(datafile), expr);
     return null;
   }
 
