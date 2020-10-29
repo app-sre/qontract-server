@@ -1,5 +1,5 @@
 const { createLogger, format, transports } = require('winston');
-const { combine, timestamp, splat, simple, printf} = format;
+const { combine, timestamp, splat, simple, printf } = format;
 
 const logFormat = printf((info: any) => {
   return `${info.timestamp} ${info.level.toUpperCase()}: ${ info.message }`;
