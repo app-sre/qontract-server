@@ -22,6 +22,7 @@ const isRef = (obj: Object): boolean => {
   return obj.constructor === Object && Object.keys(obj).length === 1 && '$ref' in obj;
 };
 
+// object types helpers
 const addObjectType = (app: express.Express, bundleSha: string, name: string, obj: any) => {
   if (typeof (app.get('objectTypes')[bundleSha]) === 'undefined') {
     app.get('objectTypes')[bundleSha] = {};
@@ -33,6 +34,7 @@ const getObjectType = (app: express.Express, bundleSha: string, name: string) =>
   return app.get('objectTypes')[bundleSha][name];
 };
 
+// interface types helpers
 const addInterfaceType = (app: express.Express, bundleSha: string, name: string, obj: any) => {
   if (typeof (app.get('objectInterfaces')[bundleSha]) === 'undefined') {
     app.get('objectInterfaces')[bundleSha] = {};
@@ -43,8 +45,10 @@ const addInterfaceType = (app: express.Express, bundleSha: string, name: string,
 const getInterfaceType = (app: express.Express, bundleSha: string, name: string) =>
   app.get('objectInterfaces')[bundleSha][name];
 
+// helpers
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
+// synthetic field resolver
 const resolveSyntheticField = (app: express.Express,
                                bundleSha: string,
                                path: string,
@@ -71,6 +75,7 @@ const resolveSyntheticField = (app: express.Express,
     return false;
   }).values());
 
+// default resolver
 export const defaultResolver = (app: express.Express, bundleSha: string) =>
   (root: any, args: any, context: any, info: any) => {
     // add root.$schema to the schemas extensions
