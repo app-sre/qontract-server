@@ -185,8 +185,15 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
         fieldDef['resolve'] = (root: any, args: any) => {
           return Array.from(app.get('bundles')[bundleSha].datafiles.filter(
             (df: db.Datafile) => {
-              const sameSchema: boolean = df.$schema === fieldInfo.datafileSchema;
-              return args.path ? df.path === args.path && sameSchema : sameSchema;
+              if (df.$schema !== fieldInfo.datafileSchema) {
+                return false;
+              }
+              for (const key of Object.keys(args)) {
+                if (!(key in df) || args[key] !== df[key]) {
+                  return false;
+                }
+              }
+              return true;
             }).values());
         };
       } else if (fieldInfo.synthetic) {
