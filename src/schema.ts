@@ -34,6 +34,19 @@ const getObjectType = (app: express.Express, bundleSha: string, name: string) =>
   return app.get('objectTypes')[bundleSha][name];
 };
 
+// searchable fields helpers
+const addSearchableFields =
+  (app: express.Express, bundleSha: string, name: string, fields: any) => {
+    if (typeof (app.get('searchableFields')[bundleSha]) === 'undefined') {
+      app.get('searchableFields')[bundleSha] = {};
+    }
+    app.get('searchableFields')[bundleSha][name] = fields;
+  };
+
+const getSearchableFields = (app: express.Express, bundleSha: string, name: string) => {
+  return app.get('searchableFields')[bundleSha][name];
+};
+
 // interface types helpers
 const addInterfaceType = (app: express.Express, bundleSha: string, name: string, obj: any) => {
   if (typeof (app.get('objectInterfaces')[bundleSha]) === 'undefined') {
@@ -131,6 +144,13 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
   // name
   objTypeConf['name'] = conf.name;
 
+  // searchable fields
+  const searchableFields = conf.fields
+    .filter((f: any) => f.isSearchable && f.type === 'string')
+    .map((f: any) => f.name);
+
+  addSearchableFields(app, bundleSha, conf.name, searchableFields);
+
   // fields
   objTypeConf['fields'] = () => conf.fields.reduce(
     (objFields: any, fieldInfo: any) => {
@@ -181,7 +201,15 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
 
       if (fieldInfo.datafileSchema) {
         // schema
+
+        // path is always a searchable field
         fieldDef['args'] = { path: { type: GraphQLString } };
+
+        // add other searchable fields
+        for (const searchableField of getSearchableFields(app, bundleSha, fieldInfo.type)) {
+          fieldDef['args'][searchableField] = { type: GraphQLString };
+        }
+
         fieldDef['resolve'] = (root: any, args: any) => {
           return Array.from(app.get('bundles')[bundleSha].datafiles.filter(
             (df: db.Datafile) => {
@@ -275,6 +303,15 @@ export const generateAppSchema = (app: express.Express, bundleSha: string): Grap
   if (typeof (app.get('objectInterfaces')) === 'undefined') {
     app.set('objectInterfaces', {});
   }
+
+  if (typeof (app.get('searchableFields')) === 'undefined') {
+    app.set('searchableFields', {});
+  }
+
+  // populate searchable fields
+  schemaData.map((gqlType: any) => addSearchableFields(
+    app, bundleSha, gqlType.name,
+    gqlType.fields.filter((f: any) => f.isSearchable).map((f: any) => f.name)));
 
   schemaData.map((t: any) => createSchemaType(app, bundleSha, t));
 
