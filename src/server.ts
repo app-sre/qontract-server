@@ -79,6 +79,9 @@ const removeExpiredBundles = (app: express.Express) => {
 
       // remove from bundleCache
       delete app.get('bundleCache')[sha];
+
+      // remove from searchableFields
+      delete app.get('searchableFields')[sha];
     }
   }
 };
@@ -197,6 +200,7 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
 
     fullCacheInfo['bundles'] = Object.keys(req.app.get('bundles'));
     fullCacheInfo['routerStack'] = app._router.stack.length;
+    fullCacheInfo['searchableFields'] = Object.keys(req.app.get('searchableFields'));
 
     res.send(JSON.stringify(fullCacheInfo));
   });
