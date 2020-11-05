@@ -92,6 +92,54 @@ describe('server', async () => {
     return response.body.data.resources[0].content.should.equal('test resource');
   });
 
+  it('can search by path', async () => {
+    const query = `{
+      roles_v1(path: "/role-A.yml") {
+        path
+        name
+      }
+    }`;
+
+    const response = await chai.request(srv)
+                            .post('/graphql')
+                            .set('content-type', 'application/json')
+                            .send({ query });
+    responseIsNotAnError(response);
+    return response.body.data.roles_v1[0].name.should.equal('role-A');
+  });
+
+  it('can search by name (isSearchable)', async () => {
+    const query = `{
+      roles_v1(name: "role-B") {
+        path
+        name
+      }
+    }`;
+
+    const response = await chai.request(srv)
+                            .post('/graphql')
+                            .set('content-type', 'application/json')
+                            .send({ query });
+    responseIsNotAnError(response);
+    return response.body.data.roles_v1[0].path.should.equal('/role-B.yml');
+  });
+
+  it('cannot search by name (NOT isSearchable)', async () => {
+    const query = `{
+      quay_orgs_v1(name:"quay-org-A") {
+        path
+        name
+      }
+    }`;
+
+    const response = await chai.request(srv)
+                            .post('/graphql')
+                            .set('content-type', 'application/json')
+                            .send({ query });
+
+    return response.should.not.have.status(200);
+  });
+
   it('can retrieve a field from an interface', async () => {
     const query = `{
       roles: roles_v1(path: "/role-A.yml") {

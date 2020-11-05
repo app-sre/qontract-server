@@ -42,6 +42,12 @@
         }
       ]
     },
+    "/role-B.yml": {
+      "$schema": "/access/role-1.yml",
+      "labels": {},
+      "name": "role-B",
+      "permissions": []
+    },
     "/quay-org-A.yml": {
       "$schema": "/dependencies/quay-org-1.yml",
       "labels": {},
@@ -1107,6 +1113,7 @@
         },
         {
           "isRequired": true,
+          "isSearchable": true,
           "type": "string",
           "name": "name"
         },
