@@ -29,6 +29,27 @@ objects:
           app: app-interface
           deploymentconfig: app-interface
       spec:
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                      - app-interface
+                  topologyKey: kubernetes.io/hostname
+                weight: 100
+              - podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                      - app-interface
+                  topologyKey: failure-domain.beta.kubernetes.io/zone
+                weight: 100
         containers:
         - image: ${IMAGE_GATE}:${IMAGE_GATE_TAG}
           imagePullPolicy: Always
