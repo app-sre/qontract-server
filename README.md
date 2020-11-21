@@ -27,11 +27,11 @@ This server is configured via environment variables.
 
 - `BUNDLE_SHA_TTL`: (not required) Expiration time for bundles. Defaults to `20m`.
 - `LOAD_METHOD`: (required) `fs` | `s3`. Source of the data.
-- `AWS_ACCESS_KEY_ID`: (required if `LOAD_METHOD=fs`) AWS access key ID.
-- `AWS_SECRET_ACCESS_KEY`: (required if `LOAD_METHOD=fs`) AWS secret access key.
-- `AWS_REGION`: (required if `LOAD_METHOD=fs`) AWS region.
-- `AWS_S3_BUCKET`: (required if `LOAD_METHOD=fs`) AWS s3 bucket name.
-- `AWS_S3_KEY`: (required if `LOAD_METHOD=fs`)  AWS s3 key name.
+- `AWS_ACCESS_KEY_ID`: (required if `LOAD_METHOD=s3`) AWS access key ID.
+- `AWS_SECRET_ACCESS_KEY`: (required if `LOAD_METHOD=s3`) AWS secret access key.
+- `AWS_REGION`: (required if `LOAD_METHOD=s3`) AWS region.
+- `AWS_S3_BUCKET`: (required if `LOAD_METHOD=s3`) AWS s3 bucket name.
+- `AWS_S3_KEY`: (required if `LOAD_METHOD=s3`)  AWS s3 key name.
 
 ## Bundle Caching
 
