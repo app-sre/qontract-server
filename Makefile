@@ -12,6 +12,7 @@ BUNDLE_FILENAME := bundle.json
 VALIDATOR_IMAGE_NAME ?= quay.io/app-sre/qontract-validator
 VALIDATOR_IMAGE_TAG ?= latest
 GIT_COMMIT := $(shell cd $(APP_INTERFACE_PATH) && git rev-parse HEAD)
+GIT_COMMIT_TIMESTAMP := $(shell cd $(APP_INTERFACE_PATH) && git log -1 --format=%ct $(GIT_COMMIT))
 
 ifneq (,$(wildcard $(CURDIR)/.docker))
 	DOCKER_CONF := $(CURDIR)/.docker
@@ -30,7 +31,7 @@ bundle:
 		-v $(DATA_DIR):/data:z \
 		-v $(RESOURCES_DIR):/resources:z \
 		$(VALIDATOR_IMAGE_NAME):$(VALIDATOR_IMAGE_TAG) \
-		qontract-bundler /schemas /graphql/schema.yml /data /resources $(GIT_COMMIT) > $(BUNDLE_DIR)/$(BUNDLE_FILENAME)
+		qontract-bundler /schemas /graphql/schema.yml /data /resources $(GIT_COMMIT) $(GIT_COMMIT_TIMESTAMP) > $(BUNDLE_DIR)/$(BUNDLE_FILENAME)
 	@docker run --rm \
 		-v $(BUNDLE_DIR):/bundle:z \
 		$(VALIDATOR_IMAGE_NAME):$(VALIDATOR_IMAGE_TAG) \
