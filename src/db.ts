@@ -27,6 +27,7 @@ export type Bundle = {
   schema: any[];
   fileHash: string;
   gitCommit: string;
+  gitCommitTimestamp: string;
 };
 
 const getRefPath = (ref: string): string => /^[^$]*/.exec(ref)[0];
@@ -68,6 +69,7 @@ const parseBundle = (contents: string) : Bundle => {
     resourcefiles: parseResourcefiles(parsedContents.resources),
     fileHash: hashDatafile(contents),
     gitCommit: parsedContents['git_commit'],
+    gitCommitTimestamp: parsedContents['git_commit_timestamp'],
     schema: parsedContents.graphql,
   } as Bundle;
 };
@@ -146,6 +148,7 @@ export const bundleFromEnvironment = async() => {
         schema: {},
         fileHash: '',
         gitCommit: '',
+        gitCommitTimestamp: '',
       } as Bundle;
   }
 };

@@ -186,6 +186,29 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
     res.send(req.app.get('bundles')[req.params.sha].gitCommit);
   });
 
+  app.get('/git-commit-info', (req: express.Request, res: express.Response) => {
+    const bundleSha = req.app.get('latestBundleSha');
+    const gitCommitInfo: any = {};
+    gitCommitInfo['commit'] = req.app.get('bundles')[bundleSha].gitCommit;
+    gitCommitInfo['timestamp'] = req.app.get('bundles')[bundleSha].gitCommitTimestamp;
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(gitCommitInfo));
+  });
+
+  app.get('/git-commit-info/:sha', (req: express.Request, res: express.Response) => {
+    const gitCommitInfo: any = {};
+
+    if (!(req.params.sha in req.app.get('bundles'))) {
+      res.status(404).send(`Bundle ${req.params.sha} not found`);
+      return;
+    }
+
+    gitCommitInfo['commit'] = req.app.get('bundles')[req.params.sha].gitCommit;
+    gitCommitInfo['timestamp'] = req.app.get('bundles')[req.params.sha].gitCommitTimestamp;
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify(gitCommitInfo));
+  });
+
   app.get('/metrics', (req: express.Request, res: express.Response) => {
     res.send(promClient.register.metrics());
   });
