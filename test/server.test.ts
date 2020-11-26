@@ -36,6 +36,26 @@ describe('server', async () => {
     return response.text.length.should.equal(64);
   });
 
+  it('GET /git-commit-info returns commit information', async () => {
+    const response = await chai.request(srv).get('/git-commit-info');
+    response.body.commit.should.equal('cf639ded4b97808ffae8bfd4dc3f4c183508e1ca');
+    response.body.timestamp.should.equal('1606295532');
+    return response.should.have.status(200);
+  });
+
+  it('GET /git-commit-info/:sha returns commit information from sha', async () => {
+    const shaResponse = await chai.request(srv).get('/sha256');
+    const commitResponse = await chai.request(srv).get(`/git-commit-info/${shaResponse.text}`);
+    commitResponse.body.commit.should.equal('cf639ded4b97808ffae8bfd4dc3f4c183508e1ca');
+    commitResponse.body.timestamp.should.equal('1606295532');
+    return commitResponse.should.have.status(200);
+  });
+
+  it('GET /git-commit-info/:sha returns 404 on unknown sha', async () => {
+    const response = await chai.request(srv).get('/git-commit-info/LOL');
+    return response.should.have.status(404);
+  });
+
   it('resolves item refs', async () => {
     const query = `{
           roles: roles_v1 {
