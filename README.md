@@ -51,11 +51,13 @@ The shas will expire after a certain amount of time:
 - `POST /graphql`: the request body should contain the GraphQL query. The query will be directed at the latest bundle.
 - `GET /graphql`: redirects to `POST /graphql`.
 - `GET /sha256`: returns the sha of the latest bundle.
-- `GET /git-commit`: returns the git commit for the latest bundle.
-- `GET /git-commit/:sha`: returns the git commit for the specified bundle.
+- `GET /git-commit-info`: returns json doc with git commit information (commit sha and timestamp)
+- `GET /git-commit-info/:sha`: returns json doc with git commit information (commit sha and timestamp) for the specified bundle
 - `GET /cache`: returns a json with the cache information.
 - `GET /reload`: reloads data from the configured data source.
 - `GET /metrics`: prometheus metrics.
+- `GET /git-commit`: returns the git commit for the latest bundle. (deprecated, use git-commit-info instead)
+- `GET /git-commit/:sha`: returns the git commit for the specified bundle., use git-commit-info instead
 
 ## Metrics
 

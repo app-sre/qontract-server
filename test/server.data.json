@@ -1,4 +1,6 @@
 {
+  "git_commit": "cf639ded4b97808ffae8bfd4dc3f4c183508e1ca",
+  "git_commit_timestamp": "1606295532",
   "data": {
     "/app-A.yml": {
       "$schema": "/app-sre/app-1.yml",
