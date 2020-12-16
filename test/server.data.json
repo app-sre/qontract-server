@@ -421,6 +421,10 @@
           "isRequired": true,
           "type": "string",
           "name": "sha256sum"
+        },
+        {
+          "type": "string",
+          "name": "schema"
         }
       ],
       "name": "Resource_v1"
@@ -1236,7 +1240,14 @@
     "/resource1.yml": {
       "content": "test resource",
       "path": "/resource1.yml",
-      "sha256sum": "ff"
+      "sha256sum": "ff",
+      "$schema": null
+    },
+    "/prometheus-resource.yml": {
+      "content": "prometheus test resource",
+      "path": "/prometheus-resource.yml",
+      "sha256sum": "ee",
+      "$schema": "/openshift/prometheus-rule-1.yml"
     }
   }
 }

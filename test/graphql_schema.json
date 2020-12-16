@@ -359,6 +359,10 @@
         "isRequired": true,
         "type": "string",
         "name": "sha256sum"
+      },
+      {
+        "type": "string",
+        "name": "schema"
       }
     ],
     "name": "Resource_v1"

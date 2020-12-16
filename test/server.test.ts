@@ -109,7 +109,64 @@ describe('server', async () => {
                             .set('content-type', 'application/json')
                             .send({ query });
     responseIsNotAnError(response);
+    response.body.data.resources.length.should.equal(1);
     return response.body.data.resources[0].content.should.equal('test resource');
+  });
+
+  it('can retrieve a resource with a non-empty schema', async () => {
+    const query = `{
+          resources: resources_v1(path: "/prometheus-resource.yml") {
+            content
+            sha256sum
+            path
+            schema
+          }
+      }`;
+
+    const response = await chai.request(srv)
+                            .post('/graphql')
+                            .set('content-type', 'application/json')
+                            .send({ query });
+    responseIsNotAnError(response);
+    response.body.data.resources.length.should.equal(1);
+    return response.body.data.resources[0].schema.should.equal('/openshift/prometheus-rule-1.yml');
+  });
+
+  it('can search a resource by schema', async () => {
+    const query = `{
+          resources: resources_v1(schema: "/openshift/prometheus-rule-1.yml") {
+            content
+            sha256sum
+            path
+            schema
+          }
+      }`;
+
+    const response = await chai.request(srv)
+                            .post('/graphql')
+                            .set('content-type', 'application/json')
+                            .send({ query });
+    responseIsNotAnError(response);
+    response.body.data.resources.length.should.equal(1);
+    return response.body.data.resources[0].path.should.equal('/prometheus-resource.yml');
+  });
+
+  it('can retrieve all resources', async () => {
+    const query = `{
+          resources: resources_v1 {
+            content
+            sha256sum
+            path
+            schema
+          }
+      }`;
+
+    const response = await chai.request(srv)
+                            .post('/graphql')
+                            .set('content-type', 'application/json')
+                            .send({ query });
+    responseIsNotAnError(response);
+    return response.body.data.resources.length.should.equal(2);
   });
 
   it('can search by path', async () => {

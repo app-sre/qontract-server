@@ -235,11 +235,20 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
         );
       } else if (fieldInfo.isResource) {
         // resource
-        fieldDef['args'] = { path: { type: GraphQLString } };
-        fieldDef['resolve'] = (root: any, args: any) =>
-          args.path ?
-            [app.get('bundles')[bundleSha].resourcefiles.get(args.path)] :
-            Array.from(app.get('bundles')[bundleSha].resourcefiles.values());
+        fieldDef['args'] = { path: { type: GraphQLString }, schema: { type: GraphQLString } };
+        fieldDef['resolve'] = (root: any, args: any) => {
+          if (args.path) {
+            return [app.get('bundles')[bundleSha].resourcefiles.get(args.path)];
+          }
+
+          let results = Array.from(app.get('bundles')[bundleSha].resourcefiles.values());
+
+          if (args.schema) {
+            results = results.filter((r: any) => r.$schema === args.schema);
+          }
+
+          return results;
+        };
       }
 
       // return
