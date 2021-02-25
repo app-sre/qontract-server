@@ -4,6 +4,15 @@ kind: Template
 metadata:
   name: app-interface
 objects:
+- apiVersion: policy/v1beta1
+  kind: PodDisruptionBudget
+  metadata:
+    name: app-interface
+  spec:
+    minAvailable: 1
+    selector:
+      matchLabels:
+        app: app-interface
 - apiVersion: v1
   kind: DeploymentConfig
   metadata:
