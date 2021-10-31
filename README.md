@@ -11,6 +11,8 @@ This repository comprises the server component, which is a GraphQL API server im
 
 The [JSON Schema Validation](https://github.com/app-sre/qontract-validator) lives in a [separate repo](https://github.com/app-sre/qontract-validator).
 
+The schemas which are used for validation live in [qontract-schemas](https://github.com/app-sre/qontract-schemas).
+
 The Reconcile loop is implementation specific. Any tool that conforms with the following patterns is considered a qontract reconcile tool:
 
 - Retrieves desired state from the GraphQL API.
@@ -112,8 +114,9 @@ make bundle
 ```
 Note that this requires Docker to be running on the host.
 
-Optionally, if you want to specify the path for the app-interface repo on your local filesystem, you can use the parameter:
+Optionally, if you want to specify the path for the app-interface repo or qontract-schemas repo on your local filesystem, you can use the parameter:
 * `APP_INTERFACE_PATH` - (optional) path to a local app-interface repo (Default: `$PWD/../../service/app-interface`).
+* `SCHEMAS_PATH` - (optional) path to a local qontract-schemas repo (Default: `$PWD/../qontract-schemas`)
 
 Example: To generate the bundle with a specific app-interface path:
 

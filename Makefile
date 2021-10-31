@@ -3,8 +3,9 @@
 IMAGE_NAME := quay.io/app-sre/qontract-server
 IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
 APP_INTERFACE_PATH ?= $(shell pwd)/../../service/app-interface
-SCHEMAS_DIR := $(APP_INTERFACE_PATH)/schemas
-GRAPHQL_SCHEMA_DIR := $(APP_INTERFACE_PATH)/graphql-schemas
+SCHEMAS_PATH ?= $(shell pwd)/../qontract-schemas
+SCHEMAS_DIR := $(SCHEMAS_PATH)/schemas
+GRAPHQL_SCHEMA_DIR := $(SCHEMAS_PATH)/graphql-schemas
 DATA_DIR := $(APP_INTERFACE_PATH)/data
 RESOURCES_DIR := $(APP_INTERFACE_PATH)/resources
 BUNDLE_DIR := $(shell pwd)/bundle
