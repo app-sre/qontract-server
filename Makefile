@@ -37,7 +37,8 @@ bundle:
 	@$(CONTAINER_ENGINE) run --rm \
 		-v $(BUNDLE_DIR):/bundle:z \
 		$(VALIDATOR_IMAGE_NAME):$(VALIDATOR_IMAGE_TAG) \
-		qontract-validator --only-errors /bundle/$(BUNDLE_FILENAME)
+		qontract-validator --only-errors /bundle/$(BUNDLE_FILENAME) \
+		| sed 's/\\n/\n/g' # Without this, the error messages show newlines as \n -> hard to read
 
 run:
 	LOAD_METHOD=fs DATAFILES_FILE=$(BUNDLE_DIR)/$(BUNDLE_FILENAME) yarn run server
