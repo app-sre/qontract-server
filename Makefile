@@ -25,6 +25,9 @@ endif
 
 dev: docker-run-clean bundle docker-run
 
+reload: bundle
+	curl -X POST http://localhost:4000/reload
+
 bundle:
 	@$(CONTAINER_ENGINE) pull $(VALIDATOR_IMAGE_NAME):$(VALIDATOR_IMAGE_TAG)
 	mkdir -p $(BUNDLE_DIR)
