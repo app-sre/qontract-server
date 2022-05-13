@@ -4,6 +4,7 @@ IMAGE_NAME := quay.io/app-sre/qontract-server
 IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
 APP_INTERFACE_PATH ?= $(shell pwd)/../../service/app-interface
 CONTAINER_ENGINE ?= $(shell which podman >/dev/null 2>&1 && echo podman || echo docker)
+CONTAINER_SELINUX_FLAG ?= :z
 SCHEMAS_PATH ?= $(shell pwd)/../qontract-schemas
 SCHEMAS_DIR := $(SCHEMAS_PATH)/schemas
 GRAPHQL_SCHEMA_DIR := $(SCHEMAS_PATH)/graphql-schemas
@@ -32,14 +33,14 @@ bundle:
 	@$(CONTAINER_ENGINE) pull $(VALIDATOR_IMAGE_NAME):$(VALIDATOR_IMAGE_TAG)
 	mkdir -p $(BUNDLE_DIR)
 	@$(CONTAINER_ENGINE) run --rm \
-		-v $(SCHEMAS_DIR):/schemas:z \
-		-v $(GRAPHQL_SCHEMA_DIR):/graphql:z \
-		-v $(DATA_DIR):/data:z \
-		-v $(RESOURCES_DIR):/resources:z \
+		-v $(SCHEMAS_DIR):/schemas$(CONTAINER_SELINUX_FLAG) \
+		-v $(GRAPHQL_SCHEMA_DIR):/graphql$(CONTAINER_SELINUX_FLAG) \
+		-v $(DATA_DIR):/data$(CONTAINER_SELINUX_FLAG) \
+		-v $(RESOURCES_DIR):/resources$(CONTAINER_SELINUX_FLAG) \
 		$(VALIDATOR_IMAGE_NAME):$(VALIDATOR_IMAGE_TAG) \
 		qontract-bundler /schemas /graphql/schema.yml /data /resources $(GIT_COMMIT) $(GIT_COMMIT_TIMESTAMP) > $(BUNDLE_DIR)/$(BUNDLE_FILENAME)
 	@$(CONTAINER_ENGINE) run --rm \
-		-v $(BUNDLE_DIR):/bundle:z \
+		-v $(BUNDLE_DIR):/bundle$(CONTAINER_SELINUX_FLAG) \
 		$(VALIDATOR_IMAGE_NAME):$(VALIDATOR_IMAGE_TAG) \
 		qontract-validator --only-errors /bundle/$(BUNDLE_FILENAME)
 
@@ -48,7 +49,7 @@ run:
 
 docker-run:
 	@$(CONTAINER_ENGINE) run -it --rm \
-		-v $(BUNDLE_DIR):/bundle:z \
+		-v $(BUNDLE_DIR):/bundle$(CONTAINER_SELINUX_FLAG) \
 		-p 4000:4000 \
 		-e LOAD_METHOD=fs \
 		-e DATAFILES_FILE=/bundle/$(BUNDLE_FILENAME) \
