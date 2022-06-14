@@ -87,16 +87,22 @@ const removeExpiredBundles = (app: express.Express) => {
 };
 
 // Create application
-export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
+export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   const app: express.Express = express();
 
   // Create the initial `bundles` object. This object will have this shape:
   // bundles:
   //   <bundleSha>: <bundle>
-  const bundle = await bundlePromise;
-  const bundleSha = bundle.fileHash;
   const bundles: any = {};
-  bundles[bundleSha] = bundle;
+
+  let bundleSha: string;
+  for (const bp of bundlePromises) {
+    const bundle = await bp;
+    bundleSha = bundle.fileHash;
+    bundles[bundleSha] = bundle;
+    logger.info('loading initial bundle %s', bundleSha);
+  }
+
   app.set('bundles', bundles);
 
   // Create cache object
@@ -236,7 +242,7 @@ export const appFromBundle = async (bundlePromise: Promise<db.Bundle>) => {
 
 // If this is main, load an app from the environment and run the server.
 if (!module.parent) {
-  const app = appFromBundle(db.bundleFromEnvironment());
+  const app = appFromBundle(db.getInitialBundles());
 
   app.then((app) => {
     app.listen({ port: 4000 }, () => {
