@@ -133,11 +133,10 @@ export const bundleFromDisk = async(path: string) => {
 
 export const getInitialBundles = () => {
   if (process.env.INIT_DISK_BUNDLES) {
-    return process.env.INIT_DISK_BUNDLES.split(",").map((path: any) => bundleFromDisk(path))
-  } else {
-    return [bundleFromEnvironment()]
+    return process.env.INIT_DISK_BUNDLES.split(',').map((path: any) => bundleFromDisk(path));
   }
-}
+  return [bundleFromEnvironment()];
+};
 
 export const bundleFromEnvironment = async() => {
   switch (process.env.LOAD_METHOD) {

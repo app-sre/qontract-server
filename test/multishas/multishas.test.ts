@@ -34,7 +34,7 @@ describe('multishas', async () => {
     process.env.LOAD_METHOD = 'fs';
     process.env.DATAFILES_FILE = 'test/multishas/multishas1.data.json';
 
-    app = await server.appFromBundle(db.bundleFromEnvironment());
+    app = await server.appFromBundle([db.bundleFromEnvironment()]);
     srv = app.listen({ port: 4000 });
   });
 

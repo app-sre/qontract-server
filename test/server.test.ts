@@ -26,7 +26,7 @@ describe('server', async () => {
   before(async () => {
     process.env.LOAD_METHOD = 'fs';
     process.env.DATAFILES_FILE = 'test/server.data.json';
-    const app = await server.appFromBundle(db.bundleFromEnvironment());
+    const app = await server.appFromBundle(db.getInitialBundles());
     srv = app.listen({ port: 4000 });
   });
   after(async () => await util.promisify(srv.close));

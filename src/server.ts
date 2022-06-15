@@ -95,13 +95,14 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   //   <bundleSha>: <bundle>
   const bundles: any = {};
 
-  let bundleSha: string;
+  let sha: string;
   for (const bp of bundlePromises) {
     const bundle = await bp;
-    bundleSha = bundle.fileHash;
-    bundles[bundleSha] = bundle;
-    logger.info('loading initial bundle %s', bundleSha);
+    sha = bundle.fileHash;
+    bundles[sha] = bundle;
+    logger.info('loading initial bundle %s', sha);
   }
+  const bundleSha = sha;
 
   app.set('bundles', bundles);
 
