@@ -1,6 +1,8 @@
 import { ApolloServer } from 'apollo-server-express';
 import * as express from 'express';
 import promClient = require('prom-client');
+import diff = require('deep-diff');
+import * as im from 'immutable';
 
 import * as db from './db';
 import * as metrics from './metrics';
@@ -177,6 +179,62 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     const bundleSha = req.app.get('latestBundleSha');
     logger.info('GET /sha256 requested. Replied with %s', bundleSha);
     res.send(req.app.get('bundles')[bundleSha].fileHash);
+  });
+
+  app.get('/diff/:base_sha/:head_sha', (req: express.Request, res: express.Response) => {
+    const base_bundle: db.Bundle = req.app.get('bundles')[req.params.base_sha]
+    const head_bundle: db.Bundle = req.app.get('bundles')[req.params.head_sha]
+    const dataDiffs = diff(base_bundle.datafiles.toJS(), head_bundle.datafiles.toJS());
+
+    const resourceDiffs = diff(
+      im.Map(Array.from( base_bundle.resourcefiles, ([path, resource]) => [ path, resource.sha256sum ] )).toJS(),
+      im.Map(Array.from( head_bundle.resourcefiles, ([path, resource]) => [ path, resource.sha256sum ] )).toJS()
+    )
+
+    const changes = []
+    for (let d in resourceDiffs) {
+      const diff = resourceDiffs[d]
+      const path = diff["path"][0]
+      for (let backref_index in head_bundle.resourcefiles.get(path).backrefs) {
+        const backref = head_bundle.resourcefiles.get(path).backrefs[backref_index]
+        const old_res = base_bundle.datafiles.get(backref.path)
+        const new_res = head_bundle.datafiles.get(backref.path)
+        changes.push(
+          {
+            "resourcepath": path,
+            "datafilepath": backref.path,
+            "datafileschema": backref.datafileSchema,
+            "action": diff["kind"],
+            "jsonpath": backref.jsonpath,
+            "old": old_res,
+            "new": new_res,
+          }
+        )
+      }
+    }
+
+    for (let d in dataDiffs) {
+      const diff = dataDiffs[d]
+      const old_res = base_bundle.datafiles.get(diff["path"][0])
+      const new_res = head_bundle.datafiles.get(diff["path"][0])
+      const path = diff["path"].slice(1)
+      for (let i in path) {
+          if (Number.isInteger(path[i])) {
+              path[i] = "["+path[i]+"]"
+          }
+      }
+      changes.push(
+        {
+          "datafilepath": diff["path"][0],
+          "datafileschema": (new_res != undefined ? new_res : old_res).$schema,
+          "action": diff["kind"],
+          "jsonpath": path.join("."),
+          "old": old_res,
+          "new": new_res,
+        }
+      )
+    }
+    res.send(changes);
   });
 
   app.get('/git-commit', (req: express.Request, res: express.Response) => {

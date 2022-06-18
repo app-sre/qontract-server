@@ -15,10 +15,18 @@ export type Datafile = {
   [key: string]: any;
 };
 
+export type ResourcefileBackRef = {
+  path: string;
+  datafileSchema: string;
+  type: string;
+  jsonpath: string;
+}
+
 export type Resourcefile = {
   path: string;
   content: string;
-  shasum256: string;
+  sha256sum: string;
+  backrefs: ResourcefileBackRef[];
 };
 
 export type Bundle = {

@@ -20,6 +20,7 @@
     "aws-sdk": "^2.364.0",
     "bufferutil": "^4.0.1",
     "dotenv": "^8.2.0",
+    "deep-diff": "1.0.2",
     "express": "^4.16.4",
     "express-prom-bundle": "^6.0.0",
     "fs": "0.0.1-security",
