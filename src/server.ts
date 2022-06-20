@@ -1,8 +1,9 @@
 import { ApolloServer } from 'apollo-server-express';
 import * as express from 'express';
 import promClient = require('prom-client');
-import diff = require('deep-diff');
 import * as im from 'immutable';
+
+const deepDiff = require('deep-diff');
 
 import * as db from './db';
 import * as metrics from './metrics';
@@ -182,57 +183,68 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   });
 
   app.get('/diff/:base_sha/:head_sha', (req: express.Request, res: express.Response) => {
-    const base_bundle: db.Bundle = req.app.get('bundles')[req.params.base_sha]
-    const head_bundle: db.Bundle = req.app.get('bundles')[req.params.head_sha]
-    const dataDiffs = diff(base_bundle.datafiles.toJS(), head_bundle.datafiles.toJS());
+    const baseBundle: db.Bundle = req.app.get('bundles')[req.params.base_sha];
+    const headBundle: db.Bundle = req.app.get('bundles')[req.params.head_sha];
+    const dataDiffs = deepDiff(baseBundle.datafiles.toJS(), headBundle.datafiles.toJS());
 
-    const resourceDiffs = diff(
-      im.Map(Array.from( base_bundle.resourcefiles, ([path, resource]) => [ path, resource.sha256sum ] )).toJS(),
-      im.Map(Array.from( head_bundle.resourcefiles, ([path, resource]) => [ path, resource.sha256sum ] )).toJS()
-    )
+    const resourceDiffs = deepDiff(
+      im.Map(
+        Array.from(
+          baseBundle.resourcefiles, ([path, resource]) => [path, resource.sha256sum],
+        ),
+      ).toJS(),
+      im.Map(
+        Array.from(
+          headBundle.resourcefiles, ([path, resource]) => [path, resource.sha256sum],
+        ),
+      ).toJS(),
+    );
 
-    const changes = []
-    for (let d in resourceDiffs) {
-      const diff = resourceDiffs[d]
-      const path = diff["path"][0]
-      for (let backref_index in head_bundle.resourcefiles.get(path).backrefs) {
-        const backref = head_bundle.resourcefiles.get(path).backrefs[backref_index]
-        const old_res = base_bundle.datafiles.get(backref.path)
-        const new_res = head_bundle.datafiles.get(backref.path)
+    const changes = [];
+    for (const d in resourceDiffs) {
+      const diff = resourceDiffs[d];
+      const path = diff['path'][0];
+      const backrefs = diff['kind'] === 'D' ?
+        baseBundle.resourcefiles.get(path).backrefs :
+        headBundle.resourcefiles.get(path).backrefs;
+      for (const backrefIndex in headBundle.resourcefiles.get(path).backrefs) {
+        const backref = headBundle.resourcefiles.get(path).backrefs[backrefIndex];
+        const oldRes = baseBundle.datafiles.get(backref.path);
+        const newRes = headBundle.datafiles.get(backref.path);
         changes.push(
           {
-            "resourcepath": path,
-            "datafilepath": backref.path,
-            "datafileschema": backref.datafileSchema,
-            "action": diff["kind"],
-            "jsonpath": backref.jsonpath,
-            "old": old_res,
-            "new": new_res,
-          }
-        )
+            resourcepath: path,
+            datafilepath: backref.path,
+            datafileschema: backref.datafileSchema,
+            action: diff['kind'],
+            jsonpath: backref.jsonpath,
+            old: oldRes,
+            new: newRes,
+          },
+        );
       }
     }
 
-    for (let d in dataDiffs) {
-      const diff = dataDiffs[d]
-      const old_res = base_bundle.datafiles.get(diff["path"][0])
-      const new_res = head_bundle.datafiles.get(diff["path"][0])
-      const path = diff["path"].slice(1)
-      for (let i in path) {
-          if (Number.isInteger(path[i])) {
-              path[i] = "["+path[i]+"]"
-          }
+    for (const d in dataDiffs) {
+      const diff = dataDiffs[d];
+      const oldRes = baseBundle.datafiles.get(diff['path'][0]);
+      const newRes = headBundle.datafiles.get(diff['path'][0]);
+      const path = diff['path'].slice(1);
+      for (const i in path) {
+        if (Number.isInteger(path[i])) {
+          path[i] = `[${path[i]}]`;
+        }
       }
       changes.push(
         {
-          "datafilepath": diff["path"][0],
-          "datafileschema": (new_res != undefined ? new_res : old_res).$schema,
-          "action": diff["kind"],
-          "jsonpath": path.join("."),
-          "old": old_res,
-          "new": new_res,
-        }
-      )
+          datafilepath: diff['path'][0],
+          datafileschema: (newRes !== undefined ? newRes : oldRes).$schema,
+          action: diff['kind'],
+          jsonpath: path.join('.'),
+          old: oldRes,
+          new: newRes,
+        },
+      );
     }
     res.send(changes);
   });

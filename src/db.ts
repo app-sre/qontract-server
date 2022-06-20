@@ -20,7 +20,7 @@ export type ResourcefileBackRef = {
   datafileSchema: string;
   type: string;
   jsonpath: string;
-}
+};
 
 export type Resourcefile = {
   path: string;
