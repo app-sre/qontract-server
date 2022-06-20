@@ -1,0 +1,100 @@
+{
+  "data": {
+    "/cluster.yml": {
+      "$schema": "/openshift/cluster-1.yml",
+      "labels": {},
+      "serverUrl": "https://example.com",
+      "description": "example cluster",
+      "name": "example cluster",
+      "automationToken": {
+        "path": "secret-old"
+      }
+    }
+  },
+  "graphql": [
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "schema"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "type": "json",
+          "name": "labels"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "name"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "description"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "serverUrl"
+        },
+        {
+          "type": "VaultSecret_v1",
+          "name": "automationToken"
+        }
+      ],
+      "name": "Cluster_v1"
+    },
+    {
+      "fields": [
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "path"
+        },
+        {
+          "isRequired": true,
+          "type": "string",
+          "name": "field"
+        },
+        {
+          "type": "string",
+          "name": "format"
+        }
+      ],
+      "name": "VaultSecret_v1"
+    },
+    {
+      "fields": [
+        {
+          "type": "Cluster_v1",
+          "name": "clusters_v1",
+          "isList": true,
+          "datafileSchema": "/openshift/cluster-1.yml"
+        }
+      ],
+      "name": "Query"
+    }
+  ],
+  "resources": {
+    "/changed_resource.yml": {
+      "path": "/changed_resource.yml",
+      "content": "",
+      "$schema": null,
+      "sha256sum": "old_sha",
+      "backrefs": [
+        {
+            "path": "/cluster.yml",
+            "datafileSchema": "/openshift/cluster-1.yml",
+            "type": "Cluster_v1",
+            "jsonpath": "important.resource"
+        }
+      ]
+    }
+  }
+}

@@ -48,7 +48,7 @@ describe('clusters', async() => {
     return resp.text.should.eql('242acb1998e9d37c26186ba9be0262fb34e3ef388b503390d143164f7658c24e');
   });
 
-  before(() => {
+  after(() => {
     delete process.env.INIT_DISK_BUNDLES;
   });
 });
