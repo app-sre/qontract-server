@@ -93,18 +93,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   // Create the initial `bundles` object. This object will have this shape:
   // bundles:
   //   <bundleSha>: <bundle>
-  const bundles: any = {};
-
-  let sha: string;
-  for (const bp of bundlePromises) {
-    const bundle = await bp;
-    sha = bundle.fileHash;
-    bundles[sha] = bundle;
-    logger.info('loading initial bundle %s', sha);
-  }
-  const bundleSha = sha;
-
-  app.set('bundles', bundles);
+  app.set('bundles', {});
 
   // Create cache object
   app.set('bundleCache', {});
@@ -141,8 +130,14 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     next();
   });
 
-  const server: ApolloServer = buildApolloServer(app, bundleSha);
-  registerApolloServer(app, bundleSha, server);
+  for (const bp of bundlePromises) {
+    const bundle = await bp;
+    const sha = bundle.fileHash;
+    app.get('bundles')[sha] = bundle;
+    logger.info('loading initial bundle %s', sha);
+    const server: ApolloServer = buildApolloServer(app, sha);
+    registerApolloServer(app, sha, server);
+  }
 
   app.post('/reload', async (req: express.Request, res: express.Response) => {
     let bundle: db.Bundle;
