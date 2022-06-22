@@ -13,7 +13,7 @@ import { logger } from '../../src/logger';
 
 const should = chai.should();
 
-const diskBundles = 'fs:\\test/diff/old.data.json,fs:\\test/diff/new.data.json';
+const diskBundles = 'fs://test/diff/old.data.json,fs://test/diff/new.data.json';
 const oldSha = 'bf56095bf2ada36a6b2deca9cb9b6616d536b5c9ce230f0905296165d221a66b';
 const newSha = '302071115aa5dda8559f6e582fa7b6db7e0b64b5a9a6a9e3e9c22e2f86567f4b';
 

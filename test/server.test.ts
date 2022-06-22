@@ -255,7 +255,7 @@ describe('server', async () => {
 describe('bundle loading', async() => {
 
   it('check if init disk bundle is loaded', async() => {
-    process.env.INIT_BUNDLES = 'fs:\\test/schemas/schemas.data.json';
+    process.env.INIT_BUNDLES = 'fs://test/schemas/schemas.data.json';
     const app = await server.appFromBundle(db.getInitialBundles());
     const srv = app.listen({ port: 4000 });
     const resp = await chai.request(srv)

@@ -150,7 +150,7 @@ export const bundleFromDisk = async(path: string) => {
 export const getInitialBundles = () => {
   if (process.env.INIT_BUNDLES) {
     return process.env.INIT_BUNDLES.split(',').map((bundleUrl: any) => {
-      const urlParts = bundleUrl.split(':\\');
+      const urlParts = bundleUrl.split('://');
       switch (urlParts[0]) {
         case 'fs':
           return bundleFromDisk(urlParts[1]);

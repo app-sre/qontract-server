@@ -160,8 +160,8 @@ make run
 
 Especially during PR checks, a `qontract-server` with multiple bundles preloaded simplifies test infra setup. For this the env variable `INIT_BUNDLE` to specify a comma separated list of bundle references of the following form
 
-- fs:\\\\path\to\bundle
-- s3:\\\\bundle-key
+- fs://path/to/bundle
+- s3://bundle-key
 
 The s3 flavour relies on the `AWS_*` env variables to specify the bucket and configure authentication. the specified `bundle-key` is used as `AWS_S3_KEY`.
 
