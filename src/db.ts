@@ -125,6 +125,14 @@ const hashDatafile = (contents: string) => {
 const bundleFromS3 = async(accessKeyId: string, secretAccessKey: string, region: string,
                            bucket: string, key: string) => {
   const s3 = new aws.S3({ accessKeyId, secretAccessKey, region });
+  try {
+    await s3.waitFor(
+      'objectExists',
+      { Bucket: bucket, Key: key, $waiter: { delay: 5, maxAttempts: 20 } },
+    ).promise();
+  } catch (error) {
+    throw new Error(`key ${key} not found in s3 bucket ${bucket}`);
+  }
   const getObject = util.promisify(s3.getObject.bind(s3));
   const response = await getObject({ Bucket: bucket, Key: key });
   const contents = response.Body.toString('utf-8');
@@ -140,8 +148,22 @@ export const bundleFromDisk = async(path: string) => {
 };
 
 export const getInitialBundles = () => {
-  if (process.env.INIT_DISK_BUNDLES) {
-    return process.env.INIT_DISK_BUNDLES.split(',').map((path: any) => bundleFromDisk(path));
+  if (process.env.INIT_BUNDLES) {
+    return process.env.INIT_BUNDLES.split(',').map((bundleUrl: any) => {
+      const urlParts = bundleUrl.split('://');
+      switch (urlParts[0]) {
+        case 'fs':
+          return bundleFromDisk(urlParts[1]);
+        case 's3':
+          return bundleFromS3(process.env.AWS_ACCESS_KEY_ID,
+                              process.env.AWS_SECRET_ACCESS_KEY,
+                              process.env.AWS_REGION,
+                              process.env.AWS_S3_BUCKET,
+                              urlParts[1]);
+        default:
+          throw new Error(`incorrect bundle ${bundleUrl} specified`);
+      }
+    });
   }
   return [bundleFromEnvironment()];
 };

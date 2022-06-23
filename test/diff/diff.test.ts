@@ -13,14 +13,14 @@ import { logger } from '../../src/logger';
 
 const should = chai.should();
 
-const diskBundles = 'test/diff/old.data.json,test/diff/new.data.json';
+const diskBundles = 'fs://test/diff/old.data.json,fs://test/diff/new.data.json';
 const oldSha = 'bf56095bf2ada36a6b2deca9cb9b6616d536b5c9ce230f0905296165d221a66b';
 const newSha = '302071115aa5dda8559f6e582fa7b6db7e0b64b5a9a6a9e3e9c22e2f86567f4b';
 
 describe('diff', async() => {
   let srv: http.Server;
   before(async() => {
-    process.env.INIT_DISK_BUNDLES = diskBundles;
+    process.env.INIT_BUNDLES = diskBundles;
     const app = await server.appFromBundle(db.getInitialBundles());
     srv = app.listen({ port: 4000 });
   });
@@ -52,6 +52,6 @@ describe('diff', async() => {
   });
 
   after(() => {
-    delete process.env.INIT_DISK_BUNDLES;
+    delete process.env.INIT_BUNDLES;
   });
 });

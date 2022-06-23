@@ -32,23 +32,3 @@ describe('clusters', async() => {
     return resp.body.data.clusters[0].name.should.equal('example cluster');
   });
 });
-
-describe('clusters', async() => {
-  let srv: http.Server;
-  before(async() => {
-    process.env.INIT_DISK_BUNDLES = 'test/schemas/schemas.data.json';
-    const app = await server.appFromBundle(db.getInitialBundles());
-    srv = app.listen({ port: 4000 });
-  });
-
-  it('check if init disk bundle loads the bundle', async() => {
-    const resp = await chai.request(srv)
-                        .get('/sha256');
-    resp.should.have.status(200);
-    return resp.text.should.eql('242acb1998e9d37c26186ba9be0262fb34e3ef388b503390d143164f7658c24e');
-  });
-
-  after(() => {
-    delete process.env.INIT_DISK_BUNDLES;
-  });
-});

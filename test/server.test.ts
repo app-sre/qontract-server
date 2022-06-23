@@ -251,3 +251,20 @@ describe('server', async () => {
     expect(perm.org).to.equal('org-A');
   });
 });
+
+describe('bundle loading', async() => {
+
+  it('check if init disk bundle is loaded', async() => {
+    process.env.INIT_BUNDLES = 'fs://test/schemas/schemas.data.json';
+    const app = await server.appFromBundle(db.getInitialBundles());
+    const srv = app.listen({ port: 4000 });
+    const resp = await chai.request(srv)
+                        .get('/sha256');
+    resp.should.have.status(200);
+    return resp.text.should.eql('242acb1998e9d37c26186ba9be0262fb34e3ef388b503390d143164f7658c24e');
+  });
+
+  after(() => {
+    delete process.env.INIT_BUNDLES;
+  });
+});
