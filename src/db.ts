@@ -22,6 +22,11 @@ export type ResourcefileBackRef = {
   jsonpath: string;
 };
 
+export type GraphQLSchemaType = {
+  $schema: string;
+  confs: any[];
+};
+
 export type Resourcefile = {
   path: string;
   content: string;
@@ -32,7 +37,7 @@ export type Resourcefile = {
 export type Bundle = {
   datafiles: im.Map<string, Datafile>;
   resourcefiles: im.Map<string, Resourcefile>;
-  schema: any[];
+  schema: GraphQLSchemaType | any[];
   fileHash: string;
   gitCommit: string;
   gitCommitTimestamp: string;

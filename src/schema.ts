@@ -303,7 +303,11 @@ const jsonType = new GraphQLScalarType({
 });
 
 export const generateAppSchema = (app: express.Express, bundleSha: string): GraphQLSchema => {
-  const schemaData = app.get('bundles')[bundleSha].schema;
+  let schemaData = app.get('bundles')[bundleSha].schema;
+
+  if (typeof(schemaData.confs) !== 'undefined') {
+    schemaData = schemaData.confs;
+  }
 
   if (typeof (app.get('objectTypes')) === 'undefined') {
     app.set('objectTypes', {});
