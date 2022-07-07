@@ -243,7 +243,7 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
             }
             return null;
           };
-        } else if (fieldInfo.type == getObjectType(app, bundleSha, 'Resource_v1')) {
+        } else if (fieldInfo.type === getObjectType(app, bundleSha, 'Resource_v1')) {
           // a resource
           fieldDef['args'] = { path: { type: GraphQLString }, schema: { type: GraphQLString } };
           fieldDef['resolve'] = (root: any, args: any) => {
