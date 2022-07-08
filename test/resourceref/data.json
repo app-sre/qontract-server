@@ -1,0 +1,86 @@
+{
+    "data": {
+        "/test.yml": {
+            "$schema": "/test-type-1.yml",
+            "name": "name",
+            "unresolvable_resource_ref": "/resource1.yml",
+            "resolvable_resource_ref": "/resource1.yml"
+        }
+    },
+    "graphql": {
+        "$schema" : "/app-interface/graphql-schemas-1.yml",
+        "confs": [
+            {
+                "fields": [
+                {
+                    "isRequired": true,
+                    "type": "string",
+                    "name": "name"
+                },
+                {
+                    "isResource": true,
+                    "type": "string",
+                    "name": "unresolvable_resource_ref"
+                },
+                {
+                    "isResource": true,
+                    "resolveResource": true,
+                    "type": "string",
+                    "name": "resolvable_resource_ref"
+                    }
+                ],
+                "name": "TestType_v1"
+            },
+            {
+                "fields": [
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "path"
+                    },
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "content"
+                    },
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "sha256sum"
+                    },
+                    {
+                        "type": "string",
+                        "name": "schema"
+                    }
+                ],
+                "name": "Resource_v1"
+            },
+            {
+                "fields": [
+                {
+                    "type": "TestType_v1",
+                    "name": "test_type_v1",
+                    "isList": true,
+                    "datafileSchema": "/test-type-1.yml"
+                },
+                {
+                    "isRequired": true,
+                    "isResource": true,
+                    "type": "Resource_v1",
+                    "name": "resources_v1",
+                    "isList": true
+                }
+                ],
+                "name": "Query"
+            }
+        ]
+    },
+    "resources": {
+        "/resource1.yml": {
+            "content": "test resource",
+            "path": "/resource1.yml",
+            "sha256sum": "ff",
+            "$schema": null
+        }
+    }
+}
