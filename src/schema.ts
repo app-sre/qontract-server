@@ -92,7 +92,7 @@ const resolveSyntheticField = (app: express.Express,
 export const defaultResolver = (app: express.Express, bundleSha: string) =>
   (root: any, args: any, context: any, info: any) => {
     // add root.$schema to the schemas extensions
-    if (typeof (root.$schema) !== 'undefined') {
+    if (typeof (root.$schema) !== 'undefined' && root.$schema) {
       if ('schemas' in context) {
         if (!context.schemas.includes(root.$schema)) {
           context['schemas'].push(root.$schema);
@@ -234,21 +234,33 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
           fieldInfo.synthetic.subAttr,
         );
       } else if (fieldInfo.isResource) {
-        // resource
-        fieldDef['args'] = { path: { type: GraphQLString }, schema: { type: GraphQLString } };
-        fieldDef['resolve'] = (root: any, args: any) => {
-          if (args.path) {
-            return [app.get('bundles')[bundleSha].resourcefiles.get(args.path)];
-          }
+        if (fieldInfo.type === 'string' && fieldInfo.resolveResource) {
+          // a resource reference
+          fieldDef['type'] = getObjectType(app, bundleSha, 'Resource_v1');
+          fieldDef['resolve'] = (root: any) => {
+            if (root[fieldInfo.name] !== undefined) {
+              return app.get('bundles')[bundleSha].resourcefiles.get(root[fieldInfo.name]);
+            }
+            return null;
+          };
+        /* tslint:disable:triple-equals */
+        } else if (fieldInfo.type == getObjectType(app, bundleSha, 'Resource_v1')) {
+          // a resource
+          fieldDef['args'] = { path: { type: GraphQLString }, schema: { type: GraphQLString } };
+          fieldDef['resolve'] = (root: any, args: any) => {
+            if (args.path) {
+              return [app.get('bundles')[bundleSha].resourcefiles.get(args.path)];
+            }
 
-          let results = Array.from(app.get('bundles')[bundleSha].resourcefiles.values());
+            let results = Array.from(app.get('bundles')[bundleSha].resourcefiles.values());
 
-          if (args.schema) {
-            results = results.filter((r: any) => r.$schema === args.schema);
-          }
+            if (args.schema) {
+              results = results.filter((r: any) => r.$schema === args.schema);
+            }
 
-          return results;
-        };
+            return results;
+          };
+        }
       }
 
       // return
