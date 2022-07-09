@@ -1,0 +1,116 @@
+{
+    "data": {
+        "/recipes/guillaumes-deluxe.yml": {
+            "$schema": "/cakerecipe-1.yml",
+            "name": "Guillaumes Delux",
+            "inventor": "Guillaume",
+            "shoppingList": {
+                "cost": "999",
+                "ingredients": [
+                    {
+                        "$ref": "/ingredients/unicorn.yml"
+                    },
+                    {
+                        "$ref": "/ingredients/pixiedust.yml"
+                    },
+                    {
+                        "$ref": "/ingredients/choloclate.yml"
+                    }
+                ]
+            }
+        },
+        "/ingredients/unicorn.yml": {
+            "$schema": "/ingredient-1.yml",
+            "name": "Unicorn"
+        },
+        "/ingredients/pixiedust.yml": {
+            "$schema": "/ingredient-1.yml",
+            "name": "Pixiedust"
+        },
+        "/ingredients/choloclate.yml": {
+            "$schema": "/ingredient-1.yml",
+            "name": "Chocolate"
+        },
+        "/ingredients/cheese.yml": {
+            "$schema": "/ingredient-1.yml",
+            "name": "Cheese"
+        }
+    },
+    "graphql": {
+        "$schema" : "/app-interface/graphql-schemas-1.yml",
+        "confs": [
+            {
+                "name": "CakeRecipe_v1",
+                "fields": [
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "name"
+                    },
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "inventor"
+                    },
+                    {
+                        "type": "ShoppingList_V1",
+                        "name": "shoppingList"
+                    }
+                ]
+            },
+            {
+                "name": "ShoppingList_V1",
+                "fields": [
+                    {
+                        "isRequired": true,
+                        "type": "int",
+                        "name": "cost"
+                    },
+                    {
+                        "isRequired": true,
+                        "isList": true,
+                        "type": "Ingredient_v1",
+                        "name": "ingredients"
+                    }
+                ]
+            },
+            {
+                "name": "Ingredient_v1",
+                "fields": [
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "name"
+                    },
+                    {
+                        "name": "recipes",
+                        "type": "CakeRecipe_v1",
+                        "isList": true,
+                        "synthetic": {
+                            "schema": "/cakerecipe-1.yml",
+                            "subAttr": "shoppingList.ingredients"
+                        }
+                    }
+                ]
+            },
+            {
+                "fields": [
+                    {
+                        "type": "CakeRecipe_v1",
+                        "name": "cakerecipe_v1",
+                        "isList": true,
+                        "datafileSchema": "/cakerecipe-1.yml"
+                    },
+                    {
+                        "type": "Ingredient_v1",
+                        "name": "ingredient_v1",
+                        "isList": true,
+                        "datafileSchema": "/ingredient-1.yml"
+                    }
+                ],
+                "name": "Query"
+            }
+        ]
+    },
+    "resources": {}
+}
