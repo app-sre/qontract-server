@@ -1,5 +1,14 @@
 {
     "data": {
+        "/collections/magical-cakes.yml": {
+            "$schema": "/recipecollection-1.yml",
+            "name": "Magical Cakes",
+            "recipes": [
+                {
+                    "$ref": "/recipes/guillaumes-deluxe.yml"
+                }
+            ]
+        },
         "/recipes/guillaumes-deluxe.yml": {
             "$schema": "/cakerecipe-1.yml",
             "name": "Guillaumes Delux",
@@ -40,6 +49,21 @@
         "$schema" : "/app-interface/graphql-schemas-1.yml",
         "confs": [
             {
+                "name": "RecipeCollection_v1",
+                "fields": [
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "name"
+                    },
+                    {
+                        "type": "CakeRecipe_v1",
+                        "name": "recipes",
+                        "isList": true
+                    }
+                ]
+            },
+            {
                 "name": "CakeRecipe_v1",
                 "fields": [
                     {
@@ -53,13 +77,22 @@
                         "name": "inventor"
                     },
                     {
-                        "type": "ShoppingList_V1",
+                        "type": "ShoppingList_v1",
                         "name": "shoppingList"
+                    },
+                    {
+                        "name": "recipeCollections",
+                        "type": "RecipeCollection_v1",
+                        "isList": true,
+                        "synthetic": {
+                            "schema": "/recipecollection-1.yml",
+                            "subAttr": "recipes"
+                        }
                     }
                 ]
             },
             {
-                "name": "ShoppingList_V1",
+                "name": "ShoppingList_v1",
                 "fields": [
                     {
                         "isRequired": true,
@@ -95,6 +128,12 @@
             },
             {
                 "fields": [
+                    {
+                        "type": "RecipeCollection_v1",
+                        "name": "recipecollection_v1",
+                        "isList": true,
+                        "datafileSchema": "/recipecollection-1.yml"
+                    },
                     {
                         "type": "CakeRecipe_v1",
                         "name": "cakerecipe_v1",
