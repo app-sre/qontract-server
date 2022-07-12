@@ -25,7 +25,7 @@ Now, we will take a look at each attribute associated with a GraphQL type.
 
 
 
-#### Fields
+### Fields
 Fields associated with a given type can have different attributes. Let's explore each one of them.
 
 `name`: This is simply the name associated with a field.
@@ -42,9 +42,9 @@ Fields associated with a given type can have different attributes. Let's explore
 
 `isList`: This attribute indicates a list of values with a specific type indicated by `type` attribute. 
 
-`isResource`: This attribute is used only for type `Resource_v1` i.e files under resources directory in. This is used to setup a resolver that can fetch resource details.
+`isResource`: This attribute is used for fields of type Resource_v1 or string. If the type of the field i Resource_v1, a query for the field resolves to proper resource object. If the type of the field is string, the field is considered a resource reference, basically just the path to a resource.
 
-`isResourceRef`: This attribute is used to indicate a resource that is defined through path. For e.g openshift resource, terraform resource etc. 
+`resolveResource`: This attribute can be put on a resource reference field (isResource: true and type: string) to replace fetching the path of an object with the actual resource object. This enables resource fetching without breaking schema changes
 
 `synthetic`: This attribute is used to set up backrefs which can be queried during runtime.
 
