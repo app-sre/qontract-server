@@ -46,6 +46,12 @@ Fields associated with a given type can have different attributes. Let's explore
 
 `resolveResource`: This attribute can be put on a resource reference field (isResource: true and type: string) to replace fetching the path of an object with the actual resource object. This enables resource fetching without breaking schema changes
 
-`synthetic`: This attribute is used to set up backrefs which can be queried during runtime.
+`synthetic`: This attribute is used to set up backward references following a schema references back to the parent, e.g.
+
+```yaml
+synthetic:
+  schema: /parent-schema-1.yml,
+  subAttr: path to the field in the parent schema that points to >this< schema using . (dot) as path delimiter
+```
 
 `datafileSchema`: This attribute is used during filtering to ensure the query result is of required schema.
