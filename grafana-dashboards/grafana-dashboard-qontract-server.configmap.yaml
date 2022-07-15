@@ -1124,7 +1124,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\",container=~\"app-interface|app-interface-nginx-gate|s3-reloader\"}) by (container) /\nsum(kube_pod_container_resource_limits_memory_bytes{namespace=\"$namespace\",container=~\"app-interface|app-interface-nginx-gate|s3-reloader\"}) by (container)",
+              "expr": "sum(container_memory_working_set_bytes{namespace=\"$namespace\",container=~\"app-interface|app-interface-nginx-gate|s3-reloader\"}) by (container) /\nsum(kube_pod_container_resource_limits{resource=\"memory\",namespace=\"$namespace\",container=~\"app-interface|app-interface-nginx-gate|s3-reloader\"}) by (container)",
               "interval": "",
               "legendFormat": "{{container}}",
               "refId": "A"
