@@ -71,21 +71,16 @@ const resolveSyntheticField = (app: express.Express,
 
     if (datafile.$schema !== schema) { return false; }
 
-    if (subAttr in datafile) {
-      const subAttrVal = datafile[subAttr];
-
-      // the attribute is a list of $refs
-      if (Array.isArray(subAttrVal)) {
-        const backrefs = datafile[subAttr].map((r: any) => r.$ref);
-        return backrefs.includes(path);
-      }
-
-      // the attribute is a single $ref
-      if (subAttrVal.$ref === path) {
-        return true;
-      }
+    let resolutionContext = [datafile];
+    for (const field of subAttr.split('.')) {
+      resolutionContext = resolutionContext.map((c: any) => {
+        if (c && field in c) {
+          return c[field];
+        }
+        return null;
+      }).flat().filter((c: any) => c);
     }
-    return false;
+    return resolutionContext.map((c: any) => c.$ref).includes(path);
   }).values());
 
 // default resolver
