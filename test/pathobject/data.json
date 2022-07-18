@@ -1,0 +1,144 @@
+{
+    "data": {
+        "/collections/magical-recipes.yml": {
+            "$schema": "/recipecollection-1.yml",
+            "name": "Magical Recipes",
+            "recipes": [
+                {
+                    "$ref": "/cakerecipe/guillaumes-deluxe.yml"
+                },
+                {
+                    "$ref": "/beerrecipe/unicorn-ale.yml"
+                }
+            ]
+        },
+        "/cakerecipe/guillaumes-deluxe.yml": {
+            "$schema": "/cakerecipe-1.yml",
+            "path": "/cakerecipe/guillaumes-deluxe.yml",
+            "name": "Guillaumes Delux",
+            "inventor": "Guillaume"
+        },
+        "/beerrecipe/unicorn-ale.yml": {
+            "$schema": "/beerrecipe-1.yml",
+            "path": "/beerrecipe/unicorn-ale.yml",
+            "name": "Unicorn Ale",
+            "brewery": "Equestrias Finest"
+        }
+    },
+    "graphql": {
+        "$schema" : "/app-interface/graphql-schemas-1.yml",
+        "confs": [
+            {
+                "name": "PathObject_v1",
+                "isInterface": true,
+                "interfaceResolve": {
+                    "strategy": "schema"
+                },
+                "fields": [
+                    {
+                        "name": "path",
+                        "type": "string",
+                        "isRequired": true
+                    },
+                    {
+                        "name": "schema",
+                        "type": "string",
+                        "isRequired": true
+                    }
+                ]
+            },
+            {
+                "name": "RecipeCollection_v1",
+                "fields": [
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "name"
+                    },
+                    {
+                        "type": "PathObject_v1",
+                        "isInterface": true,
+                        "name": "recipes",
+                        "isList": true
+                    }
+                ]
+            },
+            {
+                "name": "CakeRecipe_v1",
+                "datafile": "/cakerecipe-1.yml",
+                "fields": [
+                    {
+                        "name": "schema",
+                        "type": "string",
+                        "isRequired": true
+                    },
+                    {
+                        "name": "path",
+                        "type": "string",
+                        "isRequired": true
+                    },
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "name"
+                    },
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "inventor"
+                    }
+                ]
+            },
+            {
+                "name": "BeerRecipe_v1",
+                "datafile": "/beerrecipe-1.yml",
+                "fields": [
+                    {
+                        "name": "schema",
+                        "type": "string",
+                        "isRequired": true
+                    },
+                    {
+                        "name": "path",
+                        "type": "string",
+                        "isRequired": true
+                    },
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "name"
+                    },
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "brewery"
+                    }
+                ]
+            },
+            {
+                "fields": [
+                    {
+                        "type": "RecipeCollection_v1",
+                        "name": "recipecollection_v1",
+                        "isList": true,
+                        "datafileSchema": "/recipecollection-1.yml"
+                    },
+                    {
+                        "type": "CakeRecipe_v1",
+                        "name": "cakerecipe_v1",
+                        "isList": true,
+                        "datafileSchema": "/cakerecipe-1.yml"
+                    },
+                    {
+                        "type": "BeerRecipe_v1",
+                        "name": "beerrecipe_v1",
+                        "isList": true,
+                        "datafileSchema": "/beerrecipe-1.yml"
+                    }
+                ],
+                "name": "Query"
+            }
+        ]
+    },
+    "resources": {}
+}

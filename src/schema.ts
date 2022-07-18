@@ -2,6 +2,7 @@ import * as fs from 'fs';
 
 import * as express from 'express';
 import * as yaml from 'js-yaml';
+import { logger } from './logger';
 
 import {
   GraphQLSchema,
@@ -57,6 +58,20 @@ const addInterfaceType = (app: express.Express, bundleSha: string, name: string,
 
 const getInterfaceType = (app: express.Express, bundleSha: string, name: string) =>
   app.get('objectInterfaces')[bundleSha][name];
+
+// datafile types to GraphQL type
+const addDatafileSchema = (app: express.Express, bundleSha: string,
+                           datafileSchema: string, graphqlType: string) => {
+  if (typeof (app.get('datafileSchemas')[bundleSha]) === 'undefined') {
+    app.get('datafileSchemas')[bundleSha] = {};
+  }
+  app.get('datafileSchemas')[bundleSha][datafileSchema] = graphqlType;
+};
+
+const getGraphqlTypeForDatafileSchema = (app: express.Express, bundleSha: string,
+                                         datafileSchema: string) => {
+  return app.get('datafileSchemas')[bundleSha][datafileSchema];
+};
 
 // helpers
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
@@ -266,9 +281,10 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
   );
 
   // interface
-  if (conf.interface) {
-    objTypeConf['interfaces'] = () => [getInterfaceType(app, bundleSha, conf.interface)];
-  }
+  objTypeConf['interfaces'] = () => [
+    conf.interface ? getInterfaceType(app, bundleSha, conf.interface) : null,
+    conf.datafile ? getInterfaceType(app, bundleSha, 'PathObject_v1') : null,
+  ].filter(x => x != null);
 
   // generate resolveType for interfaces
   if (conf.isInterface) {
@@ -282,6 +298,13 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
 
           const fieldMap = conf.interfaceResolve.fieldMap;
           return getObjectType(app, bundleSha, fieldMap[fieldValue]);
+        };
+        break;
+      case 'schema':
+        resolveType = (source: any) => {
+          const schema = source['$schema'];
+          const targetObjType = getGraphqlTypeForDatafileSchema(app, bundleSha, schema);
+          return getObjectType(app, bundleSha, targetObjType);
         };
         break;
       default:
@@ -298,6 +321,9 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
     addInterfaceType(app, bundleSha, conf.name, objType);
   } else {
     objType = new GraphQLObjectType(objTypeConf);
+    if (conf.datafile != undefined) {
+      addDatafileSchema(app, bundleSha, conf.datafile, conf.name);
+    }
     addObjectType(app, bundleSha, conf.name, objType);
   }
 
@@ -322,6 +348,10 @@ export const generateAppSchema = (app: express.Express, bundleSha: string): Grap
 
   if (typeof (app.get('objectInterfaces')) === 'undefined') {
     app.set('objectInterfaces', {});
+  }
+
+  if (typeof (app.get('datafileSchemas')) === 'undefined') {
+    app.set('datafileSchemas', {});
   }
 
   if (typeof (app.get('searchableFields')) === 'undefined') {
