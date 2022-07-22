@@ -361,7 +361,7 @@ objects:
         port: 8080
         targetPort: 8080
     selector:
-      status: migrating
+      deploymentconfig: app-interface
 - apiVersion: v1
   kind: Service
   metadata:
@@ -375,7 +375,7 @@ objects:
         targetPort: 4000
         name: app-interface
     selector:
-      status: migrating
+      deploymentconfig: app-interface
 parameters:
 - name: IMAGE
   value: quay.io/app-sre/qontract-server
