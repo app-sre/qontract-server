@@ -283,7 +283,7 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
   // interface
   objTypeConf['interfaces'] = () => [
     conf.interface ? getInterfaceType(app, bundleSha, conf.interface) : null,
-    conf.datafile ? getInterfaceType(app, bundleSha, 'PathObject_v1') : null,
+    conf.datafile ? getInterfaceType(app, bundleSha, 'DatafileObject_v1') : null,
   ].filter(x => x != null);
 
   // generate resolveType for interfaces
