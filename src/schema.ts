@@ -2,7 +2,6 @@ import * as fs from 'fs';
 
 import * as express from 'express';
 import * as yaml from 'js-yaml';
-import { logger } from './logger';
 
 import {
   GraphQLSchema,
