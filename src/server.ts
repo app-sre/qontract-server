@@ -185,8 +185,8 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   app.get('/diff/:base_sha/:head_sha', (req: express.Request, res: express.Response) => {
     const baseBundle: db.Bundle = req.app.get('bundles')[req.params.base_sha];
     const headBundle: db.Bundle = req.app.get('bundles')[req.params.head_sha];
-    const dataDiffs = deepDiff(baseBundle.datafiles.toJS(), headBundle.datafiles.toJS());
 
+    const dataDiffs = deepDiff(baseBundle.datafiles.toJS(), headBundle.datafiles.toJS());
     const resourceDiffs = deepDiff(
       im.Map(
         Array.from(
@@ -200,51 +200,34 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
       ).toJS(),
     );
 
-    const changes = [];
+    const changes: any = {
+      datafiles: {},
+      resources: {},
+    };
+
     for (const d in resourceDiffs) {
       const diff = resourceDiffs[d];
       const path = diff['path'][0];
-      const backrefs = diff['kind'] === 'D' ?
-        baseBundle.resourcefiles.get(path).backrefs :
-        headBundle.resourcefiles.get(path).backrefs;
-      for (const backrefIndex in headBundle.resourcefiles.get(path).backrefs) {
-        const backref = headBundle.resourcefiles.get(path).backrefs[backrefIndex];
-        const oldRes = baseBundle.datafiles.get(backref.path);
-        const newRes = headBundle.datafiles.get(backref.path);
-        changes.push(
-          {
-            resourcepath: path,
-            datafilepath: backref.path,
-            datafileschema: backref.datafileSchema,
-            action: diff['kind'],
-            jsonpath: backref.jsonpath,
-            old: oldRes,
-            new: newRes,
-          },
-        );
-      }
+      const oldRes = baseBundle.resourcefiles.get(path);
+      const newRes = headBundle.resourcefiles.get(path);
+      changes.resources[path] = {
+        resourcepath: path,
+        old: oldRes,
+        new: newRes,
+      };
     }
 
     for (const d in dataDiffs) {
       const diff = dataDiffs[d];
-      const oldRes = baseBundle.datafiles.get(diff['path'][0]);
-      const newRes = headBundle.datafiles.get(diff['path'][0]);
-      const path = diff['path'].slice(1);
-      for (const i in path) {
-        if (Number.isInteger(path[i])) {
-          path[i] = `[${path[i]}]`;
-        }
-      }
-      changes.push(
-        {
-          datafilepath: diff['path'][0],
-          datafileschema: (newRes !== undefined ? newRes : oldRes).$schema,
-          action: diff['kind'],
-          jsonpath: path.join('.'),
-          old: oldRes,
-          new: newRes,
-        },
-      );
+      const path = diff['path'][0];
+      const oldRes = baseBundle.datafiles.get(path);
+      const newRes = headBundle.datafiles.get(path);
+      changes.datafiles[path] = {
+        datafilepath: path,
+        datafileschema: (newRes !== undefined ? newRes : oldRes).$schema,
+        old: oldRes,
+        new: newRes,
+      };
     }
     res.send(changes);
   });

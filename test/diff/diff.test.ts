@@ -36,19 +36,12 @@ describe('diff', async() => {
     resp.should.have.status(200);
     logger.info(JSON.stringify(resp.body));
 
-    resp.body.length.should.equal(2);
-
-    const changed = resp.body[0];
+    const changed = resp.body.datafiles['/cluster.yml'];
     changed.datafilepath.should.equal('/cluster.yml');
     changed.datafileschema.should.equal('/openshift/cluster-1.yml');
-    changed.action.should.equal('E');
-    changed.jsonpath.should.equal('important.resource');
 
-    const resource = resp.body[1];
-    resource.datafilepath.should.equal('/cluster.yml');
-    resource.datafileschema.should.equal('/openshift/cluster-1.yml');
-    resource.action.should.equal('E');
-    resource.jsonpath.should.equal('automationToken.path');
+    const resource = resp.body.resources['/changed_resource.yml'];
+    resource.resourcepath.should.equal('/changed_resource.yml');
   });
 
   after(() => {
