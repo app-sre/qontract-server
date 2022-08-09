@@ -85,6 +85,9 @@ const removeExpiredBundles = (app: express.Express) => {
 
       // remove from searchableFields
       delete app.get('searchableFields')[sha];
+
+      // remove from datafileSchemas
+      delete app.get('datafileSchemas')[sha];
     }
   }
 };
