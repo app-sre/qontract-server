@@ -88,6 +88,12 @@ const removeExpiredBundles = (app: express.Express) => {
 
       // remove from datafileSchemas
       delete app.get('datafileSchemas')[sha];
+
+      // remove from objectTypes
+      delete app.get('objectTypes')[sha];
+
+      // remove from objectInterfaces
+      delete app.get('objectInterfaces')[sha];
     }
   }
 };
