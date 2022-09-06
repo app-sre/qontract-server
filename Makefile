@@ -13,6 +13,8 @@ DATA_DIR := $(APP_INTERFACE_PATH)/$(DATA_DIR_NAME)
 RESOURCES_DIR := $(APP_INTERFACE_PATH)/resources
 BUNDLE_DIR := $(shell pwd)/bundle
 BUNDLE_FILENAME := bundle.json
+SERVER_CONTAINER_NAME ?= qontract-server
+VALIDATOR_CONTAINER_NAME ?= qontract-validator
 VALIDATOR_IMAGE_NAME ?= quay.io/app-sre/qontract-validator
 VALIDATOR_IMAGE_TAG ?= latest
 GIT_COMMIT := $(shell cd $(APP_INTERFACE_PATH) && git rev-parse HEAD)
@@ -32,14 +34,14 @@ reload: bundle
 bundle:
 	@$(CONTAINER_ENGINE) pull $(VALIDATOR_IMAGE_NAME):$(VALIDATOR_IMAGE_TAG)
 	mkdir -p $(BUNDLE_DIR)
-	@$(CONTAINER_ENGINE) run --rm \
+	@$(CONTAINER_ENGINE) run --rm --name $(VALIDATOR_CONTAINER_NAME) \
 		-v $(SCHEMAS_DIR):/schemas$(CONTAINER_SELINUX_FLAG) \
 		-v $(GRAPHQL_SCHEMA_DIR):/graphql$(CONTAINER_SELINUX_FLAG) \
 		-v $(DATA_DIR):/data$(CONTAINER_SELINUX_FLAG) \
 		-v $(RESOURCES_DIR):/resources$(CONTAINER_SELINUX_FLAG) \
 		$(VALIDATOR_IMAGE_NAME):$(VALIDATOR_IMAGE_TAG) \
 		qontract-bundler /schemas /graphql/schema.yml /data /resources $(GIT_COMMIT) $(GIT_COMMIT_TIMESTAMP) > $(BUNDLE_DIR)/$(BUNDLE_FILENAME)
-	@$(CONTAINER_ENGINE) run --rm \
+	@$(CONTAINER_ENGINE) run --rm --name $(VALIDATOR_CONTAINER_NAME) \
 		-v $(BUNDLE_DIR):/bundle$(CONTAINER_SELINUX_FLAG) \
 		$(VALIDATOR_IMAGE_NAME):$(VALIDATOR_IMAGE_TAG) \
 		qontract-validator --only-errors /bundle/$(BUNDLE_FILENAME)
@@ -48,7 +50,7 @@ run:
 	LOAD_METHOD=fs DATAFILES_FILE=$(BUNDLE_DIR)/$(BUNDLE_FILENAME) yarn run server
 
 docker-run:
-	@$(CONTAINER_ENGINE) run -it --rm \
+	@$(CONTAINER_ENGINE) run -it --rm --name $(SERVER_CONTAINER_NAME) \
 		-v $(BUNDLE_DIR):/bundle$(CONTAINER_SELINUX_FLAG) \
 		-p 4000:4000 \
 		-e LOAD_METHOD=fs \
@@ -56,7 +58,8 @@ docker-run:
 		$(IMAGE_NAME):$(IMAGE_TAG)
 
 docker-run-clean:
-	@$(CONTAINER_ENGINE) ps -aq | xargs $(CONTAINER_ENGINE) rm -f || true
+	@$(CONTAINER_ENGINE) rm -f $(SERVER_CONTAINER_NAME) || true
+	@$(CONTAINER_ENGINE) rm -f $(VALIDATOR_CONTAINER_NAME) || true
 
 build:
 	@$(CONTAINER_ENGINE) build --pull -t $(IMAGE_NAME):latest .
