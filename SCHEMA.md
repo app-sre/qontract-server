@@ -36,6 +36,8 @@ Fields associated with a given type can have different attributes. Let's explore
 
 `isUnique`: This attribute is indicative of the unique constraint on the value. The enforcement for this is actually done through qontract-validator.
 
+`isContextUnique`: This attribute is indicative of the unique constraint on the value within a list of objects. In comparison to `isUnique`, this attribute does not act globally within the bundle but only locally within the context of a list. This attribute can be set on multiple properties of a type. In that case, uniqueness is ensured on the set of properties.
+
 `isRequired`: This attribute indicates that the type is non-null i.e values are never null and an error can be raised during the request if they are not.
 
 `isSearchable`: This attribute allows to search/filter results based on the string argument. For e.g App_v1.name is searchable attribute and we can do a query 
