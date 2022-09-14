@@ -203,12 +203,13 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
         throw `fieldInfo type is undefined: ${JSON.stringify(fieldInfo)}`;
       }
 
-      if (fieldInfo.isRequired) {
-        t = new GraphQLNonNull(t);
+      if (fieldInfo.isList) {
+        // make list elements non nullable
+        t = new GraphQLList(GraphQLNonNull(t));
       }
 
-      if (fieldInfo.isList) {
-        t = new GraphQLList(t);
+      if (fieldInfo.isRequired) {
+        t = new GraphQLNonNull(t);
       }
 
       fieldDef['type'] = t;
