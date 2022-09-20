@@ -83,7 +83,6 @@ objects:
               cpu: ${GATE_CPU_REQUESTS}
             limits:
               memory: ${GATE_MEMORY_LIMIT}
-              cpu: ${GATE_CPU_LIMIT}
         - image: ${IMAGE_RELOADER}:${IMAGE_RELOADER_TAG}
           imagePullPolicy: Always
           name: s3-reloader
