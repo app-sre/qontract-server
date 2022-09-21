@@ -154,14 +154,14 @@ objects:
               port: 4000
             initialDelaySeconds: 30
             periodSeconds: 10
-            timeoutSeconds: 3
+            timeoutSeconds: ${{LIVENESS_PROBE_TIMEOUT}}
           readinessProbe:
             httpGet:
               path: /healthz
               port: 4000
             initialDelaySeconds: 3
             periodSeconds: 10
-            timeoutSeconds: 3
+            timeoutSeconds: ${{READINESS_PROBE_TIMEOUT}}
           resources: "${{APP_INTERFACE_RESOURCES}}"
     triggers:
     - type: ConfigChange
@@ -223,3 +223,9 @@ parameters:
 # container 's3-reloader' resources
 - name: S3RELOADER_RESOURCES
   value: '{"requests": {"memory": "20Mi", "cpu": "10m"}, "limits":{"memory": "40Mi"}}'
+
+# probe timeouts
+- name: LIVENESS_PROBE_TIMEOUT
+  value: 3
+- name: READINESS_PROBE_TIMEOUT
+  value: 3
