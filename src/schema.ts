@@ -75,6 +75,36 @@ const getGraphqlTypeForDatafileSchema = (app: express.Express, bundleSha: string
 // helpers
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
+const resolveSyntheticFieldInDatafile = (path: string, datafile: any,
+                                         subAttrs: string[],
+                                         idx: number): boolean => {
+  const leaf = idx === subAttrs.length - 1;
+  if (subAttrs[idx] in datafile) {
+    const subAttrVal = datafile[subAttrs[idx]];
+
+    // the attribute is a list of $refs
+    if (Array.isArray(subAttrVal)) {
+      if (leaf) {
+        const backrefs = datafile[subAttrs[idx]].map((r: any) => r.$ref);
+        return backrefs.includes(path);
+      }
+      for (const subAttrValItem of subAttrVal) {
+        if (resolveSyntheticFieldInDatafile(path, subAttrValItem, subAttrs, idx + 1)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // the attribute is a single $ref
+    if (leaf) {
+      return subAttrVal.$ref === path;
+    }
+    return resolveSyntheticFieldInDatafile(path, subAttrVal, subAttrs, idx + 1);
+  }
+  return false;
+};
+
 // synthetic field resolver
 const resolveSyntheticField = (app: express.Express,
                                bundleSha: string,
@@ -85,16 +115,7 @@ const resolveSyntheticField = (app: express.Express,
 
     if (datafile.$schema !== schema) { return false; }
 
-    let resolutionContext = [datafile];
-    for (const field of subAttr.split('.')) {
-      resolutionContext = resolutionContext.map((c: any) => {
-        if (c && field in c) {
-          return c[field];
-        }
-        return null;
-      }).flat().filter((c: any) => c);
-    }
-    return resolutionContext.map((c: any) => c.$ref).includes(path);
+    return resolveSyntheticFieldInDatafile(path, datafile, subAttr.split('.'), 0);
   }).values());
 
 // default resolver
