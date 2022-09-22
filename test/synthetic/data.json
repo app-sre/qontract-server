@@ -43,6 +43,24 @@
         "/ingredients/cheese.yml": {
             "$schema": "/ingredient-1.yml",
             "name": "Cheese"
+        },
+        "/stores/magical-ingredients-inc.yml": {
+            "$schema": "/store-1.yml",
+            "name": "Magical Ingredients Inc."
+        },
+        "/shoppinglists/birthday-party.yml": {
+            "$schema": "/shoppinglist-1.yml",
+            "name": "Birthday Party",
+            "cost": "999",
+            "ingredients": [
+                {
+                    "$schema": "/ingredient-1.yml",
+                    "name": "Pixiedust",
+                    "store": {
+                        "$ref": "/stores/magical-ingredients-inc.yml"
+                    }
+                }
+            ]
         }
     },
     "graphql": {
@@ -60,6 +78,25 @@
                         "type": "CakeRecipe_v1",
                         "name": "recipes",
                         "isList": true
+                    }
+                ]
+            },
+            {
+                "name": "Store_v1",
+                "fields": [
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "name"
+                    },
+                    {
+                        "name": "shoppingLists",
+                        "type": "ShoppingList_v1",
+                        "isList": true,
+                        "synthetic": {
+                            "schema": "/shoppinglist-1.yml",
+                            "subAttr": "ingredients.store"
+                        }
                     }
                 ]
             },
@@ -96,6 +133,11 @@
                 "fields": [
                     {
                         "isRequired": true,
+                        "type": "string",
+                        "name": "name"
+                    },
+                    {
+                        "isRequired": true,
                         "type": "int",
                         "name": "cost"
                     },
@@ -114,6 +156,10 @@
                         "isRequired": true,
                         "type": "string",
                         "name": "name"
+                    },
+                    {
+                        "type": "Store_v1",
+                        "name": "store"
                     },
                     {
                         "name": "recipes",
@@ -145,6 +191,18 @@
                         "name": "ingredient_v1",
                         "isList": true,
                         "datafileSchema": "/ingredient-1.yml"
+                    },
+                    {
+                        "type": "Store_v1",
+                        "name": "store_v1",
+                        "isList": true,
+                        "datafileSchema": "/store-1.yml"
+                    },
+                    {
+                        "type": "ShoppingList_v1",
+                        "name": "shoppinglist_v1",
+                        "isList": true,
+                        "datafileSchema": "/shoppinglist-1.yml"
                     }
                 ],
                 "name": "Query"
