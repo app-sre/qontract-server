@@ -75,7 +75,7 @@ const getGraphqlTypeForDatafileSchema = (app: express.Express, bundleSha: string
 // helpers
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
-const pathRefExistsinDatafile = (path: string, datafile: any,
+const pathRefExistsInDatafile = (path: string, datafile: any,
                                  subAttrs: string[],
                                  idx: number): boolean => {
   const leaf = idx === subAttrs.length - 1;
@@ -89,7 +89,7 @@ const pathRefExistsinDatafile = (path: string, datafile: any,
         return backrefs.includes(path);
       }
       for (const subAttrValItem of subAttrVal) {
-        if (pathRefExistsinDatafile(path, subAttrValItem, subAttrs, idx + 1)) {
+        if (pathRefExistsInDatafile(path, subAttrValItem, subAttrs, idx + 1)) {
           return true;
         }
       }
@@ -100,7 +100,7 @@ const pathRefExistsinDatafile = (path: string, datafile: any,
     if (leaf) {
       return subAttrVal.$ref === path;
     }
-    return pathRefExistsinDatafile(path, subAttrVal, subAttrs, idx + 1);
+    return pathRefExistsInDatafile(path, subAttrVal, subAttrs, idx + 1);
   }
   return false;
 };
@@ -115,7 +115,7 @@ const resolveSyntheticField = (app: express.Express,
 
     if (datafile.$schema !== schema) { return false; }
 
-    return pathRefExistsinDatafile(path, datafile, subAttr.split('.'), 0);
+    return pathRefExistsInDatafile(path, datafile, subAttr.split('.'), 0);
   }).values());
 
 // default resolver
