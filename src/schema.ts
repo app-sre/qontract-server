@@ -78,6 +78,13 @@ const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 
 const pathRefExistsInDatafile = (path: string, datafile: any,
                                  subAttrs: string[],
                                  idx: number): boolean => {
+  // this function is basically just a dumb and simplified version of the previous
+  // synthetic resolver, that does not want to be smart or elaborate and just
+  // implements all the different filtering cases as simple as possible,
+  // avoiding costly operations on large lists of objects for performance reasons.
+  //
+  // if anyone wants to beautify this code, make sure that performance is not
+  // negatively affected!!!
   const leaf = idx === subAttrs.length - 1;
   if (subAttrs[idx] in datafile) {
     const subAttrVal = datafile[subAttrs[idx]];
