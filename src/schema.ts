@@ -75,9 +75,9 @@ const getGraphqlTypeForDatafileSchema = (app: express.Express, bundleSha: string
 // helpers
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
-const resolveSyntheticFieldInDatafile = (path: string, datafile: any,
-                                         subAttrs: string[],
-                                         idx: number): boolean => {
+const pathRefExistsinDatafile = (path: string, datafile: any,
+                                 subAttrs: string[],
+                                 idx: number): boolean => {
   const leaf = idx === subAttrs.length - 1;
   if (subAttrs[idx] in datafile) {
     const subAttrVal = datafile[subAttrs[idx]];
@@ -89,7 +89,7 @@ const resolveSyntheticFieldInDatafile = (path: string, datafile: any,
         return backrefs.includes(path);
       }
       for (const subAttrValItem of subAttrVal) {
-        if (resolveSyntheticFieldInDatafile(path, subAttrValItem, subAttrs, idx + 1)) {
+        if (pathRefExistsinDatafile(path, subAttrValItem, subAttrs, idx + 1)) {
           return true;
         }
       }
@@ -100,7 +100,7 @@ const resolveSyntheticFieldInDatafile = (path: string, datafile: any,
     if (leaf) {
       return subAttrVal.$ref === path;
     }
-    return resolveSyntheticFieldInDatafile(path, subAttrVal, subAttrs, idx + 1);
+    return pathRefExistsinDatafile(path, subAttrVal, subAttrs, idx + 1);
   }
   return false;
 };
@@ -115,7 +115,7 @@ const resolveSyntheticField = (app: express.Express,
 
     if (datafile.$schema !== schema) { return false; }
 
-    return resolveSyntheticFieldInDatafile(path, datafile, subAttr.split('.'), 0);
+    return pathRefExistsinDatafile(path, datafile, subAttr.split('.'), 0);
   }).values());
 
 // default resolver
