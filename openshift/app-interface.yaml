@@ -19,8 +19,8 @@ objects:
     labels:
       app: app-interface
     annotations:
-      ignore-check.kube-linter.io/unset-cpu-requirements: "qontract-server assigns cpu limits via parameter object"
-      ignore-check.kube-linter.io/unset-memory-requirements: "qontract-server assigns memory limits via parameter object"
+      ignore-check.kube-linter.io/unset-cpu-requirements: "qontract-server assigns cpu requirements via parameter object"
+      ignore-check.kube-linter.io/unset-memory-requirements: "qontract-server assigns memory requirements via parameter object"
     name: app-interface
   spec:
     replicas: ${{REPLICAS}}
