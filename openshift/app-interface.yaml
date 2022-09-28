@@ -4,6 +4,10 @@ kind: Template
 metadata:
   name: app-interface
 objects:
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: app-interface
 - apiVersion: policy/v1beta1
   kind: PodDisruptionBudget
   metadata:
@@ -20,6 +24,7 @@ objects:
       app: app-interface
     annotations:
       ignore-check.kube-linter.io/unset-cpu-requirements: "qontract-server does not set cpu limits as it is harmful for its performance"
+      ignore-check.kube-linter.io/no-readiness-probe: "qontract-server s3-reloader does not receive traffic"
     name: app-interface
   spec:
     replicas: ${{REPLICAS}}
@@ -78,6 +83,26 @@ objects:
           ports:
           - name: nginx-gate-port
             containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: nginx-gate-port
+              scheme: HTTP
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: nginx-gate-port
+              scheme: HTTP
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 10
           resources: "${{GATE_RESOURCES}}"
         - image: ${IMAGE_RELOADER}:${IMAGE_RELOADER_TAG}
           imagePullPolicy: Always
@@ -111,6 +136,19 @@ objects:
           args:
           - -s3-path=s3://$(AWS_S3_BUCKET)/$(AWS_S3_KEY)
           - -webhook-url=http://localhost:4000/reload
+          ports:
+          - name: s3-reloader-metrics
+            containerPort: 9533
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: s3-reloader-metrics
+              scheme: HTTP
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 10
           resources: "${{S3RELOADER_RESOURCES}}"
         - image: ${IMAGE}:${IMAGE_TAG}
           imagePullPolicy: Always
