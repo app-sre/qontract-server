@@ -18,6 +18,8 @@ objects:
   metadata:
     labels:
       app: app-interface
+    annotations:
+      ignore-check.kube-linter.io/unset-cpu-requirements: "qontract-server does not set cpu limits as it is harmful for its performance"
     name: app-interface
   spec:
     replicas: ${{REPLICAS}}
