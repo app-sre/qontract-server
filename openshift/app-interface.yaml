@@ -44,6 +44,7 @@ objects:
           deployment: app-interface
           status: migrating
       spec:
+        serviceAccountName: app-interface
         affinity:
           podAntiAffinity:
             preferredDuringSchedulingIgnoredDuringExecution:
