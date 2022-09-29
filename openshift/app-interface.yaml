@@ -137,12 +137,12 @@ objects:
           - -s3-path=s3://$(AWS_S3_BUCKET)/$(AWS_S3_KEY)
           - -webhook-url=http://localhost:4000/reload
           ports:
-          - name: s3-reloader-metrics
+          - name: s3-reloader
             containerPort: 9533
           livenessProbe:
             httpGet:
               path: /metrics
-              port: s3-reloader-metrics
+              port: s3-reloader
               scheme: HTTP
             failureThreshold: 3
             periodSeconds: 10
