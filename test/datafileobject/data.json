@@ -37,8 +37,7 @@
                 "fields": [
                     {
                         "name": "path",
-                        "type": "string",
-                        "isRequired": true
+                        "type": "string"
                     },
                     {
                         "name": "schema",
