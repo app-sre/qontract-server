@@ -191,6 +191,43 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     res.send(req.app.get('bundles')[bundleSha].fileHash);
   });
 
+  app.get(
+  '/diff/:base_sha/:head_sha/:filetype/*?',
+  (req: express.Request, res: express.Response) => {
+    const baseBundle: db.Bundle = req.app.get('bundles')[req.params.base_sha];
+    const headBundle: db.Bundle = req.app.get('bundles')[req.params.head_sha];
+
+    const filepath = `/${req.params[0]}`;
+    if (req.params.filetype === 'datafile') {
+      const oldRes = baseBundle.datafiles.get(filepath);
+      const newRes = headBundle.datafiles.get(filepath);
+      if (oldRes === undefined && newRes === undefined) {
+        res.status(404).send('datafile not found');
+      } else {
+        res.send({
+          datafilepath: filepath,
+          datafileschema: (newRes !== undefined ? newRes : oldRes).$schema,
+          old: oldRes,
+          new: newRes,
+        });
+      }
+    } else if (req.params.filetype === 'resourcefile') {
+      const oldRes = baseBundle.resourcefiles.get(filepath);
+      const newRes = headBundle.resourcefiles.get(filepath);
+      if (oldRes === undefined && newRes === undefined) {
+        res.status(404).send('resourcefile not found');
+      } else {
+        res.send({
+          resourcepath: filepath,
+          old: oldRes,
+          new: newRes,
+        });
+      }
+    } else {
+      res.status(400).send(`unknown filetype ${req.params.filetype}`);
+    }
+  });
+
   app.get('/diff/:base_sha/:head_sha', (req: express.Request, res: express.Response) => {
     const baseBundle: db.Bundle = req.app.get('bundles')[req.params.base_sha];
     const headBundle: db.Bundle = req.app.get('bundles')[req.params.head_sha];

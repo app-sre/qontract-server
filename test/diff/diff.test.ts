@@ -30,11 +30,10 @@ describe('diff', async() => {
     return response.text.should.equal(newSha);
   });
 
-  it('serve diff', async() => {
+  it('serve full diff', async() => {
     const resp = await chai.request(srv)
                            .get(`/diff/${oldSha}/${newSha}`);
     resp.should.have.status(200);
-    logger.info(JSON.stringify(resp.body));
 
     const changed = resp.body.datafiles['/cluster.yml'];
     changed.datafilepath.should.equal('/cluster.yml');
@@ -42,6 +41,43 @@ describe('diff', async() => {
 
     const resource = resp.body.resources['/changed_resource.yml'];
     resource.resourcepath.should.equal('/changed_resource.yml');
+  });
+
+  it('serve single datafile diff', async() => {
+    const resp = await chai.request(srv)
+                           .get(`/diff/${oldSha}/${newSha}/datafile/cluster.yml`);
+    resp.should.have.status(200);
+
+    resp.body.datafilepath.should.equal('/cluster.yml');
+    resp.body.datafileschema.should.equal('/openshift/cluster-1.yml');
+    resp.body.old.automationToken.path.should.equals('secret-old');
+    resp.body.new.automationToken.path.should.equals('secret-new');
+  });
+
+  it('serve single datafile diff missing', async() => {
+    const resp = await chai.request(srv)
+                           .get(`/diff/${oldSha}/${newSha}/datafile/does_not_exit.yml`);
+    resp.should.have.status(404);
+  });
+
+  it('serve single resourcefile diff', async() => {
+    const resp = await chai.request(srv)
+                           .get(`/diff/${oldSha}/${newSha}/resourcefile/changed_resource.yml`);
+    resp.should.have.status(200);
+
+    resp.body.resourcepath.should.equal('/changed_resource.yml');
+  });
+
+  it('serve single resourcefile diff not found', async() => {
+    const resp = await chai.request(srv)
+                           .get(`/diff/${oldSha}/${newSha}/resourcefile/does_not_exist.yml`);
+    resp.should.have.status(404);
+  });
+
+  it('serve single diff unknown file type', async() => {
+    const resp = await chai.request(srv)
+                           .get(`/diff/${oldSha}/${newSha}/unknown_file_type/does_not_exist.yml`);
+    resp.should.have.status(400);
   });
 
   after(() => {
