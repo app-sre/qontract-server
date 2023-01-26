@@ -1,11 +1,25 @@
-FROM registry.access.redhat.com/ubi8/nodejs-16
+FROM registry.access.redhat.com/ubi8/nodejs-16 as base
+RUN npm install -g yarn && npm cache clean --force
+WORKDIR $HOME
+COPY package.json yarn.lock ./
 
-RUN npm install -g yarn
+FROM base as dev
+RUN yarn install --frozen-lockfile && \
+    yarn cache clean
+COPY . ./
+RUN yarn build
 
-ADD . ${APP_ROOT}
-WORKDIR ${APP_ROOT}
+FROM dev as test
+RUN yarn run lint && yarn test
 
-RUN yarn install && yarn build
+FROM base as prod
+RUN yarn install --frozen-lockfile --production && \
+    yarn cache clean
 
+FROM registry.access.redhat.com/ubi8/nodejs-16-minimal
+WORKDIR $HOME
+RUN npm install -g yarn && npm cache clean --force
+COPY --from=prod $HOME $HOME
+COPY --from=dev ${HOME}/dist ./dist
 EXPOSE 4000
 CMD ["yarn", "run", "server"]
