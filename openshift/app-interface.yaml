@@ -81,6 +81,8 @@ objects:
                 configMapKeyRef:
                   key: forward_host
                   name: app-interface
+            - name: BASIC_AUTH_DISABLE
+              value: ${IMAGE_GATE_AUTH_DISABLE}
           ports:
           - name: nginx-gate-port
             containerPort: 8080
@@ -245,6 +247,9 @@ parameters:
   value: latest
   displayName: App interface nginx gate version
   description: App interface nginx gate version which defaults to latest
+- name: IMAGE_GATE_AUTH_DISABLE
+  value: "false"
+  description: Set to true to disable authentication for accessing qontract server
 - name: IMAGE_RELOADER
   value: quay.io/app-sre/s3-reload
 - name: IMAGE_RELOADER_TAG
