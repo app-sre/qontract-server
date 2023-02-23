@@ -41,7 +41,7 @@ describe('synthetic', async() => {
     return resp.body.data.test[0].recipeCollections[0].name.should.equal('Magical Cakes');
   });
 
-  it('resolves nested synthetics', async() => {
+  it('resolves nested synthetics with lists as leaf elements', async() => {
     const query = `
       {
         test: ingredient_v1(path: "/ingredients/pixiedust.yml") {
@@ -59,5 +59,25 @@ describe('synthetic', async() => {
     resp.should.have.status(200);
     resp.body.data.test[0].name.should.equal('Pixiedust');
     return resp.body.data.test[0].recipes[0].name.should.equal('Guillaumes Delux');
+  });
+
+  it('resolves nested synthetics with an object as leaf element', async() => {
+    const query = `
+      {
+        test: store_v1(path: "/stores/magical-ingredients-inc.yml") {
+          name
+          shoppingLists {
+            name
+          }
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+                        .post('/graphql')
+                        .set('content-type', 'application/json')
+                        .send({ query });
+    resp.should.have.status(200);
+    resp.body.data.test[0].name.should.equal('Magical Ingredients Inc.');
+    return resp.body.data.test[0].shoppingLists[0].name.should.equal('Birthday Party');
   });
 });
