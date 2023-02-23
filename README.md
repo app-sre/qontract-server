@@ -60,6 +60,8 @@ The shas will expire after a certain amount of time:
 - `GET /metrics`: prometheus metrics.
 - `GET /git-commit`: returns the git commit for the latest bundle. (deprecated, use git-commit-info instead)
 - `GET /git-commit/:sha`: returns the git commit for the specified bundle., use git-commit-info instead
+- `GET /diff/:sha/:another_sha`: return the difference between two bundles
+- `GET /diff/:sha/:another_sha/:filetype/:path`: return the difference for a single `datafile` or `resourcefile`
 
 ## Metrics
 
