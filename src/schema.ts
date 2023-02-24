@@ -246,20 +246,13 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
           fieldDef['args'][searchableField] = { type: GraphQLString };
         }
 
-        fieldDef['resolve'] = (root: any, args: any) => {
-          return Array.from(app.get('bundles')[bundleSha].datafiles.filter(
-            (df: db.Datafile) => {
-              if (df.$schema !== fieldInfo.datafileSchema) {
-                return false;
-              }
-              for (const key of Object.keys(args)) {
-                if (!(key in df) || args[key] !== df[key]) {
-                  return false;
-                }
-              }
-              return true;
-            }).values());
-        };
+        fieldDef['resolve'] = (root: any, args: any) =>
+            app.get('bundles')[bundleSha].datafilesBySchema
+                .get(fieldInfo.datafileSchema)
+                .filter((df: db.Datafile) => Object.entries(args)
+                    .every(([key, value]) => key in df && value === df[key]))
+                .valueSeq()
+                .toArray();
       } else if (fieldInfo.synthetic) {
         // synthetic
         fieldDef['resolve'] = (root: any) => resolveSyntheticField(
