@@ -1,7 +1,4 @@
-import * as fs from 'fs';
-
 import * as express from 'express';
-import * as yaml from 'js-yaml';
 
 import {
   GraphQLSchema,
@@ -113,15 +110,25 @@ const pathRefExistsInDatafile = (path: string, datafile: any,
 };
 
 // synthetic field resolver
-const resolveSyntheticField = (app: express.Express,
-                               bundleSha: string,
+const resolveSyntheticField = (bundle: db.Bundle,
                                path: string,
                                schema: string,
                                subAttr: string): db.Datafile[] =>
-  app.get('bundles')[bundleSha].datafilesBySchema.get(schema)
-      .filter((datafile: db.Datafile) => pathRefExistsInDatafile(path, datafile, subAttr.split('.'), 0))
-      .valueSeq()
-      .toArray();
+    bundle.datafilesBySchema
+        .get(schema)
+        .filter((datafile: db.Datafile) => pathRefExistsInDatafile(path, datafile, subAttr.split('.'), 0))
+        .valueSeq()
+        .toArray();
+
+const resolveDatafileSchemaField = (bundle: db.Bundle,
+                                    schema: string,
+                                    args: any): db.Datafile[] =>
+    bundle.datafilesBySchema
+        .get(schema)
+        .filter((df: db.Datafile) => Object.entries(args)
+            .every(([key, value]) => key in df && value === df[key]))
+        .valueSeq()
+        .toArray();
 
 // default resolver
 export const defaultResolver = (app: express.Express, bundleSha: string) =>
@@ -246,18 +253,15 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
           fieldDef['args'][searchableField] = { type: GraphQLString };
         }
 
-        fieldDef['resolve'] = (root: any, args: any) =>
-            app.get('bundles')[bundleSha].datafilesBySchema
-                .get(fieldInfo.datafileSchema)
-                .filter((df: db.Datafile) => Object.entries(args)
-                    .every(([key, value]) => key in df && value === df[key]))
-                .valueSeq()
-                .toArray();
+        fieldDef['resolve'] = (root: any, args: any) => resolveDatafileSchemaField(
+            app.get('bundles')[bundleSha],
+            fieldInfo.datafileSchema,
+            args,
+        );
       } else if (fieldInfo.synthetic) {
         // synthetic
         fieldDef['resolve'] = (root: any) => resolveSyntheticField(
-          app,
-          bundleSha,
+          app.get('bundles')[bundleSha],
           root.path,
           fieldInfo.synthetic.schema,
           fieldInfo.synthetic.subAttr,
