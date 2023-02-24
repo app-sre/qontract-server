@@ -118,12 +118,10 @@ const resolveSyntheticField = (app: express.Express,
                                path: string,
                                schema: string,
                                subAttr: string): db.Datafile[] =>
-  Array.from(app.get('bundles')[bundleSha].datafiles.filter((datafile: any) => {
-
-    if (datafile.$schema !== schema) { return false; }
-
-    return pathRefExistsInDatafile(path, datafile, subAttr.split('.'), 0);
-  }).values());
+  app.get('bundles')[bundleSha].datafilesBySchema.get(schema)
+      .filter((datafile: db.Datafile) => pathRefExistsInDatafile(path, datafile, subAttr.split('.'), 0))
+      .valueSeq()
+      .toArray();
 
 // default resolver
 export const defaultResolver = (app: express.Express, bundleSha: string) =>

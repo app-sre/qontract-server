@@ -36,6 +36,7 @@ export type Resourcefile = {
 
 export type Bundle = {
   datafiles: im.Map<string, Datafile>;
+  datafilesBySchema: im.Seq.Keyed<string, im.Collection<string, Datafile>>;
   resourcefiles: im.Map<string, Resourcefile>;
   schema: GraphQLSchemaType | any[];
   fileHash: string;
@@ -76,9 +77,11 @@ export const resolveRef = (bundle: Bundle, itemRef: Referencing) : any => {
 
 const parseBundle = (contents: string) : Bundle => {
   const parsedContents = JSON.parse(contents);
-
+  const datafiles = parseDatafiles(parsedContents.data);
+  const datafilesBySchema = datafiles.groupBy(d => d.$schema);
   return {
-    datafiles: parseDatafiles(parsedContents.data),
+    datafiles,
+    datafilesBySchema,
     resourcefiles: parseResourcefiles(parsedContents.resources),
     fileHash: hashDatafile(contents),
     gitCommit: parsedContents['git_commit'],
