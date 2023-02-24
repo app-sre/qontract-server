@@ -13,7 +13,8 @@
     "server": "node ./dist/main-bundle.js",
     "lint": "./node_modules/.bin/tslint --project .",
     "test": "mocha -r ts-node/register $(find test -type f -name '*.ts')",
-    "update-graphql-schema": "scripts/update-graphql-schema.js test/graphql_schema.json $(find test -name '*.data.json')"
+    "update-graphql-schema": "scripts/update-graphql-schema.js test/graphql_schema.json $(find test -name '*.data.json')",
+    "debug": "node --inspect --require ts-node/register src/server.ts"
   },
   "dependencies": {
     "apollo-server-express": "^2.18.0",

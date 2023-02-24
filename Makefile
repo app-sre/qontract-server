@@ -49,6 +49,9 @@ bundle:
 run:
 	LOAD_METHOD=fs DATAFILES_FILE=$(BUNDLE_DIR)/$(BUNDLE_FILENAME) yarn run server
 
+debug:
+	LOAD_METHOD=fs DATAFILES_FILE=$(BUNDLE_DIR)/$(BUNDLE_FILENAME) yarn run debug
+
 docker-run:
 	@$(CONTAINER_ENGINE) run -it --rm --name $(SERVER_CONTAINER_NAME) \
 		-v $(BUNDLE_DIR):/bundle$(CONTAINER_SELINUX_FLAG) \
