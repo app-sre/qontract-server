@@ -113,12 +113,14 @@ const pathRefExistsInDatafile = (path: string, datafile: any,
 const resolveSyntheticField = (bundle: db.Bundle,
                                path: string,
                                schema: string,
-                               subAttr: string): db.Datafile[] =>
-    bundle.datafilesBySchema
-        .get(schema)
-        .filter((datafile: db.Datafile) => pathRefExistsInDatafile(path, datafile, subAttr.split('.'), 0))
-        .valueSeq()
-        .toArray();
+                               subAttr: string): db.Datafile[] => {
+  const attrs = subAttr.split('.');
+  return bundle.datafilesBySchema
+      .get(schema)
+      .filter((df: db.Datafile) => bundle.syntheticBackRefTrie.contains(df.path, attrs, path))
+      .valueSeq()
+      .toArray();
+};
 
 const resolveDatafileSchemaField = (bundle: db.Bundle,
                                     schema: string,

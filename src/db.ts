@@ -5,6 +5,7 @@ import * as aws from 'aws-sdk';
 import * as im from 'immutable';
 import { md as forgeMd } from 'node-forge';
 import { logger } from './logger';
+import { SyntheticBackRefTrie } from './syntheticBackRefTrie';
 
 // cannot use `import` (old package with no associated types)
 const jsonpointer = require('jsonpointer');
@@ -42,6 +43,7 @@ export type Bundle = {
   fileHash: string;
   gitCommit: string;
   gitCommitTimestamp: string;
+  syntheticBackRefTrie: SyntheticBackRefTrie;
 };
 
 const getRefPath = (ref: string): string => /^[^$]*/.exec(ref)[0];
@@ -79,14 +81,17 @@ const parseBundle = (contents: string) : Bundle => {
   const parsedContents = JSON.parse(contents);
   const datafiles = parseDatafiles(parsedContents.data);
   const datafilesBySchema = datafiles.groupBy(d => d.$schema);
+  const schema = parsedContents.graphql;
+  const syntheticBackRefTrie = buildSyntheticBackRefTrie(datafilesBySchema, schema);
   return {
     datafiles,
     datafilesBySchema,
+    schema,
+    syntheticBackRefTrie,
     resourcefiles: parseResourcefiles(parsedContents.resources),
     fileHash: hashDatafile(contents),
     gitCommit: parsedContents['git_commit'],
     gitCommitTimestamp: parsedContents['git_commit_timestamp'],
-    schema: parsedContents.graphql,
   } as Bundle;
 };
 
@@ -98,6 +103,42 @@ const parseDatafiles = (jsonData: object) : im.Map<string, Datafile> => {
       return acc.set(path, data);
     },
     im.Map());
+};
+
+const getSyntheticFieldSubAttrs = (schema: GraphQLSchemaType | any[]): Map<string, Set<string>> => {
+  const syntheticFieldSubAttrs = new Map<string, Set<string>>();
+  const schemaData = 'confs' in schema && schema.confs ? schema.confs : schema as any[];
+  schemaData.forEach((conf: any) => {
+    conf.fields.forEach((fieldInfo: any) => {
+      if (fieldInfo.synthetic) {
+        const key = fieldInfo.synthetic.schema;
+        const value = fieldInfo.synthetic.subAttr;
+        const subAttrs = syntheticFieldSubAttrs.get(key);
+        if (subAttrs === undefined) {
+          syntheticFieldSubAttrs.set(key, new Set([value]));
+        } else {
+          subAttrs.add(value);
+        }
+      }
+    });
+  });
+  return syntheticFieldSubAttrs;
+};
+
+const buildSyntheticBackRefTrie = (
+    datafilesBySchema: im.Seq.Keyed<string, im.Collection<string, Datafile>>,
+    schema: GraphQLSchemaType | any[],
+): SyntheticBackRefTrie => {
+  const syntheticBackRefTrie = new SyntheticBackRefTrie();
+  const syntheticFieldSubAttrs = getSyntheticFieldSubAttrs(schema);
+  syntheticFieldSubAttrs.forEach((subAttrs: Set<string>, s: string) => {
+    datafilesBySchema.get(s).forEach((df: Datafile) => {
+      subAttrs.forEach((subAttr: string) => {
+        syntheticBackRefTrie.insert(df.path, subAttr.split('.'), df);
+      });
+    });
+  });
+  return syntheticBackRefTrie;
 };
 
 const validateObject = (path: string, data: object, requiredFields: string[]) : void => {
