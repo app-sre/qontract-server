@@ -1,19 +1,20 @@
 import * as express from 'express';
 
 import {
-  GraphQLSchema,
-  GraphQLObjectType,
-  GraphQLScalarType,
-  GraphQLString,
-  GraphQLFloat,
   GraphQLBoolean,
+  GraphQLFloat,
   GraphQLInt,
+  GraphQLInterfaceType,
   GraphQLList,
   GraphQLNonNull,
-  GraphQLInterfaceType,
+  GraphQLObjectType,
+  GraphQLScalarType,
+  GraphQLSchema,
+  GraphQLString,
 } from 'graphql';
 
 import * as db from './db';
+import { Datafile } from './types';
 
 const isRef = (obj: Object): boolean => {
   return obj.constructor === Object && Object.keys(obj).length === 1 && '$ref' in obj;
@@ -113,21 +114,15 @@ const pathRefExistsInDatafile = (path: string, datafile: any,
 const resolveSyntheticField = (bundle: db.Bundle,
                                path: string,
                                schema: string,
-                               subAttr: string): db.Datafile[] => {
-  const attrs = subAttr.split('.');
-  return bundle.datafilesBySchema
-      .get(schema)
-      .filter((df: db.Datafile) => bundle.syntheticBackRefTrie.contains(df.path, attrs, path))
-      .valueSeq()
-      .toArray();
-};
+                               subAttr: string): Datafile[] =>
+  bundle.syntheticBackRefTrie.getDatafiles(schema, subAttr.split('.'), path);
 
 const resolveDatafileSchemaField = (bundle: db.Bundle,
                                     schema: string,
-                                    args: any): db.Datafile[] =>
+                                    args: any): Datafile[] =>
     bundle.datafilesBySchema
         .get(schema)
-        .filter((df: db.Datafile) => Object.entries(args)
+        .filter((df: Datafile) => Object.entries(args)
             .every(([key, value]) => key in df && value === df[key]))
         .valueSeq()
         .toArray();

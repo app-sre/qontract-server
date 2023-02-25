@@ -5,27 +5,17 @@ import * as aws from 'aws-sdk';
 import * as im from 'immutable';
 import { md as forgeMd } from 'node-forge';
 import { logger } from './logger';
-import { SyntheticBackRefTrie } from './syntheticBackRefTrie';
+import { buildSyntheticBackRefTrie, SyntheticBackRefTrie } from './syntheticBackRefTrie';
+import { Datafile, GraphQLSchemaType } from './types';
 
 // cannot use `import` (old package with no associated types)
 const jsonpointer = require('jsonpointer');
-
-export type Datafile = {
-  $schema: string;
-  path: string;
-  [key: string]: any;
-};
 
 export type ResourcefileBackRef = {
   path: string;
   datafileSchema: string;
   type: string;
   jsonpath: string;
-};
-
-export type GraphQLSchemaType = {
-  $schema: string;
-  confs: any[];
 };
 
 export type Resourcefile = {
@@ -38,11 +28,11 @@ export type Resourcefile = {
 export type Bundle = {
   datafiles: im.Map<string, Datafile>;
   datafilesBySchema: im.Seq.Keyed<string, im.Collection<string, Datafile>>;
-  resourcefiles: im.Map<string, Resourcefile>;
-  schema: GraphQLSchemaType | any[];
   fileHash: string;
   gitCommit: string;
   gitCommitTimestamp: string;
+  resourcefiles: im.Map<string, Resourcefile>;
+  schema: GraphQLSchemaType | any[];
   syntheticBackRefTrie: SyntheticBackRefTrie;
 };
 
@@ -88,10 +78,10 @@ const parseBundle = (contents: string) : Bundle => {
     datafilesBySchema,
     schema,
     syntheticBackRefTrie,
-    resourcefiles: parseResourcefiles(parsedContents.resources),
     fileHash: hashDatafile(contents),
     gitCommit: parsedContents['git_commit'],
     gitCommitTimestamp: parsedContents['git_commit_timestamp'],
+    resourcefiles: parseResourcefiles(parsedContents.resources),
   } as Bundle;
 };
 
@@ -103,42 +93,6 @@ const parseDatafiles = (jsonData: object) : im.Map<string, Datafile> => {
       return acc.set(path, data);
     },
     im.Map());
-};
-
-const getSyntheticFieldSubAttrs = (schema: GraphQLSchemaType | any[]): Map<string, Set<string>> => {
-  const syntheticFieldSubAttrs = new Map<string, Set<string>>();
-  const schemaData = 'confs' in schema && schema.confs ? schema.confs : schema as any[];
-  schemaData.forEach((conf: any) => {
-    conf.fields.forEach((fieldInfo: any) => {
-      if (fieldInfo.synthetic) {
-        const key = fieldInfo.synthetic.schema;
-        const value = fieldInfo.synthetic.subAttr;
-        const subAttrs = syntheticFieldSubAttrs.get(key);
-        if (subAttrs === undefined) {
-          syntheticFieldSubAttrs.set(key, new Set([value]));
-        } else {
-          subAttrs.add(value);
-        }
-      }
-    });
-  });
-  return syntheticFieldSubAttrs;
-};
-
-const buildSyntheticBackRefTrie = (
-    datafilesBySchema: im.Seq.Keyed<string, im.Collection<string, Datafile>>,
-    schema: GraphQLSchemaType | any[],
-): SyntheticBackRefTrie => {
-  const syntheticBackRefTrie = new SyntheticBackRefTrie();
-  const syntheticFieldSubAttrs = getSyntheticFieldSubAttrs(schema);
-  syntheticFieldSubAttrs.forEach((subAttrs: Set<string>, s: string) => {
-    datafilesBySchema.get(s).forEach((df: Datafile) => {
-      subAttrs.forEach((subAttr: string) => {
-        syntheticBackRefTrie.insert(df.path, subAttr.split('.'), df);
-      });
-    });
-  });
-  return syntheticBackRefTrie;
 };
 
 const validateObject = (path: string, data: object, requiredFields: string[]) : void => {
