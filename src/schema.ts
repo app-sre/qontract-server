@@ -73,43 +73,6 @@ const getGraphqlTypeForDatafileSchema = (app: express.Express, bundleSha: string
 // helpers
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
-const pathRefExistsInDatafile = (path: string, datafile: any,
-                                 subAttrs: string[],
-                                 idx: number): boolean => {
-  // this function is basically just a dumb and simplified version of the previous
-  // synthetic resolver, that does not want to be smart or elaborate and just
-  // implements all the different filtering cases as simple as possible,
-  // avoiding costly operations on large lists of objects for performance reasons.
-  //
-  // if anyone wants to beautify this code, make sure that performance is not
-  // negatively affected!!!
-  const leaf = idx === subAttrs.length - 1;
-  if (subAttrs[idx] in datafile) {
-    const subAttrVal = datafile[subAttrs[idx]];
-
-    // the attribute is a list of $refs
-    if (Array.isArray(subAttrVal)) {
-      if (leaf) {
-        const backrefs = datafile[subAttrs[idx]].map((r: any) => r.$ref);
-        return backrefs.includes(path);
-      }
-      for (const subAttrValItem of subAttrVal) {
-        if (pathRefExistsInDatafile(path, subAttrValItem, subAttrs, idx + 1)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    // the attribute is a single $ref
-    if (leaf) {
-      return subAttrVal.$ref === path;
-    }
-    return pathRefExistsInDatafile(path, subAttrVal, subAttrs, idx + 1);
-  }
-  return false;
-};
-
 // synthetic field resolver
 const resolveSyntheticField = (bundle: db.Bundle,
                                path: string,
