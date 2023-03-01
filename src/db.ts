@@ -5,26 +5,17 @@ import * as aws from 'aws-sdk';
 import * as im from 'immutable';
 import { md as forgeMd } from 'node-forge';
 import { logger } from './logger';
+import { buildSyntheticBackRefTrie, SyntheticBackRefTrie } from './syntheticBackRefTrie';
+import { Datafile, GraphQLSchemaType } from './types';
 
 // cannot use `import` (old package with no associated types)
 const jsonpointer = require('jsonpointer');
-
-export type Datafile = {
-  $schema: string;
-  path: string;
-  [key: string]: any;
-};
 
 export type ResourcefileBackRef = {
   path: string;
   datafileSchema: string;
   type: string;
   jsonpath: string;
-};
-
-export type GraphQLSchemaType = {
-  $schema: string;
-  confs: any[];
 };
 
 export type Resourcefile = {
@@ -36,11 +27,13 @@ export type Resourcefile = {
 
 export type Bundle = {
   datafiles: im.Map<string, Datafile>;
-  resourcefiles: im.Map<string, Resourcefile>;
-  schema: GraphQLSchemaType | any[];
+  datafilesBySchema: im.Seq.Keyed<string, im.Collection<string, Datafile>>;
   fileHash: string;
   gitCommit: string;
   gitCommitTimestamp: string;
+  resourcefiles: im.Map<string, Resourcefile>;
+  schema: GraphQLSchemaType | any[];
+  syntheticBackRefTrie: SyntheticBackRefTrie;
 };
 
 const getRefPath = (ref: string): string => /^[^$]*/.exec(ref)[0];
@@ -76,14 +69,19 @@ export const resolveRef = (bundle: Bundle, itemRef: Referencing) : any => {
 
 const parseBundle = (contents: string) : Bundle => {
   const parsedContents = JSON.parse(contents);
-
+  const datafiles = parseDatafiles(parsedContents.data);
+  const datafilesBySchema = datafiles.groupBy(d => d.$schema);
+  const schema = parsedContents.graphql;
+  const syntheticBackRefTrie = buildSyntheticBackRefTrie(datafilesBySchema, schema);
   return {
-    datafiles: parseDatafiles(parsedContents.data),
-    resourcefiles: parseResourcefiles(parsedContents.resources),
+    datafiles,
+    datafilesBySchema,
+    schema,
+    syntheticBackRefTrie,
     fileHash: hashDatafile(contents),
     gitCommit: parsedContents['git_commit'],
     gitCommitTimestamp: parsedContents['git_commit_timestamp'],
-    schema: parsedContents.graphql,
+    resourcefiles: parseResourcefiles(parsedContents.resources),
   } as Bundle;
 };
 

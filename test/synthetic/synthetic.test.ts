@@ -37,8 +37,19 @@ describe('synthetic', async() => {
                         .set('content-type', 'application/json')
                         .send({ query });
     resp.should.have.status(200);
-    resp.body.data.test[0].name.should.equal('Guillaumes Delux');
-    return resp.body.data.test[0].recipeCollections[0].name.should.equal('Magical Cakes');
+    const expectedData = {
+      test: [
+        {
+          name: 'Guillaumes Delux',
+          recipeCollections: [
+            {
+              name: 'Magical Cakes',
+            },
+          ],
+        },
+      ],
+    };
+    resp.body.data.should.deep.equal(expectedData);
   });
 
   it('resolves nested synthetics with lists as leaf elements', async() => {
@@ -57,8 +68,15 @@ describe('synthetic', async() => {
                         .set('content-type', 'application/json')
                         .send({ query });
     resp.should.have.status(200);
-    resp.body.data.test[0].name.should.equal('Pixiedust');
-    return resp.body.data.test[0].recipes[0].name.should.equal('Guillaumes Delux');
+    const expectedData = {
+      test: [{
+        name: 'Pixiedust',
+        recipes: [{
+          name: 'Guillaumes Delux',
+        }],
+      }],
+    };
+    resp.body.data.should.deep.equal(expectedData);
   });
 
   it('resolves nested synthetics with an object as leaf element', async() => {
@@ -77,7 +95,14 @@ describe('synthetic', async() => {
                         .set('content-type', 'application/json')
                         .send({ query });
     resp.should.have.status(200);
-    resp.body.data.test[0].name.should.equal('Magical Ingredients Inc.');
-    return resp.body.data.test[0].shoppingLists[0].name.should.equal('Birthday Party');
+    const expectedData = {
+      test: [{
+        name: 'Magical Ingredients Inc.',
+        shoppingLists: [{
+          name: 'Birthday Party',
+        }],
+      }],
+    };
+    resp.body.data.should.deep.equal(expectedData);
   });
 });

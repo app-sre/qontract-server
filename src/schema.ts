@@ -1,22 +1,20 @@
-import * as fs from 'fs';
-
 import * as express from 'express';
-import * as yaml from 'js-yaml';
 
 import {
-  GraphQLSchema,
-  GraphQLObjectType,
-  GraphQLScalarType,
-  GraphQLString,
-  GraphQLFloat,
   GraphQLBoolean,
+  GraphQLFloat,
   GraphQLInt,
+  GraphQLInterfaceType,
   GraphQLList,
   GraphQLNonNull,
-  GraphQLInterfaceType,
+  GraphQLObjectType,
+  GraphQLScalarType,
+  GraphQLSchema,
+  GraphQLString,
 } from 'graphql';
 
 import * as db from './db';
+import { Datafile } from './types';
 
 const isRef = (obj: Object): boolean => {
   return obj.constructor === Object && Object.keys(obj).length === 1 && '$ref' in obj;
@@ -75,55 +73,22 @@ const getGraphqlTypeForDatafileSchema = (app: express.Express, bundleSha: string
 // helpers
 const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
 
-const pathRefExistsInDatafile = (path: string, datafile: any,
-                                 subAttrs: string[],
-                                 idx: number): boolean => {
-  // this function is basically just a dumb and simplified version of the previous
-  // synthetic resolver, that does not want to be smart or elaborate and just
-  // implements all the different filtering cases as simple as possible,
-  // avoiding costly operations on large lists of objects for performance reasons.
-  //
-  // if anyone wants to beautify this code, make sure that performance is not
-  // negatively affected!!!
-  const leaf = idx === subAttrs.length - 1;
-  if (subAttrs[idx] in datafile) {
-    const subAttrVal = datafile[subAttrs[idx]];
-
-    // the attribute is a list of $refs
-    if (Array.isArray(subAttrVal)) {
-      if (leaf) {
-        const backrefs = datafile[subAttrs[idx]].map((r: any) => r.$ref);
-        return backrefs.includes(path);
-      }
-      for (const subAttrValItem of subAttrVal) {
-        if (pathRefExistsInDatafile(path, subAttrValItem, subAttrs, idx + 1)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    // the attribute is a single $ref
-    if (leaf) {
-      return subAttrVal.$ref === path;
-    }
-    return pathRefExistsInDatafile(path, subAttrVal, subAttrs, idx + 1);
-  }
-  return false;
-};
-
 // synthetic field resolver
-const resolveSyntheticField = (app: express.Express,
-                               bundleSha: string,
+const resolveSyntheticField = (bundle: db.Bundle,
                                path: string,
                                schema: string,
-                               subAttr: string): db.Datafile[] =>
-  Array.from(app.get('bundles')[bundleSha].datafiles.filter((datafile: any) => {
+                               subAttr: string): Datafile[] =>
+  bundle.syntheticBackRefTrie.getDatafiles(schema, subAttr.split('.'), path);
 
-    if (datafile.$schema !== schema) { return false; }
-
-    return pathRefExistsInDatafile(path, datafile, subAttr.split('.'), 0);
-  }).values());
+const resolveDatafileSchemaField = (bundle: db.Bundle,
+                                    schema: string,
+                                    args: any): Datafile[] =>
+    bundle.datafilesBySchema
+        .get(schema)
+        .filter((df: Datafile) => Object.entries(args)
+            .every(([key, value]) => key in df && value === df[key]))
+        .valueSeq()
+        .toArray();
 
 // default resolver
 export const defaultResolver = (app: express.Express, bundleSha: string) =>
@@ -248,25 +213,15 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
           fieldDef['args'][searchableField] = { type: GraphQLString };
         }
 
-        fieldDef['resolve'] = (root: any, args: any) => {
-          return Array.from(app.get('bundles')[bundleSha].datafiles.filter(
-            (df: db.Datafile) => {
-              if (df.$schema !== fieldInfo.datafileSchema) {
-                return false;
-              }
-              for (const key of Object.keys(args)) {
-                if (!(key in df) || args[key] !== df[key]) {
-                  return false;
-                }
-              }
-              return true;
-            }).values());
-        };
+        fieldDef['resolve'] = (root: any, args: any) => resolveDatafileSchemaField(
+            app.get('bundles')[bundleSha],
+            fieldInfo.datafileSchema,
+            args,
+        );
       } else if (fieldInfo.synthetic) {
         // synthetic
         fieldDef['resolve'] = (root: any) => resolveSyntheticField(
-          app,
-          bundleSha,
+          app.get('bundles')[bundleSha],
           root.path,
           fieldInfo.synthetic.schema,
           fieldInfo.synthetic.subAttr,

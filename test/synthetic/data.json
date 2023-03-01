@@ -6,6 +6,9 @@
             "recipes": [
                 {
                     "$ref": "/recipes/guillaumes-deluxe.yml"
+                },
+                {
+                    "$ref": "/recipes/guillaumes-deluxe.yml"
                 }
             ]
         },
