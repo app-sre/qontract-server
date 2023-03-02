@@ -188,7 +188,7 @@ objects:
                     key: aws.secret.access.key
                     name: app-interface
             - name: NODE_OPTIONS
-              value: "--max-old-space-size=${{MAX_OLD_SPACE_SIZE}}"
+              value: "--max-old-space-size=${MAX_OLD_SPACE_SIZE}"
           ports:
           - name: app-interface
             containerPort: 4000
