@@ -257,7 +257,7 @@ parameters:
 - name: IMAGE_RELOADER_TAG
   value: 0bc8c97
 - name: MAX_OLD_SPACE_SIZE
-  value: 400
+  value: "400"
 
 # container 'app-interface' resources
 - name: APP_INTERFACE_RESOURCES
