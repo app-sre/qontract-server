@@ -187,6 +187,8 @@ objects:
                 secretKeyRef:
                     key: aws.secret.access.key
                     name: app-interface
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=${{MAX_OLD_SPACE_SIZE}}"
           ports:
           - name: app-interface
             containerPort: 4000
@@ -254,6 +256,8 @@ parameters:
   value: quay.io/app-sre/s3-reload
 - name: IMAGE_RELOADER_TAG
   value: 0bc8c97
+- name: MAX_OLD_SPACE_SIZE
+  value: 400
 
 # container 'app-interface' resources
 - name: APP_INTERFACE_RESOURCES
