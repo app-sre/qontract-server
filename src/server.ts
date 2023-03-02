@@ -2,6 +2,7 @@ import { ApolloServer } from 'apollo-server-express';
 import * as express from 'express';
 import promClient = require('prom-client');
 import * as im from 'immutable';
+import { createHttpTerminator } from 'http-terminator';
 
 const deepDiff = require('deep-diff');
 
@@ -340,8 +341,15 @@ if (!module.parent) {
   const app = appFromBundle(db.getInitialBundles());
 
   app.then((app) => {
-    app.listen({ port: 4000 }, () => {
+    const server = app.listen({ port: 4000 }, () => {
       logger.info('Running at http://localhost:4000/graphql');
+    });
+
+    const httpTerminator = createHttpTerminator({ server });
+
+    process.on('SIGTERM', async () => {
+      logger.info('SIGTERM received, shutting down HTTP server');
+      await httpTerminator.terminate();
     });
 
     metrics.updateCacheMetrics(app);
