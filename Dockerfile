@@ -22,4 +22,5 @@ RUN npm install -g yarn && npm cache clean --force
 COPY --from=prod $HOME $HOME
 COPY --from=dev ${HOME}/dist ./dist
 EXPOSE 4000
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 CMD ["yarn", "run", "server"]
