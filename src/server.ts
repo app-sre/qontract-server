@@ -348,9 +348,9 @@ if (!module.parent) {
       process.on(signal, () => {
         logger.info(`${signal} received, shutting down HTTP server`);
         server.close(() => {
-          logger.info('HTTP server closed')
-        })
-      })
+          logger.info('HTTP server closed');
+        });
+      });
     }
 
     metrics.updateCacheMetrics(app);
