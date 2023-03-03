@@ -340,9 +340,18 @@ if (!module.parent) {
   const app = appFromBundle(db.getInitialBundles());
 
   app.then((app) => {
-    app.listen({ port: 4000 }, () => {
+    const server = app.listen({ port: 4000 }, () => {
       logger.info('Running at http://localhost:4000/graphql');
     });
+
+    for (const signal of ['SIGINT', 'SIGTERM']) {
+      process.on(signal, () => {
+        logger.info(`${signal} received, shutting down HTTP server`);
+        server.close(() => {
+          logger.info('HTTP server closed')
+        })
+      })
+    }
 
     metrics.updateCacheMetrics(app);
     metrics.updateResourceMetrics(app.get('bundles')[app.get('latestBundleSha')]);
