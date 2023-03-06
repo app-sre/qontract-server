@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "apollo-server-express": "^2.18.0",
-    "aws-sdk": "^2.364.0",
+    "aws-sdk": "^2.814.0",
     "bufferutil": "^4.0.1",
     "dotenv": "^8.2.0",
     "deep-diff": "1.0.2",
