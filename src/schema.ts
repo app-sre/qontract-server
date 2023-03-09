@@ -94,7 +94,9 @@ const resolveDatafileSchemaField = (bundle: db.Bundle,
       .every(([key, value]) => key in df && value === df[key]))
       .valueSeq()
       .toArray();
-  }  return [];
+  }
+  return [];
+
 };
 
 // default resolver
