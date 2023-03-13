@@ -51,4 +51,25 @@ describe('pathobject', async() => {
     resp.body.data.test[0].recipes[1].schema.should.equal('/beerrecipe-1.yml');
     return resp.body.data.test[0].recipes[1].brewery.should.equal('Equestrias Finest');
   });
+
+  it('resolves empty datafileobject', async() => {
+    const query = `
+      {
+        test: recipecollection_v2 {
+          name
+          recipes {
+            path
+            schema
+          }
+        }
+      }
+    `;
+
+    const resp = await chai.request(srv)
+                          .post('/graphql')
+                          .set('content-type', 'application/json')
+                          .send({ query });
+    resp.should.have.status(200);
+    return resp.body.data.test.should.be.empty;
+  });
 });
