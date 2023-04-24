@@ -198,7 +198,24 @@ describe('server', async () => {
                             .set('content-type', 'application/json')
                             .send({ query });
     responseIsNotAnError(response);
+    response.body.data.roles_v1.length.should.equal(1);
     return response.body.data.roles_v1[0].path.should.equal('/role-B.yml');
+  });
+
+  it('can search by name (isSearchable) with null to ignore filter', async () => {
+    const query = `{
+      roles_v1(name: null) {
+        path
+        name
+      }
+    }`;
+
+    const response = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    responseIsNotAnError(response);
+    return response.body.data.roles_v1.length.should.equal(2);
   });
 
   it('cannot search by name (NOT isSearchable)', async () => {
