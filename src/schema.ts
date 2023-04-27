@@ -82,21 +82,21 @@ const resolveSyntheticField = (bundle: db.Bundle,
 
 const resolveDatafileSchemaField = (bundle: db.Bundle,
                                     schema: string,
-                                    args: any): (Datafile[] | []) => {
-
-  // that get is not guaranteed to return a value so if it doesn't, we will just returned
+                                    args: any): Datafile[] => {
+  // that get is not guaranteed to return a value so if it doesn't, we will just return
   // undefined from the function rather than cause an error
   const datafiles = bundle.datafilesBySchema.get(schema);
 
-  if (datafiles) {
-    return datafiles
-      .filter((df: Datafile) => Object.entries(args)
-      .every(([key, value]) => key in df && value === df[key]))
+  if (!datafiles) return [];
+
+  const filters = Object.entries(args)
+    .filter(([_, value]) => value != null);
+
+  return datafiles
+      .filter((df: Datafile) =>
+        filters.every(([key, value]) => key in df && value === df[key]))
       .valueSeq()
       .toArray();
-  }
-  return [];
-
 };
 
 // default resolver
