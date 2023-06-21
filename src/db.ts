@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import * as util from 'util';
+import { createHash } from 'crypto';
 
 import * as aws from 'aws-sdk';
 import * as im from 'immutable';
-import { md as forgeMd } from 'node-forge';
 import { logger } from './logger';
 import { buildSyntheticBackRefTrie, SyntheticBackRefTrie } from './syntheticBackRefTrie';
 import { Datafile, GraphQLSchemaType } from './types';
@@ -122,7 +122,7 @@ const parseResourcefiles = (jsonData: object) : im.Map<string, Resourcefile> => 
 };
 
 const hashDatafile = (contents: string) => {
-  return forgeMd.sha256.create().update(contents).digest().toHex();
+  return createHash('sha256').update(contents).digest('hex');
 };
 
 const bundleFromS3 = async(accessKeyId: string, secretAccessKey: string, region: string,
