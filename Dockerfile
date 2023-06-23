@@ -18,9 +18,9 @@ RUN yarn install --frozen-lockfile --production && \
 
 FROM registry.access.redhat.com/ubi8/nodejs-18-minimal
 WORKDIR $HOME
-RUN npm install -g yarn && npm cache clean --force
-COPY --from=prod $HOME $HOME
+COPY --from=prod $HOME/node_modules $HOME/node_modules
 COPY --from=dev ${HOME}/dist ./dist
 EXPOSE 4000
+ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=4096"
-CMD ["node", "./dist/main-bundle.js"]
+CMD ["node", "./dist/server.js"]

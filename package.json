@@ -8,9 +8,9 @@
     "node": ">= 18"
   },
   "scripts": {
-    "watch": "rm -rf ./dist && ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode development --watch --progress",
-    "build": "rm -rf ./dist && NODE_ENV=production ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode=production",
-    "server": "node ./dist/main-bundle.js",
+    "watch": "rm -rf ./dist && tsc --watch",
+    "build": "rm -rf ./dist && tsc",
+    "server": "node ./dist/server.js",
     "lint": "./node_modules/.bin/tslint --project .",
     "test": "mocha -r ts-node/register $(find test -type f -name '*.ts')",
     "update-graphql-schema": "scripts/update-graphql-schema.js test/graphql_schema.json $(find test -name '*.data.json')",
