@@ -5,7 +5,7 @@
   "author": "Red Hat App SREs <sd-app-sre@redhat.com>",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">=10.10"
+    "node": ">= 18"
   },
   "scripts": {
     "watch": "rm -rf ./dist && ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode development --watch --progress",

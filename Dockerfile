@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/nodejs-16 as base
+FROM registry.access.redhat.com/ubi8/nodejs-18 as base
 RUN npm install -g yarn && npm cache clean --force
 WORKDIR $HOME
 COPY package.json yarn.lock ./
@@ -16,7 +16,7 @@ FROM base as prod
 RUN yarn install --frozen-lockfile --production && \
     yarn cache clean
 
-FROM registry.access.redhat.com/ubi8/nodejs-16-minimal
+FROM registry.access.redhat.com/ubi8/nodejs-18-minimal
 WORKDIR $HOME
 RUN npm install -g yarn && npm cache clean --force
 COPY --from=prod $HOME $HOME
