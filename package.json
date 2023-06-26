@@ -8,9 +8,9 @@
     "node": ">= 18"
   },
   "scripts": {
-    "watch": "rm -rf ./dist && ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode development --watch --progress",
-    "build": "rm -rf ./dist && NODE_ENV=production ts-node -O '{\"module\":\"commonjs\"}' ./node_modules/.bin/webpack --mode=production",
-    "server": "node ./dist/main-bundle.js",
+    "watch": "rm -rf ./dist && tsc --watch",
+    "build": "rm -rf ./dist && tsc",
+    "server": "node ./dist/server.js",
     "lint": "./node_modules/.bin/tslint --project .",
     "test": "mocha -r ts-node/register $(find test -type f -name '*.ts')",
     "update-graphql-schema": "scripts/update-graphql-schema.js test/graphql_schema.json $(find test -name '*.data.json')",
@@ -34,16 +34,12 @@
     "@types/express": "^4.16.0",
     "@types/graphql": "^14.0.5",
     "@types/mocha": "^7.0.2",
-    "@types/webpack": "^4.4.22",
     "chai": "^4.2.0",
     "chai-http": "^4.2.1",
     "mocha": "^7.1.1",
-    "ts-loader": "^6.2.2",
     "ts-node": "^8.8.2",
     "tslint": "^6.1.1",
     "tslint-config-airbnb": "^5.11.1",
-    "typescript": "^3.2.2",
-    "webpack": "^4.28.4",
-    "webpack-cli": "^3.2.1"
+    "typescript": "^3.2.2"
   }
 }
