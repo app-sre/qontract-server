@@ -1,8 +1,11 @@
+// eslint-disable-next-line max-classes-per-file
 import { Collection, Seq } from 'immutable';
 import { Datafile, GraphQLSchemaType } from './types';
 
 class TrieNode {
   public readonly value: Map<string, Set<Datafile>>;
+
+  // eslint-disable-next-line no-use-before-define
   public readonly children: Map<string, TrieNode>;
 
   constructor() {
@@ -12,6 +15,7 @@ class TrieNode {
 
   insert(keys: string[], data: any, value: Datafile) {
     if (Array.isArray(data)) {
+      // eslint-disable-next-line no-restricted-syntax
       for (const d of data) {
         this.insert(keys, d, value);
       }
@@ -64,6 +68,7 @@ export class SyntheticBackRefTrie {
 
   private find(keys: string[]): TrieNode | undefined {
     let node = this.root;
+    // eslint-disable-next-line no-restricted-syntax
     for (const key of keys) {
       node = node.children.get(key);
       if (node === undefined) {
@@ -89,7 +94,9 @@ const getSyntheticFieldSubAttrsBySchema = (
 ): Map<string, Set<string>> => {
   const syntheticFieldSubAttrs = new Map<string, Set<string>>();
   const schemaData = 'confs' in schema && schema.confs ? schema.confs : schema as any[];
+  // eslint-disable-next-line no-restricted-syntax
   for (const conf of schemaData) {
+    // eslint-disable-next-line no-restricted-syntax
     for (const fieldInfo of conf.fields) {
       if (fieldInfo.synthetic) {
         const key = fieldInfo.synthetic.schema;
@@ -114,6 +121,7 @@ export const buildSyntheticBackRefTrie = (
   const syntheticFieldSubAttrsBySchema = getSyntheticFieldSubAttrsBySchema(schema);
   syntheticFieldSubAttrsBySchema.forEach((subAttrs: Set<string>, s: string) => {
     (datafilesBySchema.get(s) || []).forEach((df: Datafile) => {
+      // eslint-disable-next-line no-restricted-syntax
       for (const subAttr of subAttrs) {
         syntheticBackRefTrie.insert(s, subAttr.split('.'), df);
       }

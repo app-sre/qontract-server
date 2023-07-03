@@ -6,13 +6,13 @@ import * as chai from 'chai';
 // Chai is bad with types. See:
 // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/19480
 import chaiHttp = require('chai-http');
-chai.use(chaiHttp);
 
 import * as server from '../src/server';
 import * as db from '../src/db';
 
-const should = chai.should();
-const expect = chai.expect;
+chai.use(chaiHttp);
+
+const { expect } = chai;
 
 const responseIsNotAnError = (res: any) => {
   res.should.have.status(200);
@@ -29,7 +29,7 @@ describe('server', async () => {
     const app = await server.appFromBundle(db.getInitialBundles());
     srv = app.listen({ port: 4000 });
   });
-  after(async () => await util.promisify(srv.close));
+  after(async () => util.promisify(srv.close));
 
   it('GET /sha256 returns a valid sha256', async () => {
     const response = await chai.request(srv).get('/sha256');
@@ -67,9 +67,9 @@ describe('server', async () => {
         }`;
 
     const response = await chai.request(srv)
-                            .post('/graphql')
-                            .set('content-type', 'application/json')
-                            .send({ query });
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     responseIsNotAnError(response);
 
     response.body.extensions.schemas.should.eql(['/access/role-1.yml', '/access/permission-1.yml']);
@@ -88,9 +88,9 @@ describe('server', async () => {
       }`;
 
     const response = await chai.request(srv)
-                            .post('/graphql')
-                            .set('content-type', 'application/json')
-                            .send({ query });
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     responseIsNotAnError(response);
     return response.body.data.apps[0].quayRepos[0].org.name.should.equal('quay-org-A');
   });
@@ -105,9 +105,9 @@ describe('server', async () => {
       }`;
 
     const response = await chai.request(srv)
-                            .post('/graphql')
-                            .set('content-type', 'application/json')
-                            .send({ query });
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     responseIsNotAnError(response);
     response.body.data.resources.length.should.equal(1);
     return response.body.data.resources[0].content.should.equal('test resource');
@@ -124,9 +124,9 @@ describe('server', async () => {
       }`;
 
     const response = await chai.request(srv)
-                            .post('/graphql')
-                            .set('content-type', 'application/json')
-                            .send({ query });
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     responseIsNotAnError(response);
     response.body.data.resources.length.should.equal(1);
     return response.body.data.resources[0].schema.should.equal('/openshift/prometheus-rule-1.yml');
@@ -143,9 +143,9 @@ describe('server', async () => {
       }`;
 
     const response = await chai.request(srv)
-                            .post('/graphql')
-                            .set('content-type', 'application/json')
-                            .send({ query });
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     responseIsNotAnError(response);
     response.body.data.resources.length.should.equal(1);
     return response.body.data.resources[0].path.should.equal('/prometheus-resource.yml');
@@ -162,9 +162,9 @@ describe('server', async () => {
       }`;
 
     const response = await chai.request(srv)
-                            .post('/graphql')
-                            .set('content-type', 'application/json')
-                            .send({ query });
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     responseIsNotAnError(response);
     return response.body.data.resources.length.should.equal(2);
   });
@@ -178,9 +178,9 @@ describe('server', async () => {
     }`;
 
     const response = await chai.request(srv)
-                            .post('/graphql')
-                            .set('content-type', 'application/json')
-                            .send({ query });
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     responseIsNotAnError(response);
     return response.body.data.roles_v1[0].name.should.equal('role-A');
   });
@@ -194,9 +194,9 @@ describe('server', async () => {
     }`;
 
     const response = await chai.request(srv)
-                            .post('/graphql')
-                            .set('content-type', 'application/json')
-                            .send({ query });
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     responseIsNotAnError(response);
     response.body.data.roles_v1.length.should.equal(1);
     return response.body.data.roles_v1[0].path.should.equal('/role-B.yml');
@@ -227,9 +227,9 @@ describe('server', async () => {
     }`;
 
     const response = await chai.request(srv)
-                            .post('/graphql')
-                            .set('content-type', 'application/json')
-                            .send({ query });
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
 
     return response.should.not.have.status(200);
   });
@@ -262,6 +262,7 @@ describe('server', async () => {
     response2.body.extensions.schemas.should.eql(['/access/role-1.yml',
       '/access/permission-1.yml']);
 
+    // eslint-disable-next-line no-console
     console.log(JSON.stringify(response2.body.data));
 
     const perm = response2.body.data.roles[0].permissions[0];
@@ -269,14 +270,13 @@ describe('server', async () => {
   });
 });
 
-describe('bundle loading', async() => {
-
-  it('check if init disk bundle is loaded', async() => {
+describe('bundle loading', async () => {
+  it('check if init disk bundle is loaded', async () => {
     process.env.INIT_BUNDLES = 'fs://test/schemas/schemas.data.json';
     const app = await server.appFromBundle(db.getInitialBundles());
     const srv = app.listen({ port: 4000 });
     const resp = await chai.request(srv)
-                        .get('/sha256');
+      .get('/sha256');
     resp.should.have.status(200);
     return resp.text.should.eql('242acb1998e9d37c26186ba9be0262fb34e3ef388b503390d143164f7658c24e');
   });

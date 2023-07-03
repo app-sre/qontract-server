@@ -5,23 +5,22 @@ import * as chai from 'chai';
 // Chai is bad with types. See:
 // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/19480
 import chaiHttp = require('chai-http');
-chai.use(chaiHttp);
 
 import * as server from '../../src/server';
 import * as db from '../../src/db';
 
-const should = chai.should();
+chai.use(chaiHttp);
 
-describe('synthetic', async() => {
+describe('synthetic', async () => {
   let srv: http.Server;
-  before(async() => {
+  before(async () => {
     process.env.LOAD_METHOD = 'fs';
     process.env.DATAFILES_FILE = 'test/synthetic/data.json';
     const app = await server.appFromBundle(db.getInitialBundles());
     srv = app.listen({ port: 4000 });
   });
 
-  it('resolves synthetics', async() => {
+  it('resolves synthetics', async () => {
     const query = `
       {
         test: cakerecipe_v1(path: "/recipes/guillaumes-deluxe.yml") {
@@ -33,9 +32,9 @@ describe('synthetic', async() => {
       }
       `;
     const resp = await chai.request(srv)
-                        .post('/graphql')
-                        .set('content-type', 'application/json')
-                        .send({ query });
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     resp.should.have.status(200);
     const expectedData = {
       test: [
@@ -52,7 +51,7 @@ describe('synthetic', async() => {
     resp.body.data.should.deep.equal(expectedData);
   });
 
-  it('resolves nested synthetics with lists as leaf elements', async() => {
+  it('resolves nested synthetics with lists as leaf elements', async () => {
     const query = `
       {
         test: ingredient_v1(path: "/ingredients/pixiedust.yml") {
@@ -64,9 +63,9 @@ describe('synthetic', async() => {
       }
       `;
     const resp = await chai.request(srv)
-                        .post('/graphql')
-                        .set('content-type', 'application/json')
-                        .send({ query });
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     resp.should.have.status(200);
     const expectedData = {
       test: [{
@@ -79,7 +78,7 @@ describe('synthetic', async() => {
     resp.body.data.should.deep.equal(expectedData);
   });
 
-  it('resolves nested synthetics with an object as leaf element', async() => {
+  it('resolves nested synthetics with an object as leaf element', async () => {
     const query = `
       {
         test: store_v1(path: "/stores/magical-ingredients-inc.yml") {
@@ -91,9 +90,9 @@ describe('synthetic', async() => {
       }
       `;
     const resp = await chai.request(srv)
-                        .post('/graphql')
-                        .set('content-type', 'application/json')
-                        .send({ query });
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     resp.should.have.status(200);
     const expectedData = {
       test: [{

@@ -1,14 +1,14 @@
 import { ApolloServer } from 'apollo-server-express';
 import * as express from 'express';
-import promClient = require('prom-client');
 import * as im from 'immutable';
 
-const deepDiff = require('deep-diff');
-
+import promClient = require('prom-client');
 import * as db from './db';
 import * as metrics from './metrics';
-import { generateAppSchema, defaultResolver } from './schema';
+import { defaultResolver, generateAppSchema } from './schema';
 import { logger } from './logger';
+
+const deepDiff = require('deep-diff');
 
 // sha expiration time (in ms). Defaults to 20m.
 const BUNDLE_SHA_TTL = Number(process.env.BUNDLE_SHA_TTL) || 20 * 60 * 1000;
@@ -27,6 +27,7 @@ const registerApolloServer = (app: express.Express, bundleSha: string, server: a
   app.use(serverMiddleware);
 
   // add to the cache
+  // eslint-disable-next-line no-param-reassign
   app.get('bundleCache')[bundleSha] = {
     serverMiddleware,
     expiration,
@@ -46,9 +47,10 @@ const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServe
     fieldResolver: defaultResolver(app, bundleSha),
     plugins: [
       {
-        requestDidStart(requestContext) {
+        requestDidStart() {
           return {
             willSendResponse(requestContext) {
+              // eslint-disable-next-line no-param-reassign
               requestContext.response.extensions = { schemas: requestContext.context.schemas };
             },
           };
@@ -63,37 +65,42 @@ const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServe
 // remove expired bundles
 const removeExpiredBundles = (app: express.Express) => {
   // remove expired bundles
+  // eslint-disable-next-line no-restricted-syntax
   for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
     if (sha === app.get('latestBundleSha')) {
-      continue;
+      continue; // eslint-disable-line no-continue
     }
 
     const cacheInfo = cacheInfoObj as ICacheInfo;
     if (cacheInfo.expiration < Date.now()) {
       // removing sha
       logger.info('removing expired bundle: %s', sha);
+      // eslint-disable-next-line no-param-reassign
       delete app.get('bundles')[sha];
 
       // remove from router. NOTE: this is not officially supported and may break in future
       // versions of express without warning.
-      const index = app._router.stack.findIndex((m: any) =>
-        m.handle === cacheInfo.serverMiddleware);
+      // eslint-disable-next-line no-underscore-dangle
+      const index = app._router.stack.findIndex(
+        (m: any) => m.handle === cacheInfo.serverMiddleware,
+      );
+      // eslint-disable-next-line no-underscore-dangle
       app._router.stack.splice(index, 1);
 
       // remove from bundleCache
-      delete app.get('bundleCache')[sha];
+      delete app.get('bundleCache')[sha]; // eslint-disable-line no-param-reassign
 
       // remove from searchableFields
-      delete app.get('searchableFields')[sha];
+      delete app.get('searchableFields')[sha]; // eslint-disable-line no-param-reassign
 
       // remove from datafileSchemas
-      delete app.get('datafileSchemas')[sha];
+      delete app.get('datafileSchemas')[sha]; // eslint-disable-line no-param-reassign
 
       // remove from objectTypes
-      delete app.get('objectTypes')[sha];
+      delete app.get('objectTypes')[sha]; // eslint-disable-line no-param-reassign
 
       // remove from objectInterfaces
-      delete app.get('objectInterfaces')[sha];
+      delete app.get('objectInterfaces')[sha]; // eslint-disable-line no-param-reassign
     }
   }
 };
@@ -135,15 +142,16 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     if (graphqlshaMatch) {
       const sha = graphqlshaMatch[1];
       if (app.get('bundleCache')[sha]) {
-        app.get('bundleCache')[sha]['expiration'] = Date.now() + BUNDLE_SHA_TTL;
+        app.get('bundleCache')[sha].expiration = Date.now() + BUNDLE_SHA_TTL;
       }
     }
 
     next();
   });
 
+  // eslint-disable-next-line no-restricted-syntax
   for (const bp of bundlePromises) {
-    const bundle = await bp;
+    const bundle = await bp; // eslint-disable-line no-await-in-loop
     const sha = bundle.fileHash;
     app.get('bundles')[sha] = bundle;
     logger.info('loading initial bundle %s', sha);
@@ -192,41 +200,42 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   });
 
   app.get(
-  '/diff/:base_sha/:head_sha/:filetype/*?',
-  (req: express.Request, res: express.Response) => {
-    const baseBundle: db.Bundle = req.app.get('bundles')[req.params.base_sha];
-    const headBundle: db.Bundle = req.app.get('bundles')[req.params.head_sha];
+    '/diff/:base_sha/:head_sha/:filetype/*?',
+    (req: express.Request, res: express.Response) => {
+      const baseBundle: db.Bundle = req.app.get('bundles')[req.params.base_sha];
+      const headBundle: db.Bundle = req.app.get('bundles')[req.params.head_sha];
 
-    const filepath = `/${req.params[0]}`;
-    if (req.params.filetype === 'datafile') {
-      const oldRes = baseBundle.datafiles.get(filepath);
-      const newRes = headBundle.datafiles.get(filepath);
-      if (oldRes === undefined && newRes === undefined) {
-        res.status(404).send('datafile not found');
+      const filepath = `/${req.params[0]}`;
+      if (req.params.filetype === 'datafile') {
+        const oldRes = baseBundle.datafiles.get(filepath);
+        const newRes = headBundle.datafiles.get(filepath);
+        if (oldRes === undefined && newRes === undefined) {
+          res.status(404).send('datafile not found');
+        } else {
+          res.send({
+            datafilepath: filepath,
+            datafileschema: (newRes !== undefined ? newRes : oldRes).$schema,
+            old: oldRes,
+            new: newRes,
+          });
+        }
+      } else if (req.params.filetype === 'resourcefile') {
+        const oldRes = baseBundle.resourcefiles.get(filepath);
+        const newRes = headBundle.resourcefiles.get(filepath);
+        if (oldRes === undefined && newRes === undefined) {
+          res.status(404).send('resourcefile not found');
+        } else {
+          res.send({
+            resourcepath: filepath,
+            old: oldRes,
+            new: newRes,
+          });
+        }
       } else {
-        res.send({
-          datafilepath: filepath,
-          datafileschema: (newRes !== undefined ? newRes : oldRes).$schema,
-          old: oldRes,
-          new: newRes,
-        });
+        res.status(400).send(`unknown filetype ${req.params.filetype}`);
       }
-    } else if (req.params.filetype === 'resourcefile') {
-      const oldRes = baseBundle.resourcefiles.get(filepath);
-      const newRes = headBundle.resourcefiles.get(filepath);
-      if (oldRes === undefined && newRes === undefined) {
-        res.status(404).send('resourcefile not found');
-      } else {
-        res.send({
-          resourcepath: filepath,
-          old: oldRes,
-          new: newRes,
-        });
-      }
-    } else {
-      res.status(400).send(`unknown filetype ${req.params.filetype}`);
-    }
-  });
+    },
+  );
 
   app.get('/diff/:base_sha/:head_sha', (req: express.Request, res: express.Response) => {
     const baseBundle: db.Bundle = req.app.get('bundles')[req.params.base_sha];
@@ -235,14 +244,10 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     const dataDiffs = deepDiff(baseBundle.datafiles.toJS(), headBundle.datafiles.toJS());
     const resourceDiffs = deepDiff(
       im.Map(
-        Array.from(
-          baseBundle.resourcefiles, ([path, resource]) => [path, resource.sha256sum],
-        ),
+        Array.from(baseBundle.resourcefiles, ([path, resource]) => [path, resource.sha256sum]),
       ).toJS(),
       im.Map(
-        Array.from(
-          headBundle.resourcefiles, ([path, resource]) => [path, resource.sha256sum],
-        ),
+        Array.from(headBundle.resourcefiles, ([path, resource]) => [path, resource.sha256sum]),
       ).toJS(),
     );
 
@@ -251,9 +256,10 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
       resources: {},
     };
 
+    // eslint-disable-next-line no-restricted-syntax,guard-for-in
     for (const d in resourceDiffs) {
       const diff = resourceDiffs[d];
-      const path = diff['path'][0];
+      const path = diff.path[0];
       const oldRes = baseBundle.resourcefiles.get(path);
       const newRes = headBundle.resourcefiles.get(path);
       changes.resources[path] = {
@@ -263,9 +269,10 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
       };
     }
 
+    // eslint-disable-next-line no-restricted-syntax,guard-for-in
     for (const d in dataDiffs) {
       const diff = dataDiffs[d];
-      const path = diff['path'][0];
+      const path = diff.path[0];
       const oldRes = baseBundle.datafiles.get(path);
       const newRes = headBundle.datafiles.get(path);
       changes.datafiles[path] = {
@@ -290,8 +297,8 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   app.get('/git-commit-info', (req: express.Request, res: express.Response) => {
     const bundleSha = req.app.get('latestBundleSha');
     const gitCommitInfo: any = {};
-    gitCommitInfo['commit'] = req.app.get('bundles')[bundleSha].gitCommit;
-    gitCommitInfo['timestamp'] = req.app.get('bundles')[bundleSha].gitCommitTimestamp;
+    gitCommitInfo.commit = req.app.get('bundles')[bundleSha].gitCommit;
+    gitCommitInfo.timestamp = req.app.get('bundles')[bundleSha].gitCommitTimestamp;
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify(gitCommitInfo));
   });
@@ -304,8 +311,8 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
       return;
     }
 
-    gitCommitInfo['commit'] = req.app.get('bundles')[req.params.sha].gitCommit;
-    gitCommitInfo['timestamp'] = req.app.get('bundles')[req.params.sha].gitCommitTimestamp;
+    gitCommitInfo.commit = req.app.get('bundles')[req.params.sha].gitCommit;
+    gitCommitInfo.timestamp = req.app.get('bundles')[req.params.sha].gitCommitTimestamp;
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify(gitCommitInfo));
   });
@@ -317,14 +324,16 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   app.get('/cache', (req: express.Request, res: express.Response) => {
     const fullCacheInfo: any = { bundleCache: [] };
 
+    // eslint-disable-next-line no-restricted-syntax
     for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
       const cacheInfo = cacheInfoObj as ICacheInfo;
       fullCacheInfo.bundleCache.push({ sha, expiration: cacheInfo.expiration });
     }
 
-    fullCacheInfo['bundles'] = Object.keys(req.app.get('bundles'));
-    fullCacheInfo['routerStack'] = app._router.stack.length;
-    fullCacheInfo['searchableFields'] = Object.keys(req.app.get('searchableFields'));
+    fullCacheInfo.bundles = Object.keys(req.app.get('bundles'));
+    // eslint-disable-next-line no-underscore-dangle
+    fullCacheInfo.routerStack = app._router.stack.length;
+    fullCacheInfo.searchableFields = Object.keys(req.app.get('searchableFields'));
 
     res.send(JSON.stringify(fullCacheInfo));
   });
@@ -337,23 +346,23 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
 
 // If this is main, load an app from the environment and run the server.
 if (!module.parent) {
-  const app = appFromBundle(db.getInitialBundles());
-
-  app.then((app) => {
-    const server = app.listen({ port: 4000 }, () => {
-      logger.info('Running at http://localhost:4000/graphql');
-    });
-
-    for (const signal of ['SIGINT', 'SIGTERM']) {
-      process.on(signal, () => {
-        logger.info(`${signal} received, shutting down HTTP server`);
-        server.close(() => {
-          logger.info('HTTP server closed');
-        });
+  appFromBundle(db.getInitialBundles())
+    .then((app) => {
+      const server = app.listen({ port: 4000 }, () => {
+        logger.info('Running at http://localhost:4000/graphql');
       });
-    }
 
-    metrics.updateCacheMetrics(app);
-    metrics.updateResourceMetrics(app.get('bundles')[app.get('latestBundleSha')]);
-  });
+      // eslint-disable-next-line no-restricted-syntax
+      for (const signal of ['SIGINT', 'SIGTERM']) {
+        process.on(signal, () => {
+          logger.info(`${signal} received, shutting down HTTP server`);
+          server.close(() => {
+            logger.info('HTTP server closed');
+          });
+        });
+      }
+
+      metrics.updateCacheMetrics(app);
+      metrics.updateResourceMetrics(app.get('bundles')[app.get('latestBundleSha')]);
+    });
 }
