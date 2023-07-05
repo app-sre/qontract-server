@@ -59,40 +59,15 @@ export const resolveRef = (bundle: Bundle, itemRef: Referencing) : any => {
 
   const resolvedData = jsonpointer.get(datafile, expr);
   if (typeof (resolvedData) === 'undefined') {
-    logger.error('Error resolving ref: datafile: "%s", expr: "%s"',
-                 JSON.stringify(datafile), expr);
+    logger.error(
+      'Error resolving ref: datafile: "%s", expr: "%s"',
+      JSON.stringify(datafile),
+      expr,
+    );
     return null;
   }
 
   return resolvedData;
-};
-
-const parseBundle = (contents: string) : Bundle => {
-  const parsedContents = JSON.parse(contents);
-  const datafiles = parseDatafiles(parsedContents.data);
-  const datafilesBySchema = datafiles.groupBy(d => d.$schema);
-  const schema = parsedContents.graphql;
-  const syntheticBackRefTrie = buildSyntheticBackRefTrie(datafilesBySchema, schema);
-  return {
-    datafiles,
-    datafilesBySchema,
-    schema,
-    syntheticBackRefTrie,
-    fileHash: hashDatafile(contents),
-    gitCommit: parsedContents['git_commit'],
-    gitCommitTimestamp: parsedContents['git_commit_timestamp'],
-    resourcefiles: parseResourcefiles(parsedContents.resources),
-  } as Bundle;
-};
-
-const parseDatafiles = (jsonData: object) : im.Map<string, Datafile> => {
-  return Object.entries(jsonData).reduce(
-    (acc: im.Map<string, Datafile>, [path, data]: [string, Datafile]) => {
-      validateObject(path, data, ['$schema']);
-      data.path = path;
-      return acc.set(path, data);
-    },
-    im.Map());
 };
 
 const validateObject = (path: string, data: object, requiredFields: string[]) : void => {
@@ -111,22 +86,55 @@ const validateObject = (path: string, data: object, requiredFields: string[]) : 
   });
 };
 
-const parseResourcefiles = (jsonData: object) : im.Map<string, Resourcefile> => {
-  return Object.entries(jsonData).reduce(
-    (acc: im.Map<string, Resourcefile>, [path, data]: [string, Resourcefile]) => {
-      validateObject(path, data, ['path', 'content', 'sha256sum']);
-      data.path = path;
+const parseDatafiles = (jsonData: object) : im.Map<string, Datafile> => Object
+  .entries(jsonData)
+  .reduce(
+    (acc: im.Map<string, Datafile>, [path, data]: [string, Datafile]) => {
+      validateObject(path, data, ['$schema']);
+      data.path = path; // eslint-disable-line no-param-reassign
       return acc.set(path, data);
     },
-    im.Map());
+    im.Map(),
+  );
+
+const hashDatafile = (contents: string) => createHash('sha256').update(contents).digest('hex');
+
+const parseResourcefiles = (jsonData: object) : im.Map<string, Resourcefile> => Object
+  .entries(jsonData)
+  .reduce(
+    (acc: im.Map<string, Resourcefile>, [path, data]: [string, Resourcefile]) => {
+      validateObject(path, data, ['path', 'content', 'sha256sum']);
+      data.path = path; // eslint-disable-line no-param-reassign
+      return acc.set(path, data);
+    },
+    im.Map(),
+  );
+
+const parseBundle = (contents: string) : Bundle => {
+  const parsedContents = JSON.parse(contents);
+  const datafiles = parseDatafiles(parsedContents.data);
+  const datafilesBySchema = datafiles.groupBy((d) => d.$schema);
+  const schema = parsedContents.graphql;
+  const syntheticBackRefTrie = buildSyntheticBackRefTrie(datafilesBySchema, schema);
+  return {
+    datafiles,
+    datafilesBySchema,
+    schema,
+    syntheticBackRefTrie,
+    fileHash: hashDatafile(contents),
+    gitCommit: parsedContents.git_commit,
+    gitCommitTimestamp: parsedContents.git_commit_timestamp,
+    resourcefiles: parseResourcefiles(parsedContents.resources),
+  } as Bundle;
 };
 
-const hashDatafile = (contents: string) => {
-  return createHash('sha256').update(contents).digest('hex');
-};
-
-const bundleFromS3 = async(accessKeyId: string, secretAccessKey: string, region: string,
-                           bucket: string, key: string) => {
+const bundleFromS3 = async (
+  accessKeyId: string,
+  secretAccessKey: string,
+  region: string,
+  bucket: string,
+  key: string,
+) => {
   const s3 = new aws.S3({ accessKeyId, secretAccessKey, region });
   try {
     await s3.waitFor(
@@ -143,44 +151,25 @@ const bundleFromS3 = async(accessKeyId: string, secretAccessKey: string, region:
   return parseBundle(contents);
 };
 
-export const bundleFromDisk = async(path: string) => {
+export const bundleFromDisk = async (path: string) => {
   const loadPath = typeof (path) === 'undefined' ? process.env.DATAFILES_FILE : path;
   const readFile = util.promisify(fs.readFile);
   const contents = String(await readFile(loadPath));
   return parseBundle(contents);
 };
 
-export const getInitialBundles = () => {
-  if (process.env.INIT_BUNDLES) {
-    return process.env.INIT_BUNDLES.split(',').map((bundleUrl: any) => {
-      const urlParts = bundleUrl.split('://');
-      switch (urlParts[0]) {
-        case 'fs':
-          return bundleFromDisk(urlParts[1]);
-        case 's3':
-          return bundleFromS3(process.env.AWS_ACCESS_KEY_ID,
-                              process.env.AWS_SECRET_ACCESS_KEY,
-                              process.env.AWS_REGION,
-                              process.env.AWS_S3_BUCKET,
-                              urlParts[1]);
-        default:
-          throw new Error(`incorrect bundle ${bundleUrl} specified`);
-      }
-    });
-  }
-  return [bundleFromEnvironment()];
-};
-
-export const bundleFromEnvironment = async() => {
+export const bundleFromEnvironment = async () => {
   switch (process.env.LOAD_METHOD) {
     case 'fs':
       return bundleFromDisk(process.env.DATAFILES_FILE);
     case 's3':
-      return bundleFromS3(process.env.AWS_ACCESS_KEY_ID,
-                          process.env.AWS_SECRET_ACCESS_KEY,
-                          process.env.AWS_REGION,
-                          process.env.AWS_S3_BUCKET,
-                          process.env.AWS_S3_KEY);
+      return bundleFromS3(
+        process.env.AWS_ACCESS_KEY_ID,
+        process.env.AWS_SECRET_ACCESS_KEY,
+        process.env.AWS_REGION,
+        process.env.AWS_S3_BUCKET,
+        process.env.AWS_S3_KEY,
+      );
     default:
       return {
         datafiles: im.Map<string, Datafile>(),
@@ -191,4 +180,27 @@ export const bundleFromEnvironment = async() => {
         gitCommitTimestamp: '',
       } as Bundle;
   }
+};
+
+export const getInitialBundles = () => {
+  if (process.env.INIT_BUNDLES) {
+    return process.env.INIT_BUNDLES.split(',').map((bundleUrl: any) => {
+      const urlParts = bundleUrl.split('://');
+      switch (urlParts[0]) {
+        case 'fs':
+          return bundleFromDisk(urlParts[1]);
+        case 's3':
+          return bundleFromS3(
+            process.env.AWS_ACCESS_KEY_ID,
+            process.env.AWS_SECRET_ACCESS_KEY,
+            process.env.AWS_REGION,
+            process.env.AWS_S3_BUCKET,
+            urlParts[1],
+          );
+        default:
+          throw new Error(`incorrect bundle ${bundleUrl} specified`);
+      }
+    });
+  }
+  return [bundleFromEnvironment()];
 };

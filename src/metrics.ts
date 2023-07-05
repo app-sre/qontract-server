@@ -1,7 +1,7 @@
 import * as express from 'express';
+import promClient = require('prom-client');
 import * as db from './db';
 
-import promClient = require('prom-client');
 const promBundle = require('express-prom-bundle');
 
 interface IAcct {
@@ -15,7 +15,7 @@ export const metricsMiddleware = promBundle({
   normalizePath: [
     ['^/graphqlsha/.*', '/graphqlsha/#sha'],
   ],
-  buckets: [.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10],
+  buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
   formatStatusCode: (res: express.Response) => `${Math.floor(res.statusCode / 100)}xx`,
 });
 
@@ -50,7 +50,7 @@ const bundleCacheGauge = new promClient.Gauge({
 });
 
 export const updateCacheMetrics = (app: express.Express) => {
-  routerStackGauge.set(app._router.stack.length);
+  routerStackGauge.set(app._router.stack.length); // eslint-disable-line no-underscore-dangle
   bundleGauge.set(Object.keys(app.get('bundles')).length);
   bundleCacheGauge.set(Object.keys(app.get('bundleCache')).length);
 };
@@ -67,9 +67,8 @@ export const updateResourceMetrics = (bundle: db.Bundle) => {
   const schemaCount: IAcct = bundle.datafiles.reduce(reducer, {});
 
   // Set the Gauge based on counted metrics
-  Object.keys(schemaCount).map(schemaName =>
-    datafilesGauge.set({ schema: schemaName }, schemaCount[schemaName]),
-  );
+  Object.keys(schemaCount)
+    .map((schemaName) => datafilesGauge.set({ schema: schemaName }, schemaCount[schemaName]));
 
   reloadCounter.inc(1);
 };
