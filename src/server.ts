@@ -1,6 +1,5 @@
 import { ApolloServer } from 'apollo-server-express';
 import * as express from 'express';
-import * as im from 'immutable';
 
 import promClient = require('prom-client');
 import * as db from './db';
@@ -241,14 +240,18 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     const baseBundle: db.Bundle = req.app.get('bundles')[req.params.base_sha];
     const headBundle: db.Bundle = req.app.get('bundles')[req.params.head_sha];
 
-    const dataDiffs = deepDiff(baseBundle.datafiles.toJS(), headBundle.datafiles.toJS());
+    // deepDiff can only diff objects, Map is not supported
+    const dataDiffs = deepDiff(
+      Object.fromEntries(baseBundle.datafiles),
+      Object.fromEntries(headBundle.datafiles),
+    );
     const resourceDiffs = deepDiff(
-      im.Map(
+      Object.fromEntries(
         Array.from(baseBundle.resourcefiles, ([path, resource]) => [path, resource.sha256sum]),
-      ).toJS(),
-      im.Map(
+      ),
+      Object.fromEntries(
         Array.from(headBundle.resourcefiles, ([path, resource]) => [path, resource.sha256sum]),
-      ).toJS(),
+      ),
     );
 
     const changes: any = {
@@ -256,9 +259,8 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
       resources: {},
     };
 
-    // eslint-disable-next-line no-restricted-syntax,guard-for-in
-    for (const d in resourceDiffs) {
-      const diff = resourceDiffs[d];
+    // eslint-disable-next-line no-restricted-syntax
+    for (const diff of resourceDiffs) {
       const path = diff.path[0];
       const oldRes = baseBundle.resourcefiles.get(path);
       const newRes = headBundle.resourcefiles.get(path);
@@ -269,9 +271,8 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
       };
     }
 
-    // eslint-disable-next-line no-restricted-syntax,guard-for-in
-    for (const d in dataDiffs) {
-      const diff = dataDiffs[d];
+    // eslint-disable-next-line no-restricted-syntax
+    for (const diff of dataDiffs) {
       const path = diff.path[0];
       const oldRes = baseBundle.datafiles.get(path);
       const newRes = headBundle.datafiles.get(path);

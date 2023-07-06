@@ -103,9 +103,7 @@ const resolveDatafileSchemaField = (
 
   return datafiles
     .filter((df: Datafile) => filters
-      .every(([key, value]) => key in df && value === df[key]))
-    .valueSeq()
-    .toArray();
+      .every(([key, value]) => key in df && value === df[key]));
 };
 
 // default resolver

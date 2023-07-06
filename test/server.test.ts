@@ -11,6 +11,7 @@ import * as server from '../src/server';
 import * as db from '../src/db';
 
 chai.use(chaiHttp);
+chai.should();
 
 const { expect } = chai;
 

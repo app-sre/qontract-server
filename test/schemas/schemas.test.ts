@@ -10,6 +10,7 @@ import * as server from '../../src/server';
 import * as db from '../../src/db';
 
 chai.use(chaiHttp);
+chai.should();
 
 ['test/schemas/schemas.data.json', 'test/schemas/schemas.data.with.graphql.schema.header.json']
   .forEach((DATAFILES_FILE) => {

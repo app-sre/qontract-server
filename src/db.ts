@@ -3,7 +3,6 @@ import * as util from 'util';
 import { createHash } from 'crypto';
 
 import * as aws from 'aws-sdk';
-import * as im from 'immutable';
 import { logger } from './logger';
 import { buildSyntheticBackRefTrie, SyntheticBackRefTrie } from './syntheticBackRefTrie';
 import { Datafile, GraphQLSchemaType } from './types';
@@ -26,12 +25,12 @@ export type Resourcefile = {
 };
 
 export type Bundle = {
-  datafiles: im.Map<string, Datafile>;
-  datafilesBySchema: im.Seq.Keyed<string, im.Collection<string, Datafile>>;
+  datafiles: Map<string, Datafile>;
+  datafilesBySchema: Map<string, Array<Datafile>>;
   fileHash: string;
   gitCommit: string;
   gitCommitTimestamp: string;
-  resourcefiles: im.Map<string, Resourcefile>;
+  resourcefiles: Map<string, Resourcefile>;
   schema: GraphQLSchemaType | any[];
   syntheticBackRefTrie: SyntheticBackRefTrie;
 };
@@ -74,46 +73,70 @@ const validateObject = (path: string, data: object, requiredFields: string[]) : 
   if (typeof path !== 'string') { throw new Error('Expecting string for path'); }
   if (typeof data !== 'object') { throw new Error('Expecting object for data'); }
 
-  const fields = Object.keys(data);
-  if (fields.length === 0) {
+  const fields = new Set(Object.keys(data));
+  if (fields.size === 0) {
     throw new Error('Expected keys in data');
   }
 
   requiredFields.forEach((field) => {
-    if (!fields.includes(field)) {
+    if (!fields.has(field)) {
       throw new Error(`Expecting ${field} in data`);
     }
   });
 };
 
-const parseDatafiles = (jsonData: object) : im.Map<string, Datafile> => Object
-  .entries(jsonData)
-  .reduce(
-    (acc: im.Map<string, Datafile>, [path, data]: [string, Datafile]) => {
+const parseDatafiles = (jsonData: object) : Map<string, Datafile> => {
+  const entries : [string, Datafile][] = Object
+    .entries(jsonData)
+    .map(([path, data]: [string, Datafile]) => {
       validateObject(path, data, ['$schema']);
-      data.path = path; // eslint-disable-line no-param-reassign
-      return acc.set(path, data);
-    },
-    im.Map(),
-  );
+      return [
+        path,
+        {
+          ...data,
+          path,
+        },
+      ];
+    });
+  return new Map(entries);
+};
 
 const hashDatafile = (contents: string) => createHash('sha256').update(contents).digest('hex');
 
-const parseResourcefiles = (jsonData: object) : im.Map<string, Resourcefile> => Object
-  .entries(jsonData)
-  .reduce(
-    (acc: im.Map<string, Resourcefile>, [path, data]: [string, Resourcefile]) => {
+const parseResourcefiles = (jsonData: object) : Map<string, Resourcefile> => {
+  const entries : [string, Resourcefile][] = Object
+    .entries(jsonData)
+    .map(([path, data]: [string, Resourcefile]) => {
       validateObject(path, data, ['path', 'content', 'sha256sum']);
-      data.path = path; // eslint-disable-line no-param-reassign
-      return acc.set(path, data);
-    },
-    im.Map(),
-  );
+      return [
+        path,
+        {
+          ...data,
+          path,
+        },
+      ];
+    });
+  return new Map(entries);
+};
+
+const buildDatafilesBySchema = (datafiles: Map<string, Datafile>): Map<string, Array<Datafile>> => {
+  const datafilesBySchema = new Map<string, Array<Datafile>>();
+  datafiles.forEach((datafile) => {
+    const schema = datafile.$schema;
+    const group = datafilesBySchema.get(schema);
+    if (group === undefined) {
+      datafilesBySchema.set(schema, [datafile]);
+    } else {
+      group.push(datafile);
+    }
+  });
+  return datafilesBySchema;
+};
 
 const parseBundle = (contents: string) : Bundle => {
   const parsedContents = JSON.parse(contents);
   const datafiles = parseDatafiles(parsedContents.data);
-  const datafilesBySchema = datafiles.groupBy((d) => d.$schema);
+  const datafilesBySchema = buildDatafilesBySchema(datafiles);
   const schema = parsedContents.graphql;
   const syntheticBackRefTrie = buildSyntheticBackRefTrie(datafilesBySchema, schema);
   return {
@@ -172,8 +195,8 @@ export const bundleFromEnvironment = async () => {
       );
     default:
       return {
-        datafiles: im.Map<string, Datafile>(),
-        resourcefiles: im.Map<string, Resourcefile>(),
+        datafiles: new Map<string, Datafile>(),
+        resourcefiles: new Map<string, Resourcefile>(),
         schema: {},
         fileHash: '',
         gitCommit: '',
