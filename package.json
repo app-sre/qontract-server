@@ -25,7 +25,6 @@
     "express": "^4.16.4",
     "express-prom-bundle": "^6.0.0",
     "graphql": "^14.0.0",
-    "immutable": "^4.0.0-rc.12",
     "jsonpointer": "^4.0.1",
     "prom-client": "^12.0.0",
     "winston": "^3.3.3"
