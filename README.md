@@ -128,10 +128,23 @@ make bundle APP_INTERFACE_PATH=/home/myuser/app-interface/
 
 ### Running the Qontract GraphQL server
 
+Create `.env` file from example:
+
+```shell
+cp .env.example .env
+```
+
+Customize the `.env` file as needed, for example:
+
+```
+LOAD_METHOD=fs
+DATAFILES_FILE=./bundle/bundle.json
+```
+
 To run an instance of the qontract GraphQL console:
 
 ```sh
-LOAD_METHOD=fs DATAFILES_FILE=your_test_datafile yarn run server
+yarn run server
 ```
 
 Specific instructions for CentOS 7:
