@@ -1,5 +1,4 @@
 // eslint-disable-next-line max-classes-per-file
-import { Collection, Seq } from 'immutable';
 import { Datafile, GraphQLSchemaType } from './types';
 
 class TrieNode {
@@ -114,17 +113,16 @@ const getSyntheticFieldSubAttrsBySchema = (
 };
 
 export const buildSyntheticBackRefTrie = (
-  datafilesBySchema: Seq.Keyed<string, Collection<string, Datafile>>,
+  datafilesBySchema: Map<string, Array<Datafile>>,
   schema: GraphQLSchemaType | any[],
 ): SyntheticBackRefTrie => {
   const syntheticBackRefTrie = new SyntheticBackRefTrie();
   const syntheticFieldSubAttrsBySchema = getSyntheticFieldSubAttrsBySchema(schema);
   syntheticFieldSubAttrsBySchema.forEach((subAttrs: Set<string>, s: string) => {
     (datafilesBySchema.get(s) || []).forEach((df: Datafile) => {
-      // eslint-disable-next-line no-restricted-syntax
-      for (const subAttr of subAttrs) {
+      subAttrs.forEach((subAttr: string) => {
         syntheticBackRefTrie.insert(s, subAttr.split('.'), df);
-      }
+      });
     });
   });
   return syntheticBackRefTrie;

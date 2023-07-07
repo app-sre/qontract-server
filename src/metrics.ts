@@ -1,6 +1,7 @@
 import * as express from 'express';
 import promClient = require('prom-client');
 import * as db from './db';
+import { Datafile } from './types';
 
 const promBundle = require('express-prom-bundle');
 
@@ -55,20 +56,24 @@ export const updateCacheMetrics = (app: express.Express) => {
   bundleCacheGauge.set(Object.keys(app.get('bundleCache')).length);
 };
 
+// Count number of files for each schema type
+const buildSchemaCount = (datafiles: Map<string, Datafile>) : IAcct => {
+  const acc : IAcct = {};
+  // eslint-disable-next-line no-restricted-syntax
+  for (const datafile of datafiles.values()) {
+    const schema = datafile.$schema;
+    const count = acc[schema];
+    acc[schema] = (count === undefined ? 0 : count) + 1;
+  }
+  return acc;
+};
+
 export const updateResourceMetrics = (bundle: db.Bundle) => {
-  // Count number of files for each schema type
-  const reducer = (acc: IAcct, d: any) => {
-    if (!(d.$schema in acc)) {
-      acc[d.$schema] = 0;
-    }
-    acc[d.$schema] += 1;
-    return acc;
-  };
-  const schemaCount: IAcct = bundle.datafiles.reduce(reducer, {});
+  const schemaCount: IAcct = buildSchemaCount(bundle.datafiles);
 
   // Set the Gauge based on counted metrics
-  Object.keys(schemaCount)
-    .map((schemaName) => datafilesGauge.set({ schema: schemaName }, schemaCount[schemaName]));
+  Object.entries(schemaCount)
+    .forEach(([schemaName, count]) => datafilesGauge.set({ schema: schemaName }, count));
 
   reloadCounter.inc(1);
 };

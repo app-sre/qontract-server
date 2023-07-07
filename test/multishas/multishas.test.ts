@@ -10,7 +10,6 @@ import * as server from '../../src/server';
 import * as db from '../../src/db';
 
 chai.use(chaiHttp);
-
 const should = chai.should();
 
 const gql = (srv: http.Server, query: string, sha?: string) => {

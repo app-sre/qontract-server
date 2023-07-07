@@ -10,6 +10,7 @@ import * as server from '../../src/server';
 import * as db from '../../src/db';
 
 chai.use(chaiHttp);
+chai.should();
 
 const diskBundles = 'fs://test/diff/old.data.json,fs://test/diff/new.data.json';
 const oldSha = 'bf56095bf2ada36a6b2deca9cb9b6616d536b5c9ce230f0905296165d221a66b';
