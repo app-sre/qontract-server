@@ -31,7 +31,7 @@ chai.should();
           .send({ query });
         resp.should.have.status(200);
         resp.body.extensions.schemas.should.eql(['/openshift/cluster-1.yml']);
-        return resp.body.data.clusters[0].name.should.equal('example cluster');
+        resp.body.data.clusters[0].name.should.equal('example cluster');
       });
     });
   });

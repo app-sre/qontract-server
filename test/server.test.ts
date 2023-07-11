@@ -27,6 +27,7 @@ describe('server', async () => {
   before(async () => {
     process.env.LOAD_METHOD = 'fs';
     process.env.DATAFILES_FILE = 'test/server.data.json';
+    delete process.env.INIT_BUNDLES;
     const app = await server.appFromBundle(db.getInitialBundles());
     srv = app.listen({ port: 4000 });
   });
@@ -34,27 +35,39 @@ describe('server', async () => {
 
   it('GET /sha256 returns a valid sha256', async () => {
     const response = await chai.request(srv).get('/sha256');
-    return response.text.length.should.equal(64);
+    response.text.length.should.equal(64);
   });
 
   it('GET /git-commit-info returns commit information', async () => {
     const response = await chai.request(srv).get('/git-commit-info');
     response.body.commit.should.equal('cf639ded4b97808ffae8bfd4dc3f4c183508e1ca');
     response.body.timestamp.should.equal('1606295532');
-    return response.should.have.status(200);
+    response.should.have.status(200);
   });
 
   it('GET /git-commit-info/:sha returns commit information from sha', async () => {
     const shaResponse = await chai.request(srv).get('/sha256');
     const commitResponse = await chai.request(srv).get(`/git-commit-info/${shaResponse.text}`);
+    commitResponse.should.have.status(200);
     commitResponse.body.commit.should.equal('cf639ded4b97808ffae8bfd4dc3f4c183508e1ca');
     commitResponse.body.timestamp.should.equal('1606295532');
-    return commitResponse.should.have.status(200);
   });
 
   it('GET /git-commit-info/:sha returns 404 on unknown sha', async () => {
     const response = await chai.request(srv).get('/git-commit-info/LOL');
-    return response.should.have.status(404);
+    response.should.have.status(404);
+  });
+
+  it('GET /git-commit/:sha returns commit from sha', async () => {
+    const shaResponse = await chai.request(srv).get('/sha256');
+    const commitResponse = await chai.request(srv).get(`/git-commit/${shaResponse.text}`);
+    commitResponse.should.have.status(200);
+    commitResponse.text.should.equal('cf639ded4b97808ffae8bfd4dc3f4c183508e1ca');
+  });
+
+  it('GET /git-commit/:sha returns 404 on unknown sha', async () => {
+    const response = await chai.request(srv).get('/git-commit/LOL');
+    response.should.have.status(404);
   });
 
   it('resolves item refs', async () => {
@@ -74,7 +87,7 @@ describe('server', async () => {
     responseIsNotAnError(response);
 
     response.body.extensions.schemas.should.eql(['/access/role-1.yml', '/access/permission-1.yml']);
-    return response.body.data.roles[0].permissions[0].service.should.equal('github-org-team');
+    response.body.data.roles[0].permissions[0].service.should.equal('github-org-team');
   });
 
   it('resolves object refs', async () => {
@@ -93,7 +106,7 @@ describe('server', async () => {
       .set('content-type', 'application/json')
       .send({ query });
     responseIsNotAnError(response);
-    return response.body.data.apps[0].quayRepos[0].org.name.should.equal('quay-org-A');
+    response.body.data.apps[0].quayRepos[0].org.name.should.equal('quay-org-A');
   });
 
   it('can retrieve a resource', async () => {
@@ -111,7 +124,7 @@ describe('server', async () => {
       .send({ query });
     responseIsNotAnError(response);
     response.body.data.resources.length.should.equal(1);
-    return response.body.data.resources[0].content.should.equal('test resource');
+    response.body.data.resources[0].content.should.equal('test resource');
   });
 
   it('can retrieve a resource with a non-empty schema', async () => {
@@ -130,7 +143,7 @@ describe('server', async () => {
       .send({ query });
     responseIsNotAnError(response);
     response.body.data.resources.length.should.equal(1);
-    return response.body.data.resources[0].schema.should.equal('/openshift/prometheus-rule-1.yml');
+    response.body.data.resources[0].schema.should.equal('/openshift/prometheus-rule-1.yml');
   });
 
   it('can search a resource by schema', async () => {
@@ -149,7 +162,7 @@ describe('server', async () => {
       .send({ query });
     responseIsNotAnError(response);
     response.body.data.resources.length.should.equal(1);
-    return response.body.data.resources[0].path.should.equal('/prometheus-resource.yml');
+    response.body.data.resources[0].path.should.equal('/prometheus-resource.yml');
   });
 
   it('can retrieve all resources', async () => {
@@ -167,7 +180,7 @@ describe('server', async () => {
       .set('content-type', 'application/json')
       .send({ query });
     responseIsNotAnError(response);
-    return response.body.data.resources.length.should.equal(2);
+    response.body.data.resources.length.should.equal(2);
   });
 
   it('can search by path', async () => {
@@ -183,7 +196,7 @@ describe('server', async () => {
       .set('content-type', 'application/json')
       .send({ query });
     responseIsNotAnError(response);
-    return response.body.data.roles_v1[0].name.should.equal('role-A');
+    response.body.data.roles_v1[0].name.should.equal('role-A');
   });
 
   it('can search by name (isSearchable)', async () => {
@@ -200,7 +213,7 @@ describe('server', async () => {
       .send({ query });
     responseIsNotAnError(response);
     response.body.data.roles_v1.length.should.equal(1);
-    return response.body.data.roles_v1[0].path.should.equal('/role-B.yml');
+    response.body.data.roles_v1[0].path.should.equal('/role-B.yml');
   });
 
   it('can search by name (isSearchable) with null to ignore filter', async () => {
@@ -216,7 +229,7 @@ describe('server', async () => {
       .set('content-type', 'application/json')
       .send({ query });
     responseIsNotAnError(response);
-    return response.body.data.roles_v1.length.should.equal(2);
+    response.body.data.roles_v1.length.should.equal(2);
   });
 
   it('cannot search by name (NOT isSearchable)', async () => {
@@ -232,7 +245,7 @@ describe('server', async () => {
       .set('content-type', 'application/json')
       .send({ query });
 
-    return response.should.not.have.status(200);
+    response.should.not.have.status(200);
   });
 
   it('can retrieve a field from an interface', async () => {

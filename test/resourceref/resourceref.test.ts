@@ -41,6 +41,6 @@ describe('clusters', async () => {
     resp.body.extensions.schemas.should.eql(['/test-type-1.yml']);
     resp.body.data.test[0].name.should.equal('name');
     resp.body.data.test[0].unresolvable_resource_ref.should.equal('/resource1.yml');
-    return resp.body.data.test[0].resolvable_resource_ref.content.should.equal('test resource');
+    resp.body.data.test[0].resolvable_resource_ref.content.should.equal('test resource');
   });
 });

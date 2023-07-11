@@ -26,7 +26,7 @@ describe('diff', async () => {
 
   it('GET /sha256 returns a valid sha256', async () => {
     const response = await chai.request(srv).get('/sha256');
-    return response.text.should.equal(newSha);
+    response.text.should.equal(newSha);
   });
 
   it('serve full diff', async () => {
@@ -40,6 +40,29 @@ describe('diff', async () => {
 
     const resource = resp.body.resources['/changed_resource.yml'];
     resource.resourcepath.should.equal('/changed_resource.yml');
+  });
+
+  it('serve full diff with identical changes', async () => {
+    const resp = await chai.request(srv)
+      .get(`/diff/${oldSha}/${oldSha}`);
+    resp.should.have.status(200);
+    const expectedBody = {
+      datafiles: {},
+      resources: {},
+    };
+    resp.body.should.deep.equal(expectedBody);
+  });
+
+  it('serve full diff with unknown old sha', async () => {
+    const resp = await chai.request(srv)
+      .get(`/diff/unknown/${newSha}`);
+    resp.should.have.status(404);
+  });
+
+  it('serve full diff with unknown new sha', async () => {
+    const resp = await chai.request(srv)
+      .get(`/diff/${oldSha}/unknown`);
+    resp.should.have.status(404);
   });
 
   it('serve single datafile diff', async () => {
@@ -77,6 +100,18 @@ describe('diff', async () => {
     const resp = await chai.request(srv)
       .get(`/diff/${oldSha}/${newSha}/unknown_file_type/does_not_exist.yml`);
     resp.should.have.status(400);
+  });
+
+  it('serve single diff with unknown old sha', async () => {
+    const resp = await chai.request(srv)
+      .get(`/diff/unknown/${newSha}/datafile/cluster.yml`);
+    resp.should.have.status(404);
+  });
+
+  it('serve single diff with unknown new sha', async () => {
+    const resp = await chai.request(srv)
+      .get(`/diff/${oldSha}/unknown/datafile/cluster.yml`);
+    resp.should.have.status(404);
   });
 
   after(() => {
