@@ -27,6 +27,7 @@ describe('server', async () => {
   before(async () => {
     process.env.LOAD_METHOD = 'fs';
     process.env.DATAFILES_FILE = 'test/server.data.json';
+    delete process.env.INIT_BUNDLES;
     const app = await server.appFromBundle(db.getInitialBundles());
     srv = app.listen({ port: 4000 });
   });
@@ -34,27 +35,39 @@ describe('server', async () => {
 
   it('GET /sha256 returns a valid sha256', async () => {
     const response = await chai.request(srv).get('/sha256');
-    return response.text.length.should.equal(64);
+    response.text.length.should.equal(64);
   });
 
   it('GET /git-commit-info returns commit information', async () => {
     const response = await chai.request(srv).get('/git-commit-info');
     response.body.commit.should.equal('cf639ded4b97808ffae8bfd4dc3f4c183508e1ca');
     response.body.timestamp.should.equal('1606295532');
-    return response.should.have.status(200);
+    response.should.have.status(200);
   });
 
   it('GET /git-commit-info/:sha returns commit information from sha', async () => {
     const shaResponse = await chai.request(srv).get('/sha256');
     const commitResponse = await chai.request(srv).get(`/git-commit-info/${shaResponse.text}`);
+    commitResponse.should.have.status(200);
     commitResponse.body.commit.should.equal('cf639ded4b97808ffae8bfd4dc3f4c183508e1ca');
     commitResponse.body.timestamp.should.equal('1606295532');
-    return commitResponse.should.have.status(200);
   });
 
   it('GET /git-commit-info/:sha returns 404 on unknown sha', async () => {
     const response = await chai.request(srv).get('/git-commit-info/LOL');
-    return response.should.have.status(404);
+    response.should.have.status(404);
+  });
+
+  it('GET /git-commit/:sha returns commit from sha', async () => {
+    const shaResponse = await chai.request(srv).get('/sha256');
+    const commitResponse = await chai.request(srv).get(`/git-commit/${shaResponse.text}`);
+    commitResponse.should.have.status(200);
+    commitResponse.text.should.equal('cf639ded4b97808ffae8bfd4dc3f4c183508e1ca');
+  });
+
+  it('GET /git-commit/:sha returns 404 on unknown sha', async () => {
+    const response = await chai.request(srv).get('/git-commit/LOL');
+    response.should.have.status(404);
   });
 
   it('resolves item refs', async () => {

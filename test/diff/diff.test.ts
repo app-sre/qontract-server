@@ -53,6 +53,18 @@ describe('diff', async () => {
     resp.body.should.deep.equal(expectedBody);
   });
 
+  it('serve full diff with unknown old sha', async () => {
+    const resp = await chai.request(srv)
+      .get(`/diff/unknown/${newSha}`);
+    resp.should.have.status(404);
+  });
+
+  it('serve full diff with unknown new sha', async () => {
+    const resp = await chai.request(srv)
+      .get(`/diff/${oldSha}/unknown`);
+    resp.should.have.status(404);
+  });
+
   it('serve single datafile diff', async () => {
     const resp = await chai.request(srv)
       .get(`/diff/${oldSha}/${newSha}/datafile/cluster.yml`);
@@ -88,6 +100,18 @@ describe('diff', async () => {
     const resp = await chai.request(srv)
       .get(`/diff/${oldSha}/${newSha}/unknown_file_type/does_not_exist.yml`);
     resp.should.have.status(400);
+  });
+
+  it('serve single diff with unknown old sha', async () => {
+    const resp = await chai.request(srv)
+      .get(`/diff/unknown/${newSha}/datafile/cluster.yml`);
+    resp.should.have.status(404);
+  });
+
+  it('serve single diff with unknown new sha', async () => {
+    const resp = await chai.request(srv)
+      .get(`/diff/${oldSha}/unknown/datafile/cluster.yml`);
+    resp.should.have.status(404);
   });
 
   after(() => {

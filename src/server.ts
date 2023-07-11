@@ -203,43 +203,65 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     '/diff/:base_sha/:head_sha/:filetype/*?',
     (req: express.Request, res: express.Response) => {
       const baseBundle: db.Bundle = req.app.get('bundles')[req.params.base_sha];
+      if (baseBundle === undefined) {
+        res.status(404).send(`Bundle ${req.params.base_sha} not found`);
+        return;
+      }
       const headBundle: db.Bundle = req.app.get('bundles')[req.params.head_sha];
+      if (headBundle === undefined) {
+        res.status(404).send(`Bundle ${req.params.head_sha} not found`);
+        return;
+      }
 
       const filepath = `/${req.params[0]}`;
-      if (req.params.filetype === 'datafile') {
-        const oldRes = baseBundle.datafiles.get(filepath);
-        const newRes = headBundle.datafiles.get(filepath);
-        if (oldRes === undefined && newRes === undefined) {
-          res.status(404).send('datafile not found');
-        } else {
-          res.send({
-            datafilepath: filepath,
-            datafileschema: (newRes !== undefined ? newRes : oldRes).$schema,
-            old: oldRes,
-            new: newRes,
-          });
+      switch (req.params.filetype) {
+        case 'datafile':
+        {
+          const oldRes = baseBundle.datafiles.get(filepath);
+          const newRes = headBundle.datafiles.get(filepath);
+          if (oldRes === undefined && newRes === undefined) {
+            res.status(404).send('datafile not found');
+          } else {
+            res.send({
+              datafilepath: filepath,
+              datafileschema: (newRes !== undefined ? newRes : oldRes).$schema,
+              old: oldRes,
+              new: newRes,
+            });
+          }
+          break;
         }
-      } else if (req.params.filetype === 'resourcefile') {
-        const oldRes = baseBundle.resourcefiles.get(filepath);
-        const newRes = headBundle.resourcefiles.get(filepath);
-        if (oldRes === undefined && newRes === undefined) {
-          res.status(404).send('resourcefile not found');
-        } else {
-          res.send({
-            resourcepath: filepath,
-            old: oldRes,
-            new: newRes,
-          });
+        case 'resourcefile': {
+          const oldRes = baseBundle.resourcefiles.get(filepath);
+          const newRes = headBundle.resourcefiles.get(filepath);
+          if (oldRes === undefined && newRes === undefined) {
+            res.status(404).send('resourcefile not found');
+          } else {
+            res.send({
+              resourcepath: filepath,
+              old: oldRes,
+              new: newRes,
+            });
+          }
+          break;
         }
-      } else {
-        res.status(400).send(`unknown filetype ${req.params.filetype}`);
+        default:
+          res.status(400).send(`unknown filetype ${req.params.filetype}`);
       }
     },
   );
 
   app.get('/diff/:base_sha/:head_sha', (req: express.Request, res: express.Response) => {
     const baseBundle: db.Bundle = req.app.get('bundles')[req.params.base_sha];
+    if (baseBundle === undefined) {
+      res.status(404).send(`Bundle ${req.params.base_sha} not found`);
+      return;
+    }
     const headBundle: db.Bundle = req.app.get('bundles')[req.params.head_sha];
+    if (headBundle === undefined) {
+      res.status(404).send(`Bundle ${req.params.head_sha} not found`);
+      return;
+    }
 
     // deepDiff can only diff objects, Map is not supported
     const dataDiffs = deepDiff(
@@ -292,28 +314,35 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   });
 
   app.get('/git-commit/:sha', (req: express.Request, res: express.Response) => {
-    res.send(req.app.get('bundles')[req.params.sha].gitCommit);
+    const bundle = req.app.get('bundles')[req.params.sha];
+    if (bundle === undefined) {
+      res.status(404).send(`Bundle ${req.params.sha} not found`);
+      return;
+    }
+    res.send(bundle.gitCommit);
   });
 
   app.get('/git-commit-info', (req: express.Request, res: express.Response) => {
     const bundleSha = req.app.get('latestBundleSha');
-    const gitCommitInfo: any = {};
-    gitCommitInfo.commit = req.app.get('bundles')[bundleSha].gitCommit;
-    gitCommitInfo.timestamp = req.app.get('bundles')[bundleSha].gitCommitTimestamp;
+    const bundle = req.app.get('bundles')[bundleSha];
+    const gitCommitInfo = {
+      commit: bundle.gitCommit,
+      timestamp: bundle.gitCommitTimestamp,
+    };
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify(gitCommitInfo));
   });
 
   app.get('/git-commit-info/:sha', (req: express.Request, res: express.Response) => {
-    const gitCommitInfo: any = {};
-
-    if (!(req.params.sha in req.app.get('bundles'))) {
+    const bundle = req.app.get('bundles')[req.params.sha];
+    if (bundle === undefined) {
       res.status(404).send(`Bundle ${req.params.sha} not found`);
       return;
     }
-
-    gitCommitInfo.commit = req.app.get('bundles')[req.params.sha].gitCommit;
-    gitCommitInfo.timestamp = req.app.get('bundles')[req.params.sha].gitCommitTimestamp;
+    const gitCommitInfo = {
+      commit: bundle.gitCommit,
+      timestamp: bundle.gitCommitTimestamp,
+    };
     res.setHeader('Content-Type', 'application/json');
     res.send(JSON.stringify(gitCommitInfo));
   });
