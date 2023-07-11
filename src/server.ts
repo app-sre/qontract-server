@@ -260,8 +260,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
       resources: {},
     };
 
-    // eslint-disable-next-line no-restricted-syntax
-    for (const diff of resourceDiffs) {
+    (resourceDiffs || []).forEach((diff: any) => {
       const path = diff.path[0];
       const oldRes = baseBundle.resourcefiles.get(path);
       const newRes = headBundle.resourcefiles.get(path);
@@ -270,10 +269,9 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
         old: oldRes,
         new: newRes,
       };
-    }
+    });
 
-    // eslint-disable-next-line no-restricted-syntax
-    for (const diff of dataDiffs) {
+    (dataDiffs || []).forEach((diff: any) => {
       const path = diff.path[0];
       const oldRes = baseBundle.datafiles.get(path);
       const newRes = headBundle.datafiles.get(path);
@@ -283,7 +281,8 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
         old: oldRes,
         new: newRes,
       };
-    }
+    });
+
     res.send(changes);
   });
 

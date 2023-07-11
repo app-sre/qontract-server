@@ -42,6 +42,17 @@ describe('diff', async () => {
     resource.resourcepath.should.equal('/changed_resource.yml');
   });
 
+  it('serve full diff with identical changes', async () => {
+    const resp = await chai.request(srv)
+      .get(`/diff/${oldSha}/${oldSha}`);
+    resp.should.have.status(200);
+    const expectedBody = {
+      datafiles: {},
+      resources: {},
+    };
+    resp.body.should.deep.equal(expectedBody);
+  });
+
   it('serve single datafile diff', async () => {
     const resp = await chai.request(srv)
       .get(`/diff/${oldSha}/${newSha}/datafile/cluster.yml`);
