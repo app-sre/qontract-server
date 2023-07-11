@@ -26,7 +26,7 @@ describe('diff', async () => {
 
   it('GET /sha256 returns a valid sha256', async () => {
     const response = await chai.request(srv).get('/sha256');
-    return response.text.should.equal(newSha);
+    response.text.should.equal(newSha);
   });
 
   it('serve full diff', async () => {

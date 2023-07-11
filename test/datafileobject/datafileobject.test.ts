@@ -49,7 +49,7 @@ describe('pathobject', async () => {
     resp.body.data.test[0].recipes[0].inventor.should.equal('Guillaume');
     resp.body.data.test[0].recipes[1].path.should.equal('/beerrecipe/unicorn-ale.yml');
     resp.body.data.test[0].recipes[1].schema.should.equal('/beerrecipe-1.yml');
-    return resp.body.data.test[0].recipes[1].brewery.should.equal('Equestrias Finest');
+    resp.body.data.test[0].recipes[1].brewery.should.equal('Equestrias Finest');
   });
 
   it('resolves empty datafileobject', async () => {
@@ -70,6 +70,10 @@ describe('pathobject', async () => {
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
-    return resp.body.data.test.should.be.empty;
+    const expectedBody : any = {
+      data: { test: [] },
+      extensions: {},
+    };
+    resp.body.should.deep.equal(expectedBody);
   });
 });
