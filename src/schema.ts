@@ -28,24 +28,55 @@ const addObjectType = (app: express.Express, bundleSha: string, name: string, ob
 
 const getObjectType = (app: express.Express, bundleSha: string, name: string) => app.get('objectTypes')[bundleSha][name];
 
+class SearchableField {
+  // eslint-disable-next-line no-unused-vars
+  filter: (df: any, value: any) => boolean;
+
+  gqlType: any;
+
+  // eslint-disable-next-line no-unused-vars
+  constructor(filter: (df: any, value: any) => boolean, gqlType: any) {
+    this.filter = filter;
+    this.gqlType = gqlType;
+  }
+}
+
+interface SearchableFieldDict {
+  [key: string]: SearchableField;
+}
+
 // searchable fields helpers
 const addSearchableFields = (
   app: express.Express,
   bundleSha: string,
   name: string,
-  fields: any,
+  fields: string[],
 ) => {
   if (typeof (app.get('searchableFields')[bundleSha]) === 'undefined') {
     app.get('searchableFields')[bundleSha] = {}; // eslint-disable-line no-param-reassign
   }
-  app.get('searchableFields')[bundleSha][name] = fields; // eslint-disable-line no-param-reassign
+
+  const filters: SearchableFieldDict = {};
+
+  [...fields, 'path'].forEach((field) => {
+    filters[field] = new SearchableField(
+      (df: any, value: string) => field in df && df[field] === value,
+      GraphQLString,
+    );
+
+    filters[`${field}__in__`] = new SearchableField(
+      (df: any, valueList: string[]) => field in df && valueList.includes(df[field]),
+      GraphQLList(GraphQLString),
+    );
+  });
+  app.get('searchableFields')[bundleSha][name] = filters; // eslint-disable-line no-param-reassign
 };
 
 const getSearchableFields = (
   app: express.Express,
   bundleSha: string,
   name: string,
-) => app.get('searchableFields')[bundleSha][name];
+): SearchableFieldDict => app.get('searchableFields')[bundleSha][name];
 
 // interface types helpers
 const addInterfaceType = (app: express.Express, bundleSha: string, name: string, obj: any) => {
@@ -90,6 +121,7 @@ const resolveSyntheticField = (
 const resolveDatafileSchemaField = (
   bundle: db.Bundle,
   schema: string,
+  searchableFields: SearchableFieldDict,
   args: any,
 ): Datafile[] => {
   // that get is not guaranteed to return a value so if it doesn't, we will just return
@@ -98,12 +130,12 @@ const resolveDatafileSchemaField = (
 
   if (!datafiles) return [];
 
-  const filters = Object.entries(args)
+  const filterArgs = Object.entries(args)
     .filter(([_, value]) => value != null); // eslint-disable-line no-unused-vars
 
   return datafiles
-    .filter((df: Datafile) => filters
-      .every(([key, value]) => key in df && value === df[key]));
+    .filter((df: Datafile) => filterArgs
+      .every(([key, value]) => searchableFields[key].filter(df, value)));
 };
 
 // default resolver
@@ -169,11 +201,11 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
   objTypeConf.name = conf.name;
 
   // searchable fields
-  const searchableFields = conf.fields
+  const searchableFieldNames = conf.fields
     .filter((f: any) => f.isSearchable && f.type === 'string')
     .map((f: any) => f.name);
 
-  addSearchableFields(app, bundleSha, conf.name, searchableFields);
+  addSearchableFields(app, bundleSha, conf.name, searchableFieldNames);
 
   // fields
   objTypeConf.fields = () => conf.fields.reduce(
@@ -227,18 +259,24 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
       if (fieldInfo.datafileSchema) {
         // schema
 
-        // path is always a searchable field
-        fieldDef.args = { path: { type: GraphQLString } };
-
-        // add other searchable fields
+        // add searchable fields
         // eslint-disable-next-line no-restricted-syntax
-        for (const searchableField of getSearchableFields(app, bundleSha, fieldInfo.type)) {
-          fieldDef.args[searchableField] = { type: GraphQLString };
-        }
+        const searchableFieldsSpecs = getSearchableFields(app, bundleSha, fieldInfo.type);
+        fieldDef.args = Object.fromEntries(
+          Object.entries(searchableFieldsSpecs).map(
+            ([searchableField, searchableFieldInfo]) => [
+              searchableField,
+              {
+                type: searchableFieldInfo.gqlType,
+              },
+            ],
+          ),
+        );
 
         fieldDef.resolve = (root: any, args: any) => resolveDatafileSchemaField(
           app.get('bundles')[bundleSha],
           fieldInfo.datafileSchema,
+          searchableFieldsSpecs,
           args,
         );
       } else if (fieldInfo.synthetic) {

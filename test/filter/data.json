@@ -1,0 +1,51 @@
+{
+    "data": {
+      "/resource-a.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource A"
+      },
+      "/resource-b.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource B"
+      },
+      "/resource-c.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource C"
+      }
+    },
+    "graphql": [
+      {
+        "name": "Resource_v1",
+        "fields": [
+          {
+            "isRequired": true,
+            "type": "string",
+            "name": "schema"
+          },
+          {
+            "isRequired": true,
+            "type": "string",
+            "name": "name",
+            "isSearchable": true
+          },
+          {
+            "isRequired": true,
+            "type": "string",
+            "name": "path"
+          }
+        ]
+      },
+      {
+        "fields": [
+            {
+                "type": "Resource_v1",
+                "name": "resources_v1",
+                "isList": true,
+                "datafileSchema": "/resource-1.yml"
+            }
+        ],
+        "name": "Query"
+    }
+    ],
+    "resources": {}
+}
