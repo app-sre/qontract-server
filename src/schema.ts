@@ -28,7 +28,12 @@ const addObjectType = (app: express.Express, bundleSha: string, name: string, ob
 
 const getObjectType = (app: express.Express, bundleSha: string, name: string) => app.get('objectTypes')[bundleSha][name];
 
-class SearchableField {
+const jsonType = new GraphQLScalarType({
+  name: 'JSON',
+  serialize: JSON.stringify,
+});
+
+class Filter {
   // eslint-disable-next-line no-unused-vars
   filter: (df: any, value: any) => boolean;
 
@@ -41,12 +46,26 @@ class SearchableField {
   }
 }
 
-interface SearchableFieldDict {
-  [key: string]: SearchableField;
+interface FilterDict {
+  [key: string]: Filter;
 }
 
-// searchable fields helpers
-const addSearchableFields = (
+const processFilterObject = (
+  df: any,
+  filterObj: any,
+): boolean => Object.entries(filterObj).every(([key, value]) => {
+  if (typeof value === 'string') {
+    if (df[key] !== value) return false;
+  } else if (Array.isArray(value)) {
+    if (!value.includes(df[key])) return false;
+  } else if (typeof value === 'object') {
+    // not supported yet
+    return false;
+  }
+  return true;
+});
+
+const registerFilterArgs = (
   app: express.Express,
   bundleSha: string,
   name: string,
@@ -56,27 +75,30 @@ const addSearchableFields = (
     app.get('searchableFields')[bundleSha] = {}; // eslint-disable-line no-param-reassign
   }
 
-  const filters: SearchableFieldDict = {};
+  const filters: FilterDict = {};
 
+  // searchable fields + path
   [...fields, 'path'].forEach((field) => {
-    filters[field] = new SearchableField(
+    filters[field] = new Filter(
       (df: any, value: string) => field in df && df[field] === value,
       GraphQLString,
     );
-
-    filters[`${field}__in__`] = new SearchableField(
-      (df: any, valueList: string[]) => field in df && valueList.includes(df[field]),
-      GraphQLList(GraphQLString),
-    );
   });
+
+  // generic filter object
+  filters.filter = new Filter(
+    processFilterObject,
+    jsonType,
+  );
+
   app.get('searchableFields')[bundleSha][name] = filters; // eslint-disable-line no-param-reassign
 };
 
-const getSearchableFields = (
+const getFilters = (
   app: express.Express,
   bundleSha: string,
   name: string,
-): SearchableFieldDict => app.get('searchableFields')[bundleSha][name];
+): FilterDict => app.get('searchableFields')[bundleSha][name];
 
 // interface types helpers
 const addInterfaceType = (app: express.Express, bundleSha: string, name: string, obj: any) => {
@@ -121,7 +143,7 @@ const resolveSyntheticField = (
 const resolveDatafileSchemaField = (
   bundle: db.Bundle,
   schema: string,
-  searchableFields: SearchableFieldDict,
+  searchableFields: FilterDict,
   args: any,
 ): Datafile[] => {
   // that get is not guaranteed to return a value so if it doesn't, we will just return
@@ -189,11 +211,6 @@ export const defaultResolver = (
 
 // ------------------ START SCHEMA ------------------
 
-const jsonType = new GraphQLScalarType({
-  name: 'JSON',
-  serialize: JSON.stringify,
-});
-
 const createSchemaType = (app: express.Express, bundleSha: string, conf: any) => {
   const objTypeConf: any = {};
 
@@ -205,7 +222,7 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
     .filter((f: any) => f.isSearchable && f.type === 'string')
     .map((f: any) => f.name);
 
-  addSearchableFields(app, bundleSha, conf.name, searchableFieldNames);
+  registerFilterArgs(app, bundleSha, conf.name, searchableFieldNames);
 
   // fields
   objTypeConf.fields = () => conf.fields.reduce(
@@ -261,9 +278,9 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
 
         // add searchable fields
         // eslint-disable-next-line no-restricted-syntax
-        const searchableFieldsSpecs = getSearchableFields(app, bundleSha, fieldInfo.type);
+        const filterSpecs = getFilters(app, bundleSha, fieldInfo.type);
         fieldDef.args = Object.fromEntries(
-          Object.entries(searchableFieldsSpecs).map(
+          Object.entries(filterSpecs).map(
             ([searchableField, searchableFieldInfo]) => [
               searchableField,
               {
@@ -276,7 +293,7 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
         fieldDef.resolve = (root: any, args: any) => resolveDatafileSchemaField(
           app.get('bundles')[bundleSha],
           fieldInfo.datafileSchema,
-          searchableFieldsSpecs,
+          filterSpecs,
           args,
         );
       } else if (fieldInfo.synthetic) {
@@ -401,7 +418,7 @@ export const generateAppSchema = (app: express.Express, bundleSha: string): Grap
   }
 
   // populate searchable fields
-  schemaData.map((gqlType: any) => addSearchableFields(
+  schemaData.map((gqlType: any) => registerFilterArgs(
     app,
     bundleSha,
     gqlType.name,
