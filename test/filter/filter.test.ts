@@ -37,6 +37,22 @@ describe('pathobject', async () => {
     resp.body.data.test[0].name.should.equal('resource A');
   });
 
+  it('filter by searchable field with null value', async () => {
+    const query = `
+      {
+        test: resources_v1(name: null) {
+          name
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.data.test.length.should.equal(4);
+  });
+
   it('filter with filter object and single value', async () => {
     const query = `
       {
@@ -53,7 +69,7 @@ describe('pathobject', async () => {
     resp.body.data.test[0].name.should.equal('resource A');
   });
 
-  it('filter with filter object and list value', async () => {
+  it('filter object with list field value', async () => {
     const query = `
       {
         test: resources_v1(filter: {name: ["resource A", "resource B"]}) {
@@ -69,7 +85,7 @@ describe('pathobject', async () => {
     new Set(resp.body.data.test.map((r: { name: string; }) => r.name)).should.deep.equal(new Set(['resource A', 'resource B']));
   });
 
-  it('filter with filter object and unknown field', async () => {
+  it('filter object with unknown field', async () => {
     const query = `
       {
         test: resources_v1(filter: {unknown_field: "value"}) {
@@ -83,5 +99,22 @@ describe('pathobject', async () => {
       .send({ query });
     resp.should.have.status(200);
     resp.body.errors.length.should.equal(1);
+  });
+
+  it('filter object with null field value', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {optional_field: null}) {
+          name
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.data.test.length.should.equal(1);
+    resp.body.data.test[0].name.should.equal('resource D');
   });
 });

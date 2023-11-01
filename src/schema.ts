@@ -52,10 +52,19 @@ interface FilterDict {
   [key: string]: Filter;
 }
 
-const fieldEqPredicateBuilder = (field: string): FilterPredicateBuilder => (
-  (value: any): FilterPredicate => (
-    (source: any): boolean => field in source && source[field] === value
-  )
+const falsePredicate = (_: any): boolean => false; // eslint-disable-line no-unused-vars
+
+const truePredicate = (_: any): boolean => true; // eslint-disable-line no-unused-vars
+
+const fieldEqPredicateBuilder = (field: string, ignoreNull: boolean): FilterPredicateBuilder => (
+  (value: any): FilterPredicate => {
+    if (value == null && ignoreNull) return truePredicate;
+    return (source: any): boolean => {
+      const fieldExistsWithValue = field in source && source[field] === value;
+      const fieldDoesNotExistAndValueIsNull = !(field in source) && value == null;
+      return fieldExistsWithValue || fieldDoesNotExistAndValueIsNull;
+    };
+  }
 );
 
 const containsPredicateBuilder = (field: string): FilterPredicateBuilder => (
@@ -64,17 +73,21 @@ const containsPredicateBuilder = (field: string): FilterPredicateBuilder => (
   )
 );
 
-const falsePredicate = (_: any): boolean => false; // eslint-disable-line no-unused-vars
-
 const filterObjectPredicateBuilder = (gqlType: any): FilterPredicateBuilder => (
   (filterObject: any): FilterPredicate => {
-    const fieldsInSchema = new Set(gqlType.fields.map((f: any) => f.name));
+    const supportedFieldsInSchema = new Set(
+      gqlType.fields.filter(
+        (f: any) => ['string', 'int', 'boolean'].includes(f.type),
+      ).map(
+        (f: any) => f.name,
+      ),
+    );
     if (typeof filterObject !== 'object') return falsePredicate;
     const filters: FilterPredicate[] = Object.entries(filterObject).map(([field, value]) => {
       switch (true) {
-        case !fieldsInSchema.has(field):
+        case !supportedFieldsInSchema.has(field):
           throw new GraphQLError(
-            `Field ${field} does not exist in ${gqlType.name}`,
+            `Field ${field} on ${gqlType.name} can not be used for filtering (yet)`,
             undefined,
             null,
             null,
@@ -85,14 +98,10 @@ const filterObjectPredicateBuilder = (gqlType: any): FilterPredicateBuilder => (
               gqlType: gqlType.name,
             },
           );
-        case value == null:
-          return (_: any) => true; // eslint-disable-line no-unused-vars
-        case typeof value === 'string':
-          return fieldEqPredicateBuilder(field)(value);
         case Array.isArray(value):
           return containsPredicateBuilder(field)(new Set(value as Array<string>));
         default:
-          return falsePredicate;
+          return fieldEqPredicateBuilder(field, false)(value);
       }
     });
     return (source: any): boolean => filters.every((f) => f(source));
@@ -114,7 +123,7 @@ const registerFilterArgs = (
   // searchable fields + path
   [...fields, 'path'].forEach((field) => {
     filters[field] = new Filter(
-      fieldEqPredicateBuilder(field),
+      fieldEqPredicateBuilder(field, true),
       GraphQLString,
     );
   });
@@ -192,7 +201,6 @@ const resolveDatafileSchemaField = (
   const predicates = filterArgs.map(
     ([key, value]) => searchableFields[key].predicateBuilder(value),
   );
-
   return datafiles
     .filter((df: Datafile) => predicates.every((predicate) => predicate(df)));
 };

@@ -2,15 +2,22 @@
     "data": {
       "/resource-a.yml": {
         "$schema": "/resource-1.yml",
-        "name": "resource A"
+        "name": "resource A",
+        "optional_field": "A"
       },
       "/resource-b.yml": {
         "$schema": "/resource-1.yml",
-        "name": "resource B"
+        "name": "resource B",
+        "optional_field": "B"
       },
       "/resource-c.yml": {
         "$schema": "/resource-1.yml",
-        "name": "resource C"
+        "name": "resource C",
+        "optional_field": "C"
+      },
+      "/resource-d.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource D"
       }
     },
     "graphql": [
@@ -25,13 +32,18 @@
           {
             "isRequired": true,
             "type": "string",
+            "name": "path"
+          },
+          {
+            "type": "string",
             "name": "name",
+            "isRequired": true,
             "isSearchable": true
           },
           {
-            "isRequired": true,
             "type": "string",
-            "name": "path"
+            "name": "optional_field",
+            "isRequired": false
           }
         ]
       },
