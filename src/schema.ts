@@ -11,6 +11,7 @@ import {
   GraphQLScalarType,
   GraphQLSchema,
   GraphQLString,
+  GraphQLError,
 } from 'graphql';
 
 import * as db from './db';
@@ -33,15 +34,16 @@ const jsonType = new GraphQLScalarType({
   serialize: JSON.stringify,
 });
 
+type FilterPredicate = (source: any) => boolean; // eslint-disable-line no-unused-vars
+
+type FilterPredicateBuilder = (value: any) => FilterPredicate; // eslint-disable-line no-unused-vars
+
 class Filter {
-  // eslint-disable-next-line no-unused-vars
-  filter: (df: any, value: any) => boolean;
-
-  gqlType: any;
-
-  // eslint-disable-next-line no-unused-vars
-  constructor(filter: (df: any, value: any) => boolean, gqlType: any) {
-    this.filter = filter;
+  constructor(
+    public predicateBuilder: FilterPredicateBuilder,
+    public gqlType: any,
+  ) {
+    this.predicateBuilder = predicateBuilder;
     this.gqlType = gqlType;
   }
 }
@@ -50,25 +52,57 @@ interface FilterDict {
   [key: string]: Filter;
 }
 
-const processFilterObject = (
-  df: any,
-  filterObj: any,
-): boolean => Object.entries(filterObj).every(([key, value]) => {
-  if (typeof value === 'string') {
-    if (df[key] !== value) return false;
-  } else if (Array.isArray(value)) {
-    if (!value.includes(df[key])) return false;
-  } else if (typeof value === 'object') {
-    // not supported yet
-    return false;
+const fieldEqPredicateBuilder = (field: string): FilterPredicateBuilder => (
+  (value: any): FilterPredicate => (
+    (source: any): boolean => field in source && source[field] === value
+  )
+);
+
+const containsPredicateBuilder = (field: string): FilterPredicateBuilder => (
+  (set: Set<string>): FilterPredicate => (
+    (source: any): boolean => field in source && set.has(source[field])
+  )
+);
+
+const falsePredicate = (_: any): boolean => false; // eslint-disable-line no-unused-vars
+
+const filterObjectPredicateBuilder = (gqlType: any): FilterPredicateBuilder => (
+  (filterObject: any): FilterPredicate => {
+    const fieldsInSchema = new Set(gqlType.fields.map((f: any) => f.name));
+    if (typeof filterObject !== 'object') return falsePredicate;
+    const filters: FilterPredicate[] = Object.entries(filterObject).map(([field, value]) => {
+      switch (true) {
+        case !fieldsInSchema.has(field):
+          throw new GraphQLError(
+            `Field ${field} does not exist in ${gqlType.name}`,
+            undefined,
+            null,
+            null,
+            null,
+            null,
+            {
+              code: 'BAD_FILTER_FIELD',
+              gqlType: gqlType.name,
+            },
+          );
+        case value == null:
+          return (_: any) => true; // eslint-disable-line no-unused-vars
+        case typeof value === 'string':
+          return fieldEqPredicateBuilder(field)(value);
+        case Array.isArray(value):
+          return containsPredicateBuilder(field)(new Set(value as Array<string>));
+        default:
+          return falsePredicate;
+      }
+    });
+    return (source: any): boolean => filters.every((f) => f(source));
   }
-  return true;
-});
+);
 
 const registerFilterArgs = (
   app: express.Express,
   bundleSha: string,
-  name: string,
+  gqlType: any,
   fields: string[],
 ) => {
   if (typeof (app.get('searchableFields')[bundleSha]) === 'undefined') {
@@ -80,18 +114,18 @@ const registerFilterArgs = (
   // searchable fields + path
   [...fields, 'path'].forEach((field) => {
     filters[field] = new Filter(
-      (df: any, value: string) => field in df && df[field] === value,
+      fieldEqPredicateBuilder(field),
       GraphQLString,
     );
   });
 
   // generic filter object
   filters.filter = new Filter(
-    processFilterObject,
+    filterObjectPredicateBuilder(gqlType),
     jsonType,
   );
 
-  app.get('searchableFields')[bundleSha][name] = filters; // eslint-disable-line no-param-reassign
+  app.get('searchableFields')[bundleSha][gqlType.name] = filters; // eslint-disable-line no-param-reassign
 };
 
 const getFilters = (
@@ -155,9 +189,12 @@ const resolveDatafileSchemaField = (
   const filterArgs = Object.entries(args)
     .filter(([_, value]) => value != null); // eslint-disable-line no-unused-vars
 
+  const predicates = filterArgs.map(
+    ([key, value]) => searchableFields[key].predicateBuilder(value),
+  );
+
   return datafiles
-    .filter((df: Datafile) => filterArgs
-      .every(([key, value]) => searchableFields[key].filter(df, value)));
+    .filter((df: Datafile) => predicates.every((predicate) => predicate(df)));
 };
 
 // default resolver
@@ -222,7 +259,7 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
     .filter((f: any) => f.isSearchable && f.type === 'string')
     .map((f: any) => f.name);
 
-  registerFilterArgs(app, bundleSha, conf.name, searchableFieldNames);
+  registerFilterArgs(app, bundleSha, conf, searchableFieldNames);
 
   // fields
   objTypeConf.fields = () => conf.fields.reduce(
@@ -421,7 +458,7 @@ export const generateAppSchema = (app: express.Express, bundleSha: string): Grap
   schemaData.map((gqlType: any) => registerFilterArgs(
     app,
     bundleSha,
-    gqlType.name,
+    gqlType,
     gqlType.fields.filter((f: any) => f.isSearchable).map((f: any) => f.name),
   ));
 

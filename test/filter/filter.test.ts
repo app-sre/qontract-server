@@ -25,7 +25,6 @@ describe('pathobject', async () => {
     const query = `
       {
         test: resources_v1(name: "resource A") {
-          path
           name
         }
       }
@@ -42,7 +41,6 @@ describe('pathobject', async () => {
     const query = `
       {
         test: resources_v1(filter: {name: "resource A"}) {
-          path
           name
         }
       }
@@ -59,7 +57,6 @@ describe('pathobject', async () => {
     const query = `
       {
         test: resources_v1(filter: {name: ["resource A", "resource B"]}) {
-          path
           name
         }
       }
@@ -70,5 +67,21 @@ describe('pathobject', async () => {
       .send({ query });
     resp.should.have.status(200);
     new Set(resp.body.data.test.map((r: { name: string; }) => r.name)).should.deep.equal(new Set(['resource A', 'resource B']));
+  });
+
+  it('filter with filter object and unknown field', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {unknown_field: "value"}) {
+          name
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.errors.length.should.equal(1);
   });
 });
