@@ -59,11 +59,7 @@ const truePredicate = (_: any): boolean => true; // eslint-disable-line no-unuse
 const fieldEqPredicateBuilder = (field: string, ignoreNull: boolean): FilterPredicateBuilder => (
   (value: any): FilterPredicate => {
     if (value == null && ignoreNull) return truePredicate;
-    return (source: any): boolean => {
-      const fieldExistsWithValue = field in source && source[field] === value;
-      const fieldDoesNotExistAndValueIsNull = !(field in source) && value == null;
-      return fieldExistsWithValue || fieldDoesNotExistAndValueIsNull;
-    };
+    return (source: any): boolean => (source[field] ?? null) === value;
   }
 );
 
