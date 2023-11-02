@@ -56,17 +56,20 @@ const falsePredicate = (_: any): boolean => false; // eslint-disable-line no-unu
 
 const truePredicate = (_: any): boolean => true; // eslint-disable-line no-unused-vars
 
-const fieldEqPredicateBuilder = (field: string, ignoreNull: boolean): FilterPredicateBuilder => (
-  (value: any): FilterPredicate => {
-    if (value == null && ignoreNull) return truePredicate;
-    return (source: any): boolean => (source[field] ?? null) === value;
-  }
+const fieldEqPredicate = (field: string, value: any, source: any): boolean => (
+  (source[field] ?? null) === value
 );
 
-const containsPredicateBuilder = (field: string): FilterPredicateBuilder => (
-  (set: Set<string>): FilterPredicate => (
-    (source: any): boolean => field in source && set.has(source[field])
+const fieldEqPredicateIgnoreNullBuilder = (field: string) : FilterPredicateBuilder => (
+  (value: any): FilterPredicate => (
+    value === null
+      ? truePredicate
+      : fieldEqPredicate.bind(null, field, value)
   )
+);
+
+const containsPredicate = (field: string, value: Set<string>, source: any): boolean => (
+  field in source && value.has(source[field])
 );
 
 const filterObjectPredicateBuilder = (gqlType: any): FilterPredicateBuilder => (
@@ -95,9 +98,9 @@ const filterObjectPredicateBuilder = (gqlType: any): FilterPredicateBuilder => (
             },
           );
         case Array.isArray(value):
-          return containsPredicateBuilder(field)(new Set(value as Array<string>));
+          return containsPredicate.bind(null, field, new Set(value as Array<string>));
         default:
-          return fieldEqPredicateBuilder(field, false)(value);
+          return fieldEqPredicate.bind(null, field, value);
       }
     });
     return (source: any): boolean => filters.every((f) => f(source));
@@ -119,7 +122,7 @@ const registerFilterArgs = (
   // searchable fields + path
   [...fields, 'path'].forEach((field) => {
     filters[field] = new Filter(
-      fieldEqPredicateBuilder(field, true),
+      fieldEqPredicateIgnoreNullBuilder(field),
       GraphQLString,
     );
   });
