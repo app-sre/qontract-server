@@ -18,6 +18,18 @@
       "/resource-d.yml": {
         "$schema": "/resource-1.yml",
         "name": "resource D"
+      },
+      "/resource-e.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource E",
+        "optional_field": "E",
+        "list_field": ["A", "B", "C"]
+      },
+      "/resource-f.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource F",
+        "optional_field": "F",
+        "list_field": ["C", "D", "E"]
       }
     },
     "graphql": [
@@ -43,6 +55,12 @@
           {
             "type": "string",
             "name": "optional_field",
+            "isRequired": false
+          },
+          {
+            "type": "string",
+            "name": "list_field",
+            "isList": true,
             "isRequired": false
           }
         ]

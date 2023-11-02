@@ -60,6 +60,16 @@ const fieldEqPredicate = (field: string, value: any, source: any): boolean => (
   (source[field] ?? null) === value
 );
 
+const arrayEqPredicate = (field: string, comparisonArray: any, source: any): boolean => {
+  const sourceArray = (source[field] ?? null);
+  if (sourceArray === comparisonArray) {
+    return true;
+  }
+  return sourceArray != null && comparisonArray != null
+    && sourceArray.length === comparisonArray.length
+    && sourceArray.every((val: any, index: number) => val === comparisonArray[index]);
+};
+
 const fieldEqPredicateIgnoreNullBuilder = (field: string) : FilterPredicateBuilder => (
   (value: any): FilterPredicate => (
     value === null
@@ -72,13 +82,24 @@ const containsPredicate = (field: string, value: Set<string>, source: any): bool
   field in source && value.has(source[field])
 );
 
+const conditionsObjectPredicate = (field: string, value: any, source: any): boolean => {
+  switch (true) {
+    case 'in' in value:
+      return containsPredicate(field, new Set(value.in as Array<string>), source);
+    default:
+      throw new GraphQLError(
+        `Condition object ${value} unsupported`,
+      );
+  }
+};
+
 const filterObjectPredicateBuilder = (gqlType: any): FilterPredicateBuilder => (
   (filterObject: any): FilterPredicate => {
-    const supportedFieldsInSchema = new Set(
+    const supportedFieldsInSchema = new Map<string, any>(
       gqlType.fields.filter(
         (f: any) => ['string', 'int', 'boolean'].includes(f.type),
       ).map(
-        (f: any) => f.name,
+        (f: any) => [f.name, f],
       ),
     );
     if (typeof filterObject !== 'object') return falsePredicate;
@@ -97,8 +118,10 @@ const filterObjectPredicateBuilder = (gqlType: any): FilterPredicateBuilder => (
               gqlType: gqlType.name,
             },
           );
-        case Array.isArray(value):
-          return containsPredicate.bind(null, field, new Set(value as Array<string>));
+        case supportedFieldsInSchema.get(field).isList && Array.isArray(value):
+          return arrayEqPredicate.bind(null, field, value);
+        case typeof value === 'object' && value !== null:
+          return conditionsObjectPredicate.bind(null, field, value);
         default:
           return fieldEqPredicate.bind(null, field, value);
       }
