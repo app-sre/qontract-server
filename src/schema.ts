@@ -331,7 +331,7 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
 
       if (fieldInfo.isList) {
         // make list elements non nullable
-        t = new GraphQLList(GraphQLNonNull(t));
+        t = new GraphQLList(new GraphQLNonNull(t));
       }
 
       if (fieldInfo.isRequired) {
