@@ -18,7 +18,7 @@
     "debug": "node --inspect --require ts-node/register src/server.ts"
   },
   "dependencies": {
-    "apollo-server-express": "^2.18.0",
+    "apollo-server-express": "^3.0.0",
     "aws-sdk": "^2.364.0",
     "deep-diff": "1.0.2",
     "dotenv": "^8.2.0",
