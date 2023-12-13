@@ -3,6 +3,7 @@ import { ApolloServer } from 'apollo-server-express';
 import * as express from 'express';
 
 import promClient = require('prom-client');
+import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
 import * as db from './db';
 import * as metrics from './metrics';
 import { defaultResolver, generateAppSchema } from './schema';
@@ -38,26 +39,28 @@ const registerApolloServer = (app: express.Express, bundleSha: string, server: a
 };
 
 // builds the ApolloServer for the specific bundleSha
-const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServer => {
+const buildApolloServer = async (app: express.Express, bundleSha: string): Promise<ApolloServer> => {
   const schema = generateAppSchema(app, bundleSha);
   const server = new ApolloServer({
     schema,
-    playground: true,
     introspection: true,
     fieldResolver: defaultResolver(app, bundleSha),
     plugins: [
       {
-        requestDidStart() {
+        async requestDidStart() {
           return {
-            willSendResponse(requestContext) {
+            async willSendResponse(requestContext) {
               // eslint-disable-next-line no-param-reassign
               requestContext.response.extensions = { schemas: requestContext.context.schemas };
             },
           };
         },
       },
+      ApolloServerPluginLandingPageGraphQLPlayground(),
     ],
   });
+
+  await server.start();
 
   return server;
 };
@@ -155,7 +158,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     const sha = bundle.fileHash;
     app.get('bundles')[sha] = bundle;
     logger.info('loading initial bundle %s', sha);
-    const server: ApolloServer = buildApolloServer(app, sha);
+    const server: ApolloServer = await buildApolloServer(app, sha); // eslint-disable-line no-await-in-loop
     registerApolloServer(app, sha, server);
   }
 
@@ -183,7 +186,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
 
     app.get('bundles')[bundleSha] = bundle;
     // register a new server exposing this bundle
-    const server = buildApolloServer(app, bundleSha);
+    const server = await buildApolloServer(app, bundleSha);
     registerApolloServer(app, bundleSha, server);
 
     metrics.updateResourceMetrics(bundle);
