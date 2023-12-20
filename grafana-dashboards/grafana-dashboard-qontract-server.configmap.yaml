@@ -33,7 +33,7 @@ data:
           },
           "id": 4,
           "panels": [],
-          "title": "Router",
+          "title": "Service",
           "type": "row"
         },
         {
@@ -83,7 +83,7 @@ data:
           "pluginVersion": "7.2.1",
           "targets": [
             {
-              "expr": "1 -\nsum(increase(haproxy_backend_http_responses_total{route=\"$route\",code=\"5xx\"}[$__range]))\n/\nsum(increase(haproxy_backend_http_responses_total{route=\"$route\"}[$__range]))",
+              "expr": "1 - (sum(increase(http_request_duration_seconds_count{namespace=\"$namespace\",status_code=\"5xx\"}[$__range])) or vector(0) / sum(increase(http_request_duration_seconds_count{namespace=\"$namespace\"}[$__range])))",
               "interval": "",
               "legendFormat": "",
               "refId": "A"
@@ -149,7 +149,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum by (code) (rate(haproxy_backend_http_responses_total{route=\"$route\"}[5m]))",
+              "expr": "sum by (code) (rate(http_request_duration_seconds_count{namespace=\"$namespace\"}[5m]))",
               "interval": "",
               "legendFormat": "{{code}}",
               "refId": "A"
@@ -248,7 +248,7 @@ data:
           "steppedLine": false,
           "targets": [
             {
-              "expr": "sum(rate(haproxy_backend_http_responses_total{route=\"$route\",code=\"5xx\"}[5m])) /\nsum(rate(haproxy_backend_http_responses_total{route=\"$route\"}[5m]))",
+              "expr": "sum(rate(http_request_duration_seconds_count{namespace=\"$namespace\",status_code=\"5xx\"}[5m])) or vector(0) /\nsum(rate(http_request_duration_seconds_count{namespace=\"$namespace\"}[5m]))",
               "interval": "",
               "legendFormat": "errors",
               "refId": "A"
