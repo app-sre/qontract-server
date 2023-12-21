@@ -1725,38 +1725,6 @@ data:
             "allValue": null,
             "current": {
               "selected": false,
-              "text": "app-interface-prod",
-              "value": "app-interface-prod"
-            },
-            "datasource": "$datasource",
-            "definition": "label_values(haproxy_backend_http_responses_total, route)",
-            "hide": 0,
-            "includeAll": false,
-            "label": null,
-            "multi": false,
-            "name": "route",
-            "options": [
-              {
-                "selected": true,
-                "text": "app-interface-prod",
-                "value": "app-interface-prod"
-              }
-            ],
-            "query": "label_values(haproxy_backend_http_responses_total, route)",
-            "refresh": 0,
-            "regex": "/app-interface/",
-            "skipUrlSync": false,
-            "sort": 0,
-            "tagValuesQuery": "",
-            "tags": [],
-            "tagsQuery": "",
-            "type": "query",
-            "useTags": false
-          },
-          {
-            "allValue": null,
-            "current": {
-              "selected": false,
               "text": "app-interface-production",
               "value": "app-interface-production"
             },
