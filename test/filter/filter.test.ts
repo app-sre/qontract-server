@@ -50,7 +50,7 @@ describe('pathobject', async () => {
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
-    resp.body.data.test.length.should.equal(6);
+    resp.body.data.test.length.should.equal(8);
   });
 
   it('filter object - field value eq', async () => {
@@ -114,7 +114,7 @@ describe('pathobject', async () => {
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
-    resp.body.data.test.length.should.equal(1);
+    resp.body.data.test.length.should.equal(3);
     resp.body.data.test[0].name.should.equal('resource D');
   });
 
@@ -147,6 +147,74 @@ describe('pathobject', async () => {
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
-    new Set(resp.body.data.test.map((r: { name: string; }) => r.name)).should.deep.equal(new Set(['resource A', 'resource B', 'resource C', 'resource D']));
+    new Set(resp.body.data.test.map((r: { name: string; }) => r.name)).should.deep.equal(new Set(['resource A', 'resource B', 'resource C', 'resource D', 'resource G', 'resource H']));
+  });
+
+  it('filter object - referenced object - field value eq', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {reference: {filter: {name: "resource A"}}}) {
+          name
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.data.test.length.should.equal(1);
+    resp.body.data.test[0].name.should.equal('resource G');
+  });
+
+  it('filter object - referenced object - field null', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {reference: {filter: {optional_field: null}}}) {
+          name
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.data.test.length.should.equal(1);
+    resp.body.data.test[0].name.should.equal('resource H');
+  });
+
+  it('filter object - referenced object - list field eq', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {reference_list: {filter: {name: ["resource A", "resource B", "resource C"]}}}) {
+          name
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.data.test.length.should.equal(1);
+    resp.body.data.test[0].name.should.equal('resource H');
+  });
+
+  it('filter object - referenced object - list field in', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {reference_list: {filter: {name: {in: ["resource A", "resource B", "resource C", "resource D"]}}}}) {
+          name
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.data.test.length.should.equal(1);
+    resp.body.data.test[0].name.should.equal('resource H');
   });
 });
