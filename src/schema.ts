@@ -189,14 +189,12 @@ const conditionsObjectPredicateDeconstructor = (
   bundleSha: string,
   source: any,
 ): boolean => {
-  if (Array.isArray(source)) {
-    return source.every(
-      (e: any) => (
-        conditionsObjectPredicate(field, value, fieldGqlType, app, bundleSha, e)
-      ),
-    );
-  }
-  return conditionsObjectPredicate(field, value, fieldGqlType, app, bundleSha, source);
+  const sources = Array.isArray(source) ? source : [source];
+  return sources.every(
+    (e: any) => (
+      conditionsObjectPredicate(field, value, fieldGqlType, app, bundleSha, e)
+    ),
+  );
 };
 
 const getGraphGQLTypeFields = (
