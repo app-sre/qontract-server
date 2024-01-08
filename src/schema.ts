@@ -94,7 +94,6 @@ const resolveValue = (
   app: express.Express,
   bundleSha: string,
   root: any,
-  args: any,
   context: any,
   info: any,
 ): any => {
@@ -152,7 +151,7 @@ const extractListOfValues = (
   source: any,
 ): any[] => {
   const sources = Array.isArray(source) ? source : [source];
-  return sources.map((e: any) => resolveValue(app, bundleSha, e, null, {}, { fieldName: field }));
+  return sources.map((e: any) => resolveValue(app, bundleSha, e, {}, { fieldName: field }));
 };
 
 const getFilters = (
@@ -183,7 +182,7 @@ const conditionsObjectPredicate = (
   }
   if (Object.prototype.hasOwnProperty.call(value, 'filter')) {
     const filterSpecs = getFilters(app, bundleSha, fieldGqlType.name);
-    const fieldValue = resolveValue(app, bundleSha, source, null, {}, { fieldName: field });
+    const fieldValue = resolveValue(app, bundleSha, source, {}, { fieldName: field });
     if (fieldValue == null) return false;
     return filterSpecs.filter.predicateBuilder(value.filter)(fieldValue);
   }
@@ -379,7 +378,7 @@ export const defaultResolver = (
   app: express.Express,
   bundleSha: string,
 ) => (root: any, args: any, context: any, info: any) => {
-  const resolved = resolveValue(app, bundleSha, root, args, context, info);
+  const resolved = resolveValue(app, bundleSha, root, context, info);
   if (Object.keys(args).length !== 0) {
     const filterSpecs = getFilters(app, bundleSha, getInnerGqlType(info.returnType));
     const filterArgs = Object.entries(args)
