@@ -151,12 +151,8 @@ const extractListOfValues = (
   field: string,
   source: any,
 ): any[] => {
-  if (Array.isArray(source)) {
-    return source.map((e: any) => resolveValue(app, bundleSha, e, null, {}, { fieldName: field }));
-  }
-  return [
-    resolveValue(app, bundleSha, source, null, {}, { fieldName: field }),
-  ];
+  const sources = Array.isArray(source) ? source : [source];
+  return sources.map((e: any) => resolveValue(app, bundleSha, e, null, {}, { fieldName: field }));
 };
 
 const getFilters = (
