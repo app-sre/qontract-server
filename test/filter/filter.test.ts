@@ -216,23 +216,6 @@ describe('pathobject', async () => {
     resp.body.data.test[0].name.should.equal('resource H');
   });
 
-  it('filter object - referenced object - list field eq', async () => {
-    const query = `
-      {
-        test: resources_v1(filter: {reference_list: {filter: {name: ["resource A", "resource B", "resource C"]}}}) {
-          name
-        }
-      }
-      `;
-    const resp = await chai.request(srv)
-      .post('/graphql')
-      .set('content-type', 'application/json')
-      .send({ query });
-    resp.should.have.status(200);
-    resp.body.data.test.length.should.equal(1);
-    resp.body.data.test[0].name.should.equal('resource H');
-  });
-
   it('filter object - referenced object - list field in', async () => {
     const query = `
       {

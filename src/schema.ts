@@ -144,16 +144,6 @@ const resolveValue = (
   return val;
 };
 
-const extractListOfValues = (
-  app: express.Express,
-  bundleSha: string,
-  field: string,
-  source: any,
-): any[] => {
-  const sources = Array.isArray(source) ? source : [source];
-  return sources.map((e: any) => resolveValue(app, bundleSha, e, {}, { fieldName: field }));
-};
-
 const getFilters = (
   app: express.Express,
   bundleSha: string,
@@ -258,10 +248,6 @@ const filterObjectPredicateBuilder = (
       switch (true) {
         case fieldType.isList && Array.isArray(value):
           return arrayEqPredicate.bind(null, field, value);
-        case Array.isArray(value):
-          return (source: any): boolean => (
-            arrayEqPredicate('values', value, { values: extractListOfValues(app, bundleSha, field, source) })
-          );
         case isConditionsObject(value):
           return conditionsObjectPredicateDeconstructor.bind(
             null,
