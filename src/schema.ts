@@ -196,7 +196,7 @@ const conditionsObjectPredicate = (
   );
 };
 
-const conditionsObjectPredicateDeconstuctor = (
+const conditionsObjectPredicateDeconstructor = (
   field: string,
   value: any,
   fieldGqlType: any,
@@ -267,7 +267,7 @@ const filterObjectPredicateBuilder = (
             arrayEqPredicate('values', value, { values: extractListOfValues(app, bundleSha, field, source) })
           );
         case isConditionsObject(value):
-          return conditionsObjectPredicateDeconstuctor.bind(
+          return conditionsObjectPredicateDeconstructor.bind(
             null,
             field,
             value,
