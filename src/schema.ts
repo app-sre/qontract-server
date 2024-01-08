@@ -88,7 +88,7 @@ const containsPredicate = (field: string, value: Set<string>, source: any): bool
   field in source && value.has(source[field])
 );
 
-const isNonEmptyArray = (obj: any) => obj.constructor === Array && obj.length > 0;
+const isNonEmptyArray = (obj: any) => Array.isArray(obj) && obj.length > 0;
 
 const resolveValue = (
   app: express.Express,
