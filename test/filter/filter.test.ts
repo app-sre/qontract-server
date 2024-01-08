@@ -69,6 +69,22 @@ describe('pathobject', async () => {
     resp.body.data.test[0].name.should.equal('resource A');
   });
 
+  it('filter object - unknown field', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {unknown_field: "resource A"}) {
+          name
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.errors[0].message.should.equal('Field "unknown_field" does not exist on type "Resource_v1"');
+  });
+
   it('filter object - in (contains) condition', async () => {
     const query = `
       {
@@ -165,6 +181,22 @@ describe('pathobject', async () => {
     resp.should.have.status(200);
     resp.body.data.test.length.should.equal(1);
     resp.body.data.test[0].name.should.equal('resource G');
+  });
+
+  it('filter object - referenced object - unknown field', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {reference: {filter: {unknown_field: "resource A"}}}) {
+          name
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.errors[0].message.should.equal('Field "unknown_field" does not exist on type "Resource_v1"');
   });
 
   it('filter object - referenced object - field null', async () => {

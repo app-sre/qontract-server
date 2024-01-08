@@ -240,21 +240,22 @@ const filterObjectPredicateBuilder = (
     if (typeof filterObject !== 'object') return falsePredicate;
     const filters: FilterPredicate[] = Object.entries(filterObject).map(([field, value]) => {
       const fieldType = supportedFieldsInSchema.get(field);
+      if (fieldType == null) {
+        throw new GraphQLError(
+          `Field "${field}" does not exist on type "${gqlType.name}"`,
+          undefined,
+          null,
+          null,
+          null,
+          null,
+          {
+            code: 'BAD_FILTER_FIELD',
+            gqlType: gqlType.name,
+          },
+        );
+      }
       const fieldGglType = getGqlType(app, bundleSha, fieldType.type);
       switch (true) {
-        case !supportedFieldsInSchema.has(field):
-          throw new GraphQLError(
-            `Field ${field} on ${gqlType.name} can not be used for filtering (yet)`,
-            undefined,
-            null,
-            null,
-            null,
-            null,
-            {
-              code: 'BAD_FILTER_FIELD',
-              gqlType: gqlType.name,
-            },
-          );
         case fieldType.isList && Array.isArray(value):
           return arrayEqPredicate.bind(null, field, value);
         case Array.isArray(value):
