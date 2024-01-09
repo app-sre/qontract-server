@@ -159,6 +159,20 @@ const isConditionsObject = (
   return Object.prototype.hasOwnProperty.call(conditionsObject, 'in') || Object.prototype.hasOwnProperty.call(conditionsObject, 'filter');
 };
 
+const filterPredicate = (
+  field: string,
+  filter: any,
+  fieldGqlType: any,
+  app: express.Express,
+  bundleSha: string,
+  source: any,
+): boolean => {
+  const filterSpecs = getFilters(app, bundleSha, fieldGqlType.name);
+  const fieldValue = resolveValue(app, bundleSha, source, {}, { fieldName: field });
+  if (fieldValue == null) return false;
+  return filterSpecs.filter.predicateBuilder(filter)(fieldValue);
+};
+
 const conditionsObjectPredicate = (
   field: string,
   value: any,
@@ -171,10 +185,7 @@ const conditionsObjectPredicate = (
     return containsPredicate(field, new Set(value.in as Array<string>), source);
   }
   if (Object.prototype.hasOwnProperty.call(value, 'filter')) {
-    const filterSpecs = getFilters(app, bundleSha, fieldGqlType.name);
-    const fieldValue = resolveValue(app, bundleSha, source, {}, { fieldName: field });
-    if (fieldValue == null) return false;
-    return filterSpecs.filter.predicateBuilder(value.filter)(fieldValue);
+    return filterPredicate(field, value.filter, fieldGqlType, app, bundleSha, source);
   }
   throw new GraphQLError(
     `Condition object ${value} unsupported`,
