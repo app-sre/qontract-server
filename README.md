@@ -241,7 +241,7 @@ Filtering is also supported on nested structures of a resource.
 "filter": {
     "nested_resources": {
         "filter": {
-            "nested_field": "value"
+            "nested_field": "nested_value"
         }
     }
 }
