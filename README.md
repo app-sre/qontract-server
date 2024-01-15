@@ -192,3 +192,57 @@ projects lint script:
 ```sh
 yarn run lint
 ```
+
+## GQL query filtering
+
+While GQL does not define how filtering should work, it provides room for arguments to passed into queries. `qontract-server` offers a generic `filter` argument, that can be used to filter the resultset of a query.
+
+```gql
+query MyQuery($filter: JSON) {
+    clusters: clusters_v1(filter: $filter) {
+        ...
+    }
+}
+```
+
+The filter argument is a JSON document that can have the following content.
+
+### Field equality predicate
+
+To filter on an fields value, use the following filter object syntax
+
+```json
+"filter": {
+    "my_field": "my_value"
+}
+```
+
+This way only resources with such a field and value are returned by the query.
+
+### List contains predicate
+
+Field values can be also compared towards a list of acceptable values.
+
+```json
+"filter": {
+    "my_field": {
+        "in": ["a", "b", "c"]
+    }
+}
+```
+
+This way only resources are returned where the respective field is a or b or c.
+
+### Nested predicates
+
+Filtering is also supported on nested structures of a resource.
+
+```json
+"filter": {
+    "nested_resources": {
+        "filter": {
+            "nested_field": "nested_value"
+        }
+    }
+}
+```
