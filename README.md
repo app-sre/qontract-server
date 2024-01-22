@@ -219,6 +219,36 @@ To filter on an fields value, use the following filter object syntax
 
 This way only resources with such a field and value are returned by the query.
 
+Also works for null.
+
+```json
+"filter": {
+    "my_field": null
+}
+```
+
+### Field not-equal predicate
+
+To check if a property value is not equal to a certain value, use the `ne` filter predicate
+
+```json
+"filter": {
+    "my_field": {
+        "ne": "my_value"
+    }
+}
+```
+
+This also works to check for missing values or references.
+
+```json
+"filter": {
+    "my_field": {
+        "ne": null
+    }
+}
+```
+
 ### List contains predicate
 
 Field values can be also compared towards a list of acceptable values.

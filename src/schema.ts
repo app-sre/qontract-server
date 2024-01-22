@@ -66,6 +66,11 @@ const fieldEqPredicate = (field: string, value: any, source: any): boolean => (
   (source[field] ?? null) === value
 );
 
+const fieldNotEqualPredicate = (field: string, value: any, source: any): boolean => {
+  const sourceValue = (source[field] ?? null);
+  return value !== sourceValue;
+};
+
 const arrayEqPredicate = (field: string, comparisonArray: any, source: any): boolean => {
   const sourceArray = (source[field] ?? null);
   if (sourceArray === comparisonArray) {
@@ -156,7 +161,9 @@ const isConditionsObject = (
   if (conditionsObject == null) {
     return false;
   }
-  return Object.prototype.hasOwnProperty.call(conditionsObject, 'in') || Object.prototype.hasOwnProperty.call(conditionsObject, 'filter');
+  return Object.prototype.hasOwnProperty.call(conditionsObject, 'in')
+    || Object.prototype.hasOwnProperty.call(conditionsObject, 'filter')
+    || Object.prototype.hasOwnProperty.call(conditionsObject, 'ne');
 };
 
 const filterPredicate = (
@@ -186,6 +193,9 @@ const conditionsObjectPredicate = (
   }
   if (Object.prototype.hasOwnProperty.call(value, 'filter')) {
     return filterPredicate(field, value.filter, fieldGqlType, app, bundleSha, source);
+  }
+  if (Object.prototype.hasOwnProperty.call(value, 'ne')) {
+    return fieldNotEqualPredicate(field, value.ne, source);
   }
   throw new GraphQLError(
     `Condition object ${value} unsupported`,

@@ -134,6 +134,48 @@ describe('pathobject', async () => {
     resp.body.data.test[0].name.should.equal('resource D');
   });
 
+  it('filter object - non-null field value', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {reference: { ne: null }}) {
+          name
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.data.test.length.should.be.above(0);
+    resp.body.data.test.forEach((r: { reference?: any; }) => {
+      if (r.reference !== undefined && r.reference !== null) {
+        throw new Error('reference should be undefined or null');
+      }
+    });
+  });
+
+  it('filter object - not-equal field value', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {optional_field: { ne: "E" }}) {
+          name
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.data.test.length.should.be.above(0);
+    resp.body.data.test.forEach((r: { optional_field?: string; }) => {
+      if (r.optional_field !== undefined && r.optional_field === 'E') {
+        throw new Error('optional_field should not have value "E"');
+      }
+    });
+  });
+
   it('filter object - list field eq', async () => {
     const query = `
       {
