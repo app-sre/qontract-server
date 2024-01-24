@@ -12,6 +12,8 @@ import * as db from '../../src/db';
 chai.use(chaiHttp);
 chai.should();
 
+const should = chai.should();
+
 describe('pathobject', async () => {
   let srv: http.Server;
   before(async () => {
@@ -139,6 +141,9 @@ describe('pathobject', async () => {
       {
         test: resources_v1(filter: {reference: { ne: null }}) {
           name
+          reference {
+            name
+          }
         }
       }
       `;
@@ -149,9 +154,7 @@ describe('pathobject', async () => {
     resp.should.have.status(200);
     resp.body.data.test.length.should.be.above(0);
     resp.body.data.test.forEach((r: { reference?: any; }) => {
-      if (r.reference !== undefined && r.reference !== null) {
-        throw new Error('reference should be undefined or null');
-      }
+      should.exist(r.reference);
     });
   });
 
@@ -160,6 +163,7 @@ describe('pathobject', async () => {
       {
         test: resources_v1(filter: {optional_field: { ne: "E" }}) {
           name
+          optional_field
         }
       }
       `;
@@ -170,8 +174,8 @@ describe('pathobject', async () => {
     resp.should.have.status(200);
     resp.body.data.test.length.should.be.above(0);
     resp.body.data.test.forEach((r: { optional_field?: string; }) => {
-      if (r.optional_field !== undefined && r.optional_field === 'E') {
-        throw new Error('optional_field should not have value "E"');
+      if (r.optional_field) {
+        r.optional_field.should.not.equal('E');
       }
     });
   });

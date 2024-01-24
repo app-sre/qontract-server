@@ -155,15 +155,17 @@ const getFilters = (
   name: string,
 ): FilterDict => app.get('searchableFields')[bundleSha][name];
 
+const SUPPORTED_FILTER_OPERATORS = ['in', 'filter', 'ne'];
+
 const isConditionsObject = (
   conditionsObject: any,
 ): boolean => {
   if (conditionsObject == null) {
     return false;
   }
-  return Object.prototype.hasOwnProperty.call(conditionsObject, 'in')
-    || Object.prototype.hasOwnProperty.call(conditionsObject, 'filter')
-    || Object.prototype.hasOwnProperty.call(conditionsObject, 'ne');
+  return SUPPORTED_FILTER_OPERATORS.some((operator) => (
+    Object.prototype.hasOwnProperty.call(conditionsObject, operator)
+  ));
 };
 
 const filterPredicate = (
