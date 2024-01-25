@@ -12,6 +12,8 @@ import * as db from '../../src/db';
 chai.use(chaiHttp);
 chai.should();
 
+const should = chai.should();
+
 describe('pathobject', async () => {
   let srv: http.Server;
   before(async () => {
@@ -132,6 +134,48 @@ describe('pathobject', async () => {
     resp.should.have.status(200);
     resp.body.data.test.length.should.equal(3);
     resp.body.data.test[0].name.should.equal('resource D');
+  });
+
+  it('filter object - non-null field value', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {reference: { ne: null }}) {
+          name
+          reference {
+            name
+          }
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.data.test.length.should.be.above(0);
+    resp.body.data.test.forEach((r: { reference?: any; }) => {
+      should.exist(r.reference);
+    });
+  });
+
+  it('filter object - not-equal field value', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {optional_field: { ne: "E" }}) {
+          name
+          optional_field
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.data.test.length.should.be.above(0);
+    resp.body.data.test.forEach((r: { optional_field?: string; }) => {
+      should.not.equal(r.optional_field, 'E');
+    });
   });
 
   it('filter object - list field eq', async () => {
