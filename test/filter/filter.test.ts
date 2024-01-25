@@ -174,9 +174,7 @@ describe('pathobject', async () => {
     resp.should.have.status(200);
     resp.body.data.test.length.should.be.above(0);
     resp.body.data.test.forEach((r: { optional_field?: string; }) => {
-      if (r.optional_field) {
-        r.optional_field.should.not.equal('E');
-      }
+      should.not.equal(r.optional_field, 'E');
     });
   });
 
