@@ -13,7 +13,7 @@
     "server": "node ./dist/server.js",
     "lint": "eslint . --ext .ts",
     "lint-fix": "eslint . --ext .ts --fix",
-    "test": "mocha -r ts-node/register $(find test -type f -name '*.ts')",
+    "test": "mocha",
     "update-graphql-schema": "scripts/update-graphql-schema.js test/graphql_schema.json $(find test -name '*.data.json')",
     "debug": "node --inspect --require ts-node/register src/server.ts"
   },
@@ -42,7 +42,16 @@
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.27.5",
     "mocha": "^10.3.0",
-    "ts-node": "^8.8.2",
+    "ts-node": "^10.9.2",
     "typescript": "^3.2.2"
+  },
+  "mocha": {
+    "require": "ts-node/register",
+    "extensions": [
+      "ts"
+    ],
+    "spec": [
+      "test/**/*.ts"
+    ]
   }
 }
