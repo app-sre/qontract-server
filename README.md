@@ -276,3 +276,6 @@ Filtering is also supported on nested structures of a resource.
     }
 }
 ```
+
+Note this feature currently only support non array fields,
+the behaviour of filter list fields is undefined.

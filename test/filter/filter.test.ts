@@ -276,4 +276,21 @@ describe('pathobject', async () => {
     resp.body.data.test.length.should.equal(1);
     resp.body.data.test[0].name.should.equal('resource H');
   });
+
+  // nested filter with list field eq is not fully supported
+  it('filter object - referenced object - list field eq', async () => {
+    const query = `
+      {
+        test: resources_v1(filter: {reference_list: {filter: {name: "resource A"}}}) {
+          name
+        }
+      }
+      `;
+    const resp = await chai.request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
+    resp.should.have.status(200);
+    resp.body.data.test.length.should.equal(0);
+  });
 });
