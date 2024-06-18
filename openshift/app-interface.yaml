@@ -68,9 +68,11 @@ objects:
                 weight: 100
         volumes:
         - name: var-cache-nginx
-          emptyDir: { }
-        - name: var-run
-          emptyDir: { }
+          emptyDir:
+            medium: Memory
+        - name: tmp
+          emptyDir:
+            medium: Memory
         containers:
         - image: ${IMAGE_GATE}:${IMAGE_GATE_TAG}
           imagePullPolicy: Always
