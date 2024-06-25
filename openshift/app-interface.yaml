@@ -66,6 +66,13 @@ objects:
                       - app-interface
                   topologyKey: topology.kubernetes.io/zone
                 weight: 100
+        volumes:
+        - name: var-cache-nginx
+          emptyDir:
+            medium: Memory
+        - name: tmp
+          emptyDir:
+            medium: Memory
         containers:
         - image: ${IMAGE_GATE}:${IMAGE_GATE_TAG}
           imagePullPolicy: Always
@@ -83,6 +90,11 @@ objects:
                   name: app-interface
             - name: BASIC_AUTH_DISABLE
               value: ${IMAGE_GATE_AUTH_DISABLE}
+          volumeMounts:
+          - name: var-cache-nginx
+            mountPath: /var/cache/nginx
+          - name: tmp
+            mountPath: /tmp
           ports:
           - name: nginx-gate-port
             containerPort: 8080
@@ -107,6 +119,7 @@ objects:
             timeoutSeconds: 1
             initialDelaySeconds: 10
           resources: "${{GATE_RESOURCES}}"
+
         - image: ${IMAGE_RELOADER}:${IMAGE_RELOADER_TAG}
           imagePullPolicy: Always
           name: s3-reloader
