@@ -19,15 +19,15 @@
   },
   "dependencies": {
     "apollo-server-express": "^2.18.0",
-    "aws-sdk": "^2.364.0",
+    "aws-sdk": "^2.1659.0",
     "deep-diff": "1.0.2",
-    "dotenv": "^8.2.0",
+    "dotenv": "^16.4.5",
     "express": "^4.16.4",
     "express-prom-bundle": "^6.0.0",
-    "graphql": "^14.0.0",
-    "jsonpointer": "^4.0.1",
+    "graphql": "^14.7.0",
+    "jsonpointer": "^5.0.1",
     "prom-client": "^12.0.0",
-    "winston": "^3.3.3"
+    "winston": "^3.13.1"
   },
   "devDependencies": {
     "@types/chai": "^4.3.12",
