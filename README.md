@@ -173,14 +173,14 @@ make run
 
 ### Preload bundles
 
-Especially during PR checks, a `qontract-server` with multiple bundles preloaded simplifies test infra setup. For this the env variable `INIT_BUNDLE` to specify a comma separated list of bundle references of the following form
+Especially during PR checks, a `qontract-server` with multiple bundles preloaded simplifies test infra setup. For this the env variable `INIT_BUNDLES` to specify a comma separated list of bundle references of the following form
 
 - fs://path/to/bundle
 - s3://bundle-key
 
 The s3 flavour relies on the `AWS_*` env variables to specify the bucket and configure authentication. the specified `bundle-key` is used as `AWS_S3_KEY`.
 
-The bundles listed in `INIT_BUNDLE` are added to the `qontract-server` in the order they are specified. This means that the bundle listed last is also the one returned by the `/sha256` endpoint.
+The bundles listed in `INIT_BUNDLES` are added to the `qontract-server` in the order they are specified. This means that the bundle listed last is also the one returned by the `/sha256` endpoint.
 
 ## Style
 

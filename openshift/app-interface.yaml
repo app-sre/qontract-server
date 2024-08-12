@@ -175,6 +175,12 @@ objects:
                 configMapKeyRef:
                   key: load_method
                   name: app-interface
+            - name: INIT_BUNDLES
+              valueFrom:
+                configMapKeyRef:
+                  key: init_bundles
+                  name: app-interface
+                  optional: true
             - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
