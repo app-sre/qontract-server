@@ -255,6 +255,20 @@ objects:
         name: app-interface
     selector:
       deployment: app-interface
+- apiVersion: keda.sh/v1alpha1
+  kind: ScaledObject
+  metadata:
+    name: app-interface
+  spec:
+    scaleTargetRef:
+      name: app-interface
+  maxReplicaCount: ${{MAX_REPLICAS}}
+  minReplicaCount: ${{MIN_REPLICAS}}
+  triggers:
+  - type: cpu
+    metricType: Utilization
+    metadata:
+      value: ${TARGET_CPU_UTILIZATION_PERCENTAGE}
 parameters:
 - name: IMAGE
   value: quay.io/app-sre/qontract-server
@@ -266,6 +280,12 @@ parameters:
   description: App interface version which defaults to latest
 - name: REPLICAS
   value: "3"
+- name: MIN_REPLICAS
+  value: "3"
+- name: MAX_REPLICAS
+  value: "10"
+- name: TARGET_CPU_UTILIZATION_PERCENTAGE
+  value: "80"
 - name: IMAGE_GATE
   value: quay.io/app-sre/nginx-gate
 - name: IMAGE_GATE_TAG
