@@ -1,0 +1,295 @@
+---
+apiVersion: v1
+kind: Template
+metadata:
+  name: app-interface
+objects:
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    name: app-interface
+- apiVersion: policy/v1
+  kind: PodDisruptionBudget
+  metadata:
+    name: app-interface
+  spec:
+    minAvailable: 1
+    selector:
+      matchLabels:
+        app: app-interface
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    labels:
+      app: app-interface
+    annotations:
+      ignore-check.kube-linter.io/unset-cpu-requirements: "qontract-server does not set cpu limits as it is harmful for its performance"
+      ignore-check.kube-linter.io/no-readiness-probe: "qontract-server s3-reloader does not receive traffic"
+    name: app-interface
+  spec:
+    replicas: ${{REPLICAS}}
+    selector:
+      matchLabels:
+        app: app-interface
+        deployment: app-interface
+    strategy:
+      rollingParams:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+          app: app-interface
+          deployment: app-interface
+          status: migrating
+      spec:
+        serviceAccountName: app-interface
+        affinity:
+          podAntiAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                      - app-interface
+                  topologyKey: kubernetes.io/hostname
+                weight: 90
+              - podAffinityTerm:
+                  labelSelector:
+                    matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                      - app-interface
+                  topologyKey: topology.kubernetes.io/zone
+                weight: 100
+        volumes:
+        - name: var-cache-nginx
+          emptyDir:
+            medium: Memory
+        - name: tmp
+          emptyDir:
+            medium: Memory
+        containers:
+        - image: ${IMAGE_GATE}:${IMAGE_GATE_TAG}
+          imagePullPolicy: Always
+          name: app-interface-nginx-gate
+          env:
+            - name: HTPASSWD
+              valueFrom:
+                secretKeyRef:
+                    key: htpasswd
+                    name: app-interface
+            - name: FORWARD_HOST
+              valueFrom:
+                configMapKeyRef:
+                  key: forward_host
+                  name: app-interface
+            - name: BASIC_AUTH_DISABLE
+              value: ${IMAGE_GATE_AUTH_DISABLE}
+          volumeMounts:
+          - name: var-cache-nginx
+            mountPath: /var/cache/nginx
+          - name: tmp
+            mountPath: /tmp
+          ports:
+          - name: nginx-gate-port
+            containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: nginx-gate-port
+              scheme: HTTP
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: nginx-gate-port
+              scheme: HTTP
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 10
+          resources: "${{GATE_RESOURCES}}"
+
+        - image: ${IMAGE_RELOADER}:${IMAGE_RELOADER_TAG}
+          imagePullPolicy: Always
+          name: s3-reloader
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                    key: aws.access.key.id
+                    name: app-interface
+            - name: AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                    key: aws.region
+                    name: app-interface
+            - name: AWS_S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                    key: aws.s3.bucket
+                    name: app-interface
+            - name: AWS_S3_KEY
+              valueFrom:
+                secretKeyRef:
+                    key: aws.s3.key
+                    name: app-interface
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                    key: aws.secret.access.key
+                    name: app-interface
+          args:
+          - -s3-path=s3://$(AWS_S3_BUCKET)/$(AWS_S3_KEY)
+          - -webhook-url=http://localhost:4000/reload
+          ports:
+          - name: s3-reloader
+            containerPort: 9533
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: s3-reloader
+              scheme: HTTP
+            failureThreshold: 3
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 10
+          resources: "${{S3RELOADER_RESOURCES}}"
+        - image: ${IMAGE}:${IMAGE_TAG}
+          imagePullPolicy: Always
+          name: app-interface
+          env:
+            - name: LOAD_METHOD
+              valueFrom:
+                configMapKeyRef:
+                  key: load_method
+                  name: app-interface
+            - name: INIT_BUNDLES
+              valueFrom:
+                configMapKeyRef:
+                  key: init_bundles
+                  name: app-interface
+                  optional: true
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                    key: aws.access.key.id
+                    name: app-interface
+            - name: AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                    key: aws.region
+                    name: app-interface
+            - name: AWS_S3_BUCKET
+              valueFrom:
+                secretKeyRef:
+                    key: aws.s3.bucket
+                    name: app-interface
+            - name: AWS_S3_KEY
+              valueFrom:
+                secretKeyRef:
+                    key: aws.s3.key
+                    name: app-interface
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                    key: aws.secret.access.key
+                    name: app-interface
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=${MAX_OLD_SPACE_SIZE}"
+          ports:
+          - name: app-interface
+            containerPort: 4000
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 4000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 10
+          resources: "${{APP_INTERFACE_RESOURCES}}"
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sleep", "10"]
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: app-interface-nginx-gate
+  spec:
+    ports:
+      - protocol: TCP
+        port: 8080
+        targetPort: 8080
+    selector:
+      deployment: app-interface
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: app-interface
+    labels:
+      app: app-interface
+  spec:
+    ports:
+      - protocol: TCP
+        port: 80
+        targetPort: 4000
+        name: app-interface
+    selector:
+      deployment: app-interface
+parameters:
+- name: IMAGE
+  value: quay.io/app-sre/qontract-server
+  displayName: App interface image
+  description: App interface docker image. Defaults to quay.io/app-sre/app-interface
+- name: IMAGE_TAG
+  value: latest
+  displayName: App interface version
+  description: App interface version which defaults to latest
+- name: REPLICAS
+  value: "1"
+- name: IMAGE_GATE
+  value: quay.io/app-sre/nginx-gate
+- name: IMAGE_GATE_TAG
+  value: latest
+  displayName: App interface nginx gate version
+  description: App interface nginx gate version which defaults to latest
+- name: IMAGE_GATE_AUTH_DISABLE
+  value: "false"
+  description: Set to true to disable authentication for accessing qontract server
+- name: IMAGE_RELOADER
+  value: quay.io/app-sre/s3-reload
+- name: IMAGE_RELOADER_TAG
+  value: 0bc8c97
+- name: MAX_OLD_SPACE_SIZE
+  value: "400"
+
+# container 'app-interface' resources
+- name: APP_INTERFACE_RESOURCES
+  value: '{"requests": {"memory": "175Mi", "cpu": "30m"}, "limits":{"memory": "512Mi"}}'
+
+# container 'app-interface-nginx-gate' resources
+- name: GATE_RESOURCES
+  value: '{"requests": {"memory": "20Mi", "cpu": "20m"}, "limits":{"memory": "40Mi"}}'
+
+# container 's3-reloader' resources
+- name: S3RELOADER_RESOURCES
+  value: '{"requests": {"memory": "20Mi", "cpu": "10m"}, "limits":{"memory": "40Mi"}}'
