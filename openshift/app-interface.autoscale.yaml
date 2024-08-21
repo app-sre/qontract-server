@@ -261,13 +261,13 @@ objects:
   spec:
     scaleTargetRef:
       name: app-interface
-  maxReplicaCount: ${{MAX_REPLICAS}}
-  minReplicaCount: ${{MIN_REPLICAS}}
-  triggers:
-  - type: cpu
-    metricType: Utilization
-    metadata:
-      value: ${TARGET_CPU_UTILIZATION_PERCENTAGE}
+    maxReplicaCount: ${{MAX_REPLICAS}}
+    minReplicaCount: ${{MIN_REPLICAS}}
+    triggers:
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: ${TARGET_CPU_UTILIZATION_PERCENTAGE}
 parameters:
 - name: IMAGE
   value: quay.io/app-sre/qontract-server
