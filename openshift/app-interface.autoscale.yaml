@@ -27,7 +27,6 @@ objects:
       ignore-check.kube-linter.io/no-readiness-probe: "qontract-server s3-reloader does not receive traffic"
     name: app-interface
   spec:
-    replicas: ${{REPLICAS}}
     selector:
       matchLabels:
         app: app-interface
@@ -278,8 +277,6 @@ parameters:
   value: latest
   displayName: App interface version
   description: App interface version which defaults to latest
-- name: REPLICAS
-  value: "3"
 - name: MIN_REPLICAS
   value: "3"
 - name: MAX_REPLICAS
