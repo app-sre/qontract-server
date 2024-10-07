@@ -218,6 +218,8 @@ spec:
       params:
       - name: IMAGE
         value: $(params.output-image)
+      - name: TARGET_STAGE
+        value: test
       - name: DOCKERFILE
         value: $(params.dockerfile)
       - name: CONTEXT
