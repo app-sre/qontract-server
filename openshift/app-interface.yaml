@@ -6,6 +6,7 @@ metadata:
 objects:
 - apiVersion: v1
   kind: ServiceAccount
+  imagePullSecrets: "${{IMAGE_PULL_SECRETS}}"
   metadata:
     name: app-interface
 - apiVersion: policy/v1
@@ -264,6 +265,9 @@ parameters:
   value: latest
   displayName: App interface version
   description: App interface version which defaults to latest
+- name: IMAGE_PULL_SECRETS
+  value: '[]'
+  description: Secrets to use for pulling qontract-server images
 - name: REPLICAS
   value: "1"
 - name: IMAGE_GATE
