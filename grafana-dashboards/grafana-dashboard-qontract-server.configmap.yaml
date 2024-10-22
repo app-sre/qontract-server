@@ -2078,11 +2078,11 @@ data:
               },
               {
                 "selected": false,
-                "text": "stage-int",
-                "value": "appsres07ue1-prometheus"
+                "text": "stage-ext",
+                "value": "appsres11ue1-prometheus"
               }
             ],
-            "query": "prod-int : appsrep09ue1-prometheus, stage-int : appsres09ue1-prometheus, prod-ext : appsrep07ue1-prometheus, stage-int : appsres07ue1-prometheus",
+            "query": "prod-int : appsrep09ue1-prometheus, stage-int : appsres09ue1-prometheus, prod-ext : appsrep07ue1-prometheus, stage-ext : appsres11ue1-prometheus",
             "queryValue": "",
             "skipUrlSync": false,
             "type": "custom"
