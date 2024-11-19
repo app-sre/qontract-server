@@ -15,7 +15,7 @@ BUNDLE_DIR := $(shell pwd)/bundle
 BUNDLE_FILENAME := bundle.json
 SERVER_CONTAINER_NAME ?= qontract-server
 VALIDATOR_CONTAINER_NAME ?= qontract-validator
-VALIDATOR_IMAGE_NAME ?= quay.io/app-sre/qontract-validator
+VALIDATOR_IMAGE_NAME ?= quay.io/redhat-services-prod/app-sre-tenant/qontract-validator-master/qontract-validator-master
 VALIDATOR_IMAGE_TAG ?= latest
 GIT_COMMIT := $(shell cd $(APP_INTERFACE_PATH) && git rev-parse HEAD)
 GIT_COMMIT_TIMESTAMP := $(shell cd $(APP_INTERFACE_PATH) && git log -1 --format=%ct $(GIT_COMMIT))
