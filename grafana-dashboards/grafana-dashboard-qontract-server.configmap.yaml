@@ -2074,7 +2074,7 @@ data:
               {
                 "selected": false,
                 "text": "prod-ext",
-                "value": "appsrep07ue1-prometheus"
+                "value": "appsrep11ue1-prometheus"
               },
               {
                 "selected": false,
@@ -2082,7 +2082,7 @@ data:
                 "value": "appsres11ue1-prometheus"
               }
             ],
-            "query": "prod-int : appsrep09ue1-prometheus, stage-int : appsres09ue1-prometheus, prod-ext : appsrep07ue1-prometheus, stage-ext : appsres11ue1-prometheus",
+            "query": "prod-int : appsrep09ue1-prometheus, stage-int : appsres09ue1-prometheus, prod-ext : appsrep11ue1-prometheus, stage-ext : appsres11ue1-prometheus",
             "queryValue": "",
             "skipUrlSync": false,
             "type": "custom"
