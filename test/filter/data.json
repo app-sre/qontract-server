@@ -1,0 +1,120 @@
+{
+    "data": {
+      "/resource-a.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource A",
+        "optional_field": "A"
+      },
+      "/resource-b.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource B",
+        "optional_field": "B"
+      },
+      "/resource-c.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource C",
+        "optional_field": "C"
+      },
+      "/resource-d.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource D"
+      },
+      "/resource-e.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource E",
+        "optional_field": "E",
+        "list_field": ["A", "B", "C"]
+      },
+      "/resource-f.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource F",
+        "optional_field": "F",
+        "list_field": ["C", "D", "E"]
+      },
+      "/resource-g.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource G",
+        "reference": {
+          "$ref": "/resource-a.yml"
+        }
+      },
+      "/resource-h.yml": {
+        "$schema": "/resource-1.yml",
+        "name": "resource H",
+        "reference": {
+          "$ref": "/resource-d.yml"
+        },
+        "reference_list": [
+          {
+            "$ref": "/resource-a.yml"
+          },
+          {
+            "$ref": "/resource-b.yml"
+          },
+          {
+            "$ref": "/resource-c.yml"
+          }
+        ]
+      }
+    },
+    "graphql": {
+        "$schema" : "/app-interface/graphql-schemas-1.yml",
+        "confs": [
+          {
+            "name": "Resource_v1",
+            "fields": [
+              {
+                "isRequired": true,
+                "type": "string",
+                "name": "schema"
+              },
+              {
+                "isRequired": true,
+                "type": "string",
+                "name": "path"
+              },
+              {
+                "type": "string",
+                "name": "name",
+                "isRequired": true,
+                "isSearchable": true
+              },
+              {
+                "type": "string",
+                "name": "optional_field",
+                "isRequired": false
+              },
+              {
+                "type": "string",
+                "name": "list_field",
+                "isList": true,
+                "isRequired": false
+              },
+              {
+                "type": "Resource_v1",
+                "name": "reference",
+                "isRequired": false
+              },
+              {
+                "type": "Resource_v1",
+                "name": "reference_list",
+                "isList": true,
+                "isRequired": false
+              }
+            ]
+          },
+          {
+            "fields": [
+                {
+                    "type": "Resource_v1",
+                    "name": "resources_v1",
+                    "isList": true,
+                    "datafileSchema": "/resource-1.yml"
+                }
+            ],
+            "name": "Query"
+          }
+        ]
+    },
+    "resources": {}
+}

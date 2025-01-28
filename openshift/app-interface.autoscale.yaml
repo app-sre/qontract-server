@@ -28,7 +28,6 @@ objects:
       ignore-check.kube-linter.io/no-readiness-probe: "qontract-server s3-reloader does not receive traffic"
     name: app-interface
   spec:
-    replicas: ${{REPLICAS}}
     selector:
       matchLabels:
         app: app-interface
@@ -256,6 +255,20 @@ objects:
         name: app-interface
     selector:
       deployment: app-interface
+- apiVersion: keda.sh/v1alpha1
+  kind: ScaledObject
+  metadata:
+    name: app-interface
+  spec:
+    scaleTargetRef:
+      name: app-interface
+    maxReplicaCount: ${{MAX_REPLICAS}}
+    minReplicaCount: ${{MIN_REPLICAS}}
+    triggers:
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: ${TARGET_CPU_UTILIZATION_PERCENTAGE}
 parameters:
 - name: IMAGE
   value: quay.io/app-sre/qontract-server
@@ -268,8 +281,12 @@ parameters:
 - name: IMAGE_PULL_SECRETS
   value: '[]'
   description: Secrets to use for pulling qontract-server images
-- name: REPLICAS
-  value: "1"
+- name: MIN_REPLICAS
+  value: "3"
+- name: MAX_REPLICAS
+  value: "10"
+- name: TARGET_CPU_UTILIZATION_PERCENTAGE
+  value: "80"
 - name: IMAGE_GATE
   value: quay.io/app-sre/nginx-gate
 - name: IMAGE_GATE_TAG
@@ -288,12 +305,12 @@ parameters:
 
 # container 'app-interface' resources
 - name: APP_INTERFACE_RESOURCES
-  value: '{"requests": {"memory": "175Mi", "cpu": "30m"}, "limits":{"memory": "512Mi"}}'
+  value: '{"requests": {"memory": "512Mi", "cpu": "100m"}, "limits":{"memory": "512Mi"}}'
 
 # container 'app-interface-nginx-gate' resources
 - name: GATE_RESOURCES
-  value: '{"requests": {"memory": "20Mi", "cpu": "20m"}, "limits":{"memory": "40Mi"}}'
+  value: '{"requests": {"memory": "40Mi", "cpu": "20m"}, "limits":{"memory": "40Mi"}}'
 
 # container 's3-reloader' resources
 - name: S3RELOADER_RESOURCES
-  value: '{"requests": {"memory": "20Mi", "cpu": "10m"}, "limits":{"memory": "40Mi"}}'
+  value: '{"requests": {"memory": "40Mi", "cpu": "10m"}, "limits":{"memory": "40Mi"}}'

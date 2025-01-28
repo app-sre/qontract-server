@@ -116,6 +116,22 @@
                 ]
             },
             {
+                "name": "RecipeCollection_v2",
+                "fields": [
+                    {
+                        "isRequired": true,
+                        "type": "string",
+                        "name": "name"
+                    },
+                    {
+                        "type": "DatafileObject_v1",
+                        "isInterface": true,
+                        "name": "recipes",
+                        "isList": true
+                    }
+                ]
+            },
+            {
                 "fields": [
                     {
                         "type": "RecipeCollection_v1",
@@ -134,6 +150,12 @@
                         "name": "beerrecipe_v1",
                         "isList": true,
                         "datafileSchema": "/beerrecipe-1.yml"
+                    },
+                    {
+                        "type": "RecipeCollection_v2",
+                        "name": "recipecollection_v2",
+                        "isList": true,
+                        "datafileSchema": "/recipecollection-2.yml"
                     }
                 ],
                 "name": "Query"

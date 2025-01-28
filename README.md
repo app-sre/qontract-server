@@ -128,10 +128,23 @@ make bundle APP_INTERFACE_PATH=/home/myuser/app-interface/
 
 ### Running the Qontract GraphQL server
 
+Create `.env` file from example:
+
+```shell
+cp .env.example .env
+```
+
+Customize the `.env` file as needed, for example:
+
+```
+LOAD_METHOD=fs
+DATAFILES_FILE=./bundle/bundle.json
+```
+
 To run an instance of the qontract GraphQL console:
 
 ```sh
-LOAD_METHOD=fs DATAFILES_FILE=your_test_datafile yarn run server
+yarn run server
 ```
 
 Specific instructions for CentOS 7:
@@ -160,14 +173,14 @@ make run
 
 ### Preload bundles
 
-Especially during PR checks, a `qontract-server` with multiple bundles preloaded simplifies test infra setup. For this the env variable `INIT_BUNDLE` to specify a comma separated list of bundle references of the following form
+Especially during PR checks, a `qontract-server` with multiple bundles preloaded simplifies test infra setup. For this the env variable `INIT_BUNDLES` to specify a comma separated list of bundle references of the following form
 
 - fs://path/to/bundle
 - s3://bundle-key
 
 The s3 flavour relies on the `AWS_*` env variables to specify the bucket and configure authentication. the specified `bundle-key` is used as `AWS_S3_KEY`.
 
-The bundles listed in `INIT_BUNDLE` are added to the `qontract-server` in the order they are specified. This means that the bundle listed last is also the one returned by the `/sha256` endpoint.
+The bundles listed in `INIT_BUNDLES` are added to the `qontract-server` in the order they are specified. This means that the bundle listed last is also the one returned by the `/sha256` endpoint.
 
 ## Style
 
@@ -179,3 +192,90 @@ projects lint script:
 ```sh
 yarn run lint
 ```
+
+## GQL query filtering
+
+While GQL does not define how filtering should work, it provides room for arguments to passed into queries. `qontract-server` offers a generic `filter` argument, that can be used to filter the resultset of a query.
+
+```gql
+query MyQuery($filter: JSON) {
+    clusters: clusters_v1(filter: $filter) {
+        ...
+    }
+}
+```
+
+The filter argument is a JSON document that can have the following content.
+
+### Field equality predicate
+
+To filter on an fields value, use the following filter object syntax
+
+```json
+"filter": {
+    "my_field": "my_value"
+}
+```
+
+This way only resources with such a field and value are returned by the query.
+
+Also works for null.
+
+```json
+"filter": {
+    "my_field": null
+}
+```
+
+### Field not-equal predicate
+
+To check if a property value is not equal to a certain value, use the `ne` filter predicate
+
+```json
+"filter": {
+    "my_field": {
+        "ne": "my_value"
+    }
+}
+```
+
+This also works to check for missing values or references.
+
+```json
+"filter": {
+    "my_field": {
+        "ne": null
+    }
+}
+```
+
+### List contains predicate
+
+Field values can be also compared towards a list of acceptable values.
+
+```json
+"filter": {
+    "my_field": {
+        "in": ["a", "b", "c"]
+    }
+}
+```
+
+This way only resources are returned where the respective field is a or b or c.
+
+### Nested predicates
+
+Filtering is also supported on nested structures of a resource.
+
+```json
+"filter": {
+    "nested_resources": {
+        "filter": {
+            "nested_field": "nested_value"
+        }
+    }
+}
+```
+
+Note this feature currently only support non array fields,
+the behaviour of filter list fields is undefined.

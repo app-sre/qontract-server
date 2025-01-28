@@ -5,11 +5,11 @@ import * as chai from 'chai';
 // Chai is bad with types. See:
 // https://github.com/DefinitelyTyped/DefinitelyTyped/issues/19480
 import chaiHttp = require('chai-http');
-chai.use(chaiHttp);
 
 import * as server from '../../src/server';
 import * as db from '../../src/db';
 
+chai.use(chaiHttp);
 const should = chai.should();
 
 const gql = (srv: http.Server, query: string, sha?: string) => {
@@ -68,8 +68,8 @@ describe('multishas', async () => {
 
   it('serves a basic graphql query using GET', async () => {
     const resp = await chai.request(srv)
-                        .get('/graphql')
-                        .query({ query });
+      .get('/graphql')
+      .query({ query });
     resp.should.have.status(200);
     resp.body.data.resources_v1[0].name.should.equal('sha1');
     resp.body.data.resources_v1[0].resourceAField.should.equal('sha1');
@@ -126,15 +126,17 @@ describe('multishas', async () => {
 
   it('removes expired bundle', async () => {
     const sha: string = Object.keys(app.get('bundles'))[0];
+    // eslint-disable-next-line no-underscore-dangle
     const stackLen = app._router.stack.length;
 
     // force expiration
     process.env.DATAFILES_FILE = 'test/multishas/multishas3.data.json';
-    app.get('bundleCache')[sha]['expiration'] = 0;
+    app.get('bundleCache')[sha].expiration = 0;
     await chai.request(srv).post('/reload');
 
     should.equal(app.get('bundles')[sha], undefined);
     should.equal(app.get('bundleCache')[sha], undefined);
+    // eslint-disable-next-line no-underscore-dangle
     stackLen.should.equal(app._router.stack.length);
   });
 
@@ -155,5 +157,4 @@ describe('multishas', async () => {
     resp.body.data.resources_v1[0].resourceAField.should.equal('sha3');
     resp.body.data.resources_v1[0].newfield.should.equal('sha3');
   });
-
 });
