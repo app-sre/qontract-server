@@ -90,6 +90,8 @@ objects:
                   name: app-interface
             - name: BASIC_AUTH_DISABLE
               value: ${IMAGE_GATE_AUTH_DISABLE}
+            - name: CACHE_MAX_SIZE
+              value: ${IMAGE_GATE_CACHE_MAX_SIZE}
           volumeMounts:
           - name: var-cache-nginx
             mountPath: /var/cache/nginx
@@ -296,6 +298,10 @@ parameters:
 - name: IMAGE_GATE_AUTH_DISABLE
   value: "false"
   description: Set to true to disable authentication for accessing qontract server
+- name: IMAGE_GATE_CACHE_MAX_SIZE
+  value: 100m
+  description: Maximum nginx cache size
+
 - name: IMAGE_RELOADER
   value: quay.io/app-sre/s3-reload
 - name: IMAGE_RELOADER_TAG
