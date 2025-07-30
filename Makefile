@@ -65,7 +65,7 @@ docker-run-clean:
 	@$(CONTAINER_ENGINE) rm -f $(VALIDATOR_CONTAINER_NAME) || true
 
 build:
-	@$(CONTAINER_ENGINE) build --pull -t $(IMAGE_NAME):latest .
+	@$(CONTAINER_ENGINE) build --pull --target=prod -t $(IMAGE_NAME):latest .
 	@$(CONTAINER_ENGINE) tag $(IMAGE_NAME):latest $(IMAGE_NAME):$(IMAGE_TAG)
 
 push:
