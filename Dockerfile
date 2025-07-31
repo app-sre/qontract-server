@@ -17,8 +17,7 @@ FROM base as pre-prod
 RUN yarn install --frozen-lockfile --production && \
     yarn cache clean
 
-# TODO: use minimal image registry.access.redhat.com/ubi9/nodejs-20-minimal
-FROM registry.access.redhat.com/ubi9/nodejs-20 as prod
+FROM registry.access.redhat.com/ubi9/nodejs-20-minimal as prod
 WORKDIR $HOME
 COPY --from=pre-prod $HOME/node_modules $HOME/node_modules
 COPY --from=dev ${HOME}/dist ./dist
