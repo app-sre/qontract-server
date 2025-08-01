@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/nodejs-20-minimal:9.6-1753809880 as base
+FROM registry.access.redhat.com/ubi9/nodejs-20-minimal:9.6-1753809880@sha256:d7f0d4b5ce3786c12c327b2c4410251cc722ab3cea1bdcddbd2c9141b3041315 as base
 RUN npm install -g yarn && npm cache clean --force
 WORKDIR $HOME
 COPY package.json yarn.lock ./
@@ -17,7 +17,7 @@ FROM base as pre-prod
 RUN yarn install --frozen-lockfile --production && \
     yarn cache clean
 
-FROM registry.access.redhat.com/ubi9/nodejs-20-minimal:9.6-1753809880 as prod
+FROM registry.access.redhat.com/ubi9/nodejs-20-minimal:9.6-1753809880@sha256:d7f0d4b5ce3786c12c327b2c4410251cc722ab3cea1bdcddbd2c9141b3041315 as prod
 WORKDIR $HOME
 COPY --from=pre-prod $HOME/node_modules $HOME/node_modules
 COPY --from=dev ${HOME}/dist ./dist
