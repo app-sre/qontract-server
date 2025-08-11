@@ -1,6 +1,6 @@
 .PHONY: bundle build push docker-run
 
-IMAGE_NAME := quay.io/app-sre/qontract-server
+IMAGE_NAME := quay.io/redhat-services-prod/app-sre-tenant/qontract-server-master/qontract-server-master
 IMAGE_TAG := $(shell git rev-parse --short=7 HEAD)
 APP_INTERFACE_PATH ?= $(shell pwd)/../../service/app-interface
 CONTAINER_ENGINE ?= $(shell which podman >/dev/null 2>&1 && echo podman || echo docker)
