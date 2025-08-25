@@ -15,7 +15,7 @@ Now, we will take a look at each attribute associated with a GraphQL type.
 
 `fields`: This is a list of all fields associated with a type. The fields themselves adhere to specific [json-schema](https://github.com/app-sre/qontract-schemas/blob/main/schemas/app-interface/graphql-schemas-1.yml) that we will explore later in this document.
 
-`datafile`: This attribute does not seem to be in used currently. 
+`datafile`: This is necessary for [App Interface change type](https://gitlab.cee.redhat.com/service/app-interface/-/blob/master/docs/app-sre/change-types.md). 
 
 `isInterface`: This attribute indicates whether a given type is a GraphQL interface or not. Absence of this field indicate the type assigned is ObjectTypeDefinition.
 
