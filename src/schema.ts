@@ -81,7 +81,7 @@ const arrayEqPredicate = (field: string, comparisonArray: any, source: any): boo
     && sourceArray.every((val: any, index: number) => val === comparisonArray[index]);
 };
 
-const fieldEqPredicateIgnoreNullBuilder = (field: string) : FilterPredicateBuilder => (
+const fieldEqPredicateIgnoreNullBuilder = (field: string): FilterPredicateBuilder => (
   (value: any): FilterPredicate => (
     value === null
       ? truePredicate
@@ -121,7 +121,9 @@ const resolveValue = (
   const val = root[info.fieldName];
 
   // if the item is null, return as is
-  if (typeof (val) === 'undefined') { return null; }
+  if (typeof (val) === 'undefined') {
+    return null;
+  }
 
   if (isNonEmptyArray(val)) {
     // are all the elements of this array references?
@@ -530,10 +532,28 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
 
   // interface
   if (conf.interface || conf.datafile) {
-    objTypeConf.interfaces = () => [
-      conf.interface ? getInterfaceType(app, bundleSha, conf.interface) : null,
-      conf.datafile ? getInterfaceType(app, bundleSha, 'DatafileObject_v1') : null,
-    ].filter((x) => x != null);
+    objTypeConf.interfaces = () => {
+      const interfaceType = getInterfaceType(app, bundleSha, conf.interface);
+      const interfaces = interfaceType !== undefined ? [interfaceType] : [];
+      const datafileGraphqlTypeNames = [
+        ...(interfaces.map((i) => i.name)),
+        conf.name,
+      ];
+      // TODO: prebuild graphql type to datafile schema mapping to speedup check
+      const isDatafile = Object.values(app.get('datafileSchemas')[bundleSha] || {}).some(
+        (graphqlType) => datafileGraphqlTypeNames.includes(graphqlType),
+      );
+      if (isDatafile) {
+        const datafileObject = getInterfaceType(app, bundleSha, 'DatafileObject_v1');
+        if (datafileObject !== undefined) {
+          return [
+            ...interfaces,
+            datafileObject,
+          ];
+        }
+      }
+      return interfaces;
+    };
   }
 
   // generate resolveType for interfaces
@@ -553,8 +573,12 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
       case 'schema':
         resolveType = (source: any) => {
           const schema = source.$schema;
-          const targetObjType = getGraphqlTypeForDatafileSchema(app, bundleSha, schema);
-          return getObjectType(app, bundleSha, targetObjType);
+          const targetGraphqlType = getGraphqlTypeForDatafileSchema(app, bundleSha, schema);
+          const interfaceType = getInterfaceType(app, bundleSha, targetGraphqlType);
+          if (interfaceType !== undefined) {
+            return interfaceType.resolveType(source);
+          }
+          return getObjectType(app, bundleSha, targetGraphqlType);
         };
         break;
       default:
@@ -571,11 +595,11 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
     addInterfaceType(app, bundleSha, conf.name, objType);
   } else {
     objType = new GraphQLObjectType(objTypeConf);
-    // eslint-disable-next-line eqeqeq
-    if (conf.datafile != undefined) {
-      addDatafileSchema(app, bundleSha, conf.datafile, conf.name);
-    }
     addObjectType(app, bundleSha, conf.name, objType);
+  }
+  // eslint-disable-next-line eqeqeq
+  if (conf.datafile != undefined) {
+    addDatafileSchema(app, bundleSha, conf.datafile, conf.name);
   }
 
   return objType;

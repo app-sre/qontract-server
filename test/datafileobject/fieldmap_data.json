@@ -1,0 +1,193 @@
+{
+  "data": {
+    "/collections/magical-recipes.yml": {
+      "$schema": "/recipecollection-1.yml",
+      "name": "Magical Recipes",
+      "datafiles": [
+        {
+          "$ref": "/cakerecipe/guillaumes-deluxe.yml"
+        },
+        {
+          "$ref": "/beerrecipe/unicorn-ale.yml"
+        }
+      ],
+      "recipes": [
+        {
+          "$ref": "/cakerecipe/guillaumes-deluxe.yml"
+        },
+        {
+          "$ref": "/beerrecipe/unicorn-ale.yml"
+        }
+      ]
+    },
+    "/cakerecipe/guillaumes-deluxe.yml": {
+      "$schema": "/recipe-1.yml",
+      "path": "/cakerecipe/guillaumes-deluxe.yml",
+      "provider": "cake",
+      "name": "Guillaumes Delux",
+      "inventor": "Guillaume"
+    },
+    "/beerrecipe/unicorn-ale.yml": {
+      "$schema": "/recipe-1.yml",
+      "path": "/beerrecipe/unicorn-ale.yml",
+      "provider": "beer",
+      "name": "Unicorn Ale",
+      "brewery": "Equestrias Finest"
+    }
+  },
+  "graphql": {
+    "$schema": "/app-interface/graphql-schemas-1.yml",
+    "confs": [
+      {
+        "name": "DatafileObject_v1",
+        "isInterface": true,
+        "interfaceResolve": {
+          "strategy": "schema"
+        },
+        "fields": [
+          {
+            "name": "path",
+            "type": "string",
+            "isRequired": true
+          },
+          {
+            "name": "schema",
+            "type": "string",
+            "isRequired": true
+          }
+        ]
+      },
+      {
+        "name": "RecipeCollection_v1",
+        "fields": [
+          {
+            "isRequired": true,
+            "type": "string",
+            "name": "name"
+          },
+          {
+            "type": "DatafileObject_v1",
+            "isInterface": true,
+            "name": "datafiles",
+            "isList": true
+          },
+          {
+            "type": "Recipe_v1",
+            "isInterface": true,
+            "name": "recipes",
+            "isList": true
+          }
+        ]
+      },
+      {
+        "name": "Recipe_v1",
+        "datafile": "/recipe-1.yml",
+        "isInterface": true,
+        "interfaceResolve": {
+          "strategy": "fieldMap",
+          "field": "provider",
+          "fieldMap": {
+            "cake": "CakeRecipe_v1",
+            "beer": "BeerRecipe_v1"
+          }
+        },
+        "fields": [
+          {
+            "name": "path",
+            "type": "string",
+            "isRequired": true
+          },
+          {
+            "name": "schema",
+            "type": "string",
+            "isRequired": true
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "isRequired": true
+          },
+          {
+            "name": "provider",
+            "type": "string",
+            "isRequired": true
+          }
+        ]
+      },
+      {
+        "name": "CakeRecipe_v1",
+        "interface": "Recipe_v1",
+        "fields": [
+          {
+            "name": "schema",
+            "type": "string",
+            "isRequired": true
+          },
+          {
+            "name": "path",
+            "type": "string",
+            "isRequired": true
+          },
+          {
+            "name": "provider",
+            "type": "string",
+            "isRequired": true
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "isRequired": true
+          },
+          {
+            "name": "inventor",
+            "type": "string",
+            "isRequired": true
+          }
+        ]
+      },
+      {
+        "name": "BeerRecipe_v1",
+        "interface": "Recipe_v1",
+        "fields": [
+          {
+            "name": "schema",
+            "type": "string",
+            "isRequired": true
+          },
+          {
+            "name": "path",
+            "type": "string",
+            "isRequired": true
+          },
+          {
+            "name": "provider",
+            "type": "string",
+            "isRequired": true
+          },
+          {
+            "name": "name",
+            "type": "string",
+            "isRequired": true
+          },
+          {
+            "name": "brewery",
+            "type": "string",
+            "isRequired": true
+          }
+        ]
+      },
+      {
+        "fields": [
+          {
+            "type": "RecipeCollection_v1",
+            "name": "recipecollection_v1",
+            "isList": true,
+            "datafileSchema": "/recipecollection-1.yml"
+          }
+        ],
+        "name": "Query"
+      }
+    ]
+  },
+  "resources": {}
+}
