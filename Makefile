@@ -67,7 +67,3 @@ docker-run-clean:
 build:
 	@$(CONTAINER_ENGINE) build --pull --target=prod -t $(IMAGE_NAME):latest .
 	@$(CONTAINER_ENGINE) tag $(IMAGE_NAME):latest $(IMAGE_NAME):$(IMAGE_TAG)
-
-push:
-	@$(CONTAINER_ENGINE) --config=$(DOCKER_CONF) push $(IMAGE_NAME):latest
-	@$(CONTAINER_ENGINE) --config=$(DOCKER_CONF) push $(IMAGE_NAME):$(IMAGE_TAG)
