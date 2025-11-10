@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as util from 'util';
 import { createHash } from 'crypto';
 
-import * as aws from 'aws-sdk';
+import { GetObjectCommand, S3, waitUntilObjectExists } from '@aws-sdk/client-s3';
 import { logger } from './logger';
 import { buildSyntheticBackRefTrie, SyntheticBackRefTrie } from './syntheticBackRefTrie';
 import { Datafile, GraphQLSchemaType } from './types';
@@ -158,18 +158,31 @@ const bundleFromS3 = async (
   bucket: string,
   key: string,
 ) => {
-  const s3 = new aws.S3({ accessKeyId, secretAccessKey, region });
+  const client = new S3({
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+    },
+    region,
+  });
   try {
-    await s3.waitFor(
-      'objectExists',
-      { Bucket: bucket, Key: key, $waiter: { delay: 5, maxAttempts: 20 } },
-    ).promise();
+    await waitUntilObjectExists({
+      client,
+      maxWaitTime: 200,
+    }, {
+      Bucket: bucket,
+      Key: key,
+    });
   } catch (error) {
     throw new Error(`key ${key} not found in s3 bucket ${bucket}`);
   }
-  const getObject = util.promisify(s3.getObject.bind(s3));
-  const response = await getObject({ Bucket: bucket, Key: key });
-  const contents = response.Body.toString('utf-8');
+
+  const command = new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+  });
+  const response = await client.send(command);
+  const contents = await response.Body.transformToString('utf-8');
 
   return parseBundle(contents);
 };
