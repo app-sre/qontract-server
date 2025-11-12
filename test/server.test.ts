@@ -252,8 +252,8 @@ describe('server', async () => {
     const query = `{
       roles: roles_v1(path: "/role-A.yml") {
         permissions {
-          service
           ... on PermissionGithubOrgTeam_v1 {
+            service
             org
           }
         }
@@ -265,6 +265,9 @@ describe('server', async () => {
     responseIsNotAnError(response1);
     response1.body.extensions.schemas.should.eql(['/access/role-1.yml',
       '/access/permission-1.yml']);
+    response1.body.data.roles.length.should.equal(1);
+    response1.body.data.roles[0].permissions.length.should.equal(1);
+    response1.body.data.roles[0].permissions[0].service.should.equal('github-org-team');
     response1.body.data.roles[0].permissions[0].org.should.equal('org-A');
 
     // check that it continues to work after a reload

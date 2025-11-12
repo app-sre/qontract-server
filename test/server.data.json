@@ -34,6 +34,14 @@
       "$schema": "/access/permission-1.yml",
       "description": "description permission-A"
     },
+    "/permission-B.yml": {
+      "name": "permission-B",
+      "service": "github-org",
+      "labels": {},
+      "org": "org-A",
+      "$schema": "/access/permission-1.yml",
+      "description": "description permission-B"
+    },
     "/role-A.yml": {
       "$schema": "/access/role-1.yml",
       "labels": {},
@@ -41,6 +49,9 @@
       "permissions": [
         {
           "$ref": "/permission-A.yml"
+        },
+        {
+          "$ref": "/permission-B.yml"
         }
       ]
     },
