@@ -37,6 +37,33 @@ const registerApolloServer = (app: express.Express, bundleSha: string, server: a
   app.set('latestBundleSha', bundleSha);
 };
 
+const isEmptyObject = (obj: any): boolean => {
+  if (obj === null || typeof obj !== 'object') {
+    return false;
+  }
+  if (Array.isArray(obj)) {
+    return false;
+  }
+  return Object.keys(obj).length === 0;
+};
+
+function excludeEmptyObjectInArray(data: any): any {
+  if (data == null || typeof data !== 'object') {
+    return data;
+  }
+  if (Array.isArray(data)) {
+    return data
+      .filter((i) => !isEmptyObject(i))
+      .map((i) => excludeEmptyObjectInArray(i));
+  }
+  return Object.entries(data).reduce((acc: any, [key, value]) => {
+    acc[key] = excludeEmptyObjectInArray(value);
+    return acc;
+  }, {});
+}
+
+const formatResponse = (response: any): any => excludeEmptyObjectInArray(response);
+
 // builds the ApolloServer for the specific bundleSha
 const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServer => {
   const schema = generateAppSchema(app, bundleSha);
@@ -45,6 +72,7 @@ const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServe
     playground: true,
     introspection: true,
     fieldResolver: defaultResolver(app, bundleSha),
+    formatResponse,
     plugins: [
       {
         requestDidStart() {
