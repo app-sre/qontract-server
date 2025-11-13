@@ -1,6 +1,6 @@
-# qontract
+# qontract-server
 
-qontract (Queryable cONTRACT) is a collection of tools used to SREs to expose
+qontract-server is a qontract (Queryable cONTRACT) component which is a collection of tools used to SREs to expose
 available managed services to application developer teams.
 
 ## Overview
