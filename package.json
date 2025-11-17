@@ -18,8 +18,8 @@
     "debug": "node --inspect --require ts-node/register src/server.ts"
   },
   "dependencies": {
-    "apollo-server-express": "^2.18.0",
     "@aws-sdk/client-s3": "^3.926.0",
+    "apollo-server-express": "^2.18.0",
     "deep-diff": "1.0.2",
     "dotenv": "^16.4.5",
     "express": "^4.16.4",
@@ -33,7 +33,7 @@
     "@types/chai": "^4.3.12",
     "@types/express": "4.16.1",
     "@types/graphql": "^14.0.5",
-    "@types/mocha": "^10.0.6",
+    "@types/mocha": "^10.0.10",
     "@typescript-eslint/eslint-plugin": "^5.60.1",
     "@typescript-eslint/parser": "^5.60.1",
     "chai": "^4.4.1",
@@ -41,7 +41,7 @@
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.29.1",
-    "mocha": "^10.3.0",
+    "mocha": "^11.7.5",
     "ts-node": "^10.9.2",
     "typescript": "^3.2.2"
   },
