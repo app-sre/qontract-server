@@ -47,10 +47,10 @@ bundle:
 		qontract-validator --only-errors /bundle/$(BUNDLE_FILENAME)
 
 run:
-	LOAD_METHOD=fs DATAFILES_FILE=$(BUNDLE_DIR)/$(BUNDLE_FILENAME) yarn run server
+	LOAD_METHOD=fs DATAFILES_FILE=$(BUNDLE_DIR)/$(BUNDLE_FILENAME) npm run server
 
 debug:
-	LOAD_METHOD=fs DATAFILES_FILE=$(BUNDLE_DIR)/$(BUNDLE_FILENAME) yarn run debug
+	LOAD_METHOD=fs DATAFILES_FILE=$(BUNDLE_DIR)/$(BUNDLE_FILENAME) npm run debug
 
 docker-run:
 	@$(CONTAINER_ENGINE) run -it --rm --name $(SERVER_CONTAINER_NAME) \

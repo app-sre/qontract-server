@@ -1,21 +1,20 @@
 FROM registry.access.redhat.com/ubi9/nodejs-20-minimal:9.7-1764822489@sha256:0af20e1f2773e1f7a2792943a66a1c9875674f24fbae70f61e7cc829f8324467 AS base
-RUN npm install -g yarn && npm cache clean --force
 WORKDIR $HOME
-COPY package.json yarn.lock ./
+COPY package.json package-lock.json ./
 
 FROM base AS dev
-RUN yarn install --frozen-lockfile && \
-    yarn cache clean
+RUN npm ci && \
+    npm cache clean --force
 COPY . ./
-RUN yarn build
+RUN npm run build
 
 FROM dev AS test
-RUN yarn run lint && yarn test
+RUN npm run lint && npm test
 RUN echo "true" > /tmp/is_tested && chmod 777 /tmp/is_tested
 
 FROM base AS pre-prod
-RUN yarn install --frozen-lockfile --production && \
-    yarn cache clean
+RUN npm ci --omit=dev && \
+    npm cache clean --force
 
 FROM registry.access.redhat.com/ubi9/nodejs-20-minimal:9.7-1764822489@sha256:0af20e1f2773e1f7a2792943a66a1c9875674f24fbae70f61e7cc829f8324467 AS prod
 WORKDIR $HOME

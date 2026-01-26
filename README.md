@@ -83,29 +83,24 @@ In addition, it also contains the metrics exposed by the [express prometheus bun
 
 ## Development Environment
 
-### Setting up yarn
-
-Although it is not required, it's recommended that you use [yarn] for install
-dependencies and running development scripts.
-
-[yarn]: https://yarnpkg.com
+### Installing dependencies
 
 To install this projects dependencies to a local `node_modules` directory:
 
 ```sh
-yarn install
+npm install
 ```
 
 To run a process that watches for edits and rebuilds JavaScript from TypeScript:
 
 ```sh
-yarn run watch
+npm run watch
 ```
 
 Or alternatively, you can run the TypeScript compilation once:
 
 ```sh
-yarn build
+npm run build
 ```
 ### Creating and validating the bundle
 
@@ -144,31 +139,7 @@ DATAFILES_FILE=./bundle/bundle.json
 To run an instance of the qontract GraphQL console:
 
 ```sh
-yarn run server
-```
-
-Specific instructions for CentOS 7:
-
-```sh
-# Install node10
-sudo yum install centos-release-scl-rh
-sudo yum install rh-nodejs10
-
-# Install yarn (as root)
-scl enable rh-nodejs10 bash
-npm install -g yarn
-
-# Enable node10 (as user in qontract-server git repo)
-scl enable rh-nodejs10 bash
-
-# Install qontract-server yarn modules
-yarn install
-
-# Build the JavaScript
-yarn build
-
-# Start the server
-make run
+npm run server
 ```
 
 ### Preload bundles
@@ -190,7 +161,7 @@ projects lint script:
 [airbnb style guide]: https://github.com/airbnb/javascript
 
 ```sh
-yarn run lint
+npm run lint
 ```
 
 ## GQL query filtering
