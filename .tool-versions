@@ -1,3 +1,2 @@
 # Aligned with Dockerfile versions
-# We use yarn 1.22.22 which is too old for mise
-node 20.19.2
+node 20.19.5

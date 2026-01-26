@@ -10,14 +10,14 @@ qontract-server is a GraphQL API server that exposes managed services configurat
 ## Development Commands
 
 ### Building and Running
-- `yarn install --frozen-lockfile` - use this by default to install dependencies
-- `yarn install` - Install dependencies and allow changes to be made to yarn.lock
-- `yarn build` - Compile TypeScript to JavaScript (output to `dist/`)
+- `npm ci` - use this by default to install dependencies
+- `npm install` - Install dependencies and allow changes to be made to package-lock.json
+- `npm run build` - Compile TypeScript to JavaScript (output to `dist/`)
 
 ### Testing and Linting
-- `yarn test` - Run mocha test suite (tests in `test/**/*.ts`)
-- `yarn run lint` - Run ESLint with airbnb-base config
-- `yarn run lint-fix` - Auto-fix linting issues
+- `npm test` - Run mocha test suite (tests in `test/**/*.ts`)
+- `npm run lint` - Run ESLint with airbnb-base config
+- `npm run lint-fix` - Auto-fix linting issues
 
 ### Bundle Management
 - `make bundle` - Create/validate bundle using qontract-validator container (requires Docker/Podman)
