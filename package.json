@@ -21,7 +21,7 @@
     "@aws-sdk/client-s3": "^3.926.0",
     "apollo-server-express": "^2.18.0",
     "deep-diff": "1.0.2",
-    "dotenv": "^16.4.5",
+    "dotenv": "^17.0.0",
     "express": "^4.16.4",
     "express-prom-bundle": "^6.0.0",
     "graphql": "^14.7.0",
