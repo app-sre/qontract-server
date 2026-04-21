@@ -1,4 +1,4 @@
-import * as express from 'express';
+import express = require('express');
 import promClient = require('prom-client');
 import * as db from './db';
 import { Datafile } from './types';
