@@ -56,7 +56,7 @@ The shas will expire after a certain amount of time:
 - `GET /git-commit-info`: returns json doc with git commit information (commit sha and timestamp)
 - `GET /git-commit-info/:sha`: returns json doc with git commit information (commit sha and timestamp) for the specified bundle
 - `GET /cache`: returns a json with the cache information.
-- `GET /reload`: reloads data from the configured data source.
+- `POST /reload`: reloads data from the configured data source.
 - `GET /metrics`: prometheus metrics.
 - `GET /git-commit`: returns the git commit for the latest bundle. (deprecated, use git-commit-info instead)
 - `GET /git-commit/:sha`: returns the git commit for the specified bundle., use git-commit-info instead
@@ -83,12 +83,22 @@ In addition, it also contains the metrics exposed by the [express prometheus bun
 
 ## Development Environment
 
-### Installing dependencies
+### Prerequisites
 
-To install this projects dependencies to a local `node_modules` directory:
+This project requires Node.js >= 24. The exact version is pinned in `.tool-versions`. If you use [mise](https://mise.jdx.dev/) or [asdf](https://asdf-vm.com/), run:
 
 ```sh
-npm install
+mise install
+# or
+asdf install
+```
+
+### Installing dependencies
+
+To install this project's dependencies to a local `node_modules` directory:
+
+```sh
+npm ci
 ```
 
 To run a process that watches for edits and rebuilds JavaScript from TypeScript:
@@ -102,6 +112,7 @@ Or alternatively, you can run the TypeScript compilation once:
 ```sh
 npm run build
 ```
+
 ### Creating and validating the bundle
 
 The data files bundle is required to start the server. Once you're in the `qontract-server` directory, run:
@@ -109,7 +120,8 @@ The data files bundle is required to start the server. Once you're in the `qontr
 ```sh
 make bundle
 ```
-Note that this requires Docker to be running on the host.
+
+This requires Docker or Podman to be running on the host (auto-detected).
 
 Optionally, if you want to specify the path for the app-interface repo or qontract-schemas repo on your local filesystem, you can use the parameter:
 * `APP_INTERFACE_PATH` - (optional) path to a local app-interface repo (Default: `$PWD/../../service/app-interface`).
@@ -123,23 +135,44 @@ make bundle APP_INTERFACE_PATH=/home/myuser/app-interface/
 
 ### Running the Qontract GraphQL server
 
-Create `.env` file from example:
-
-```shell
-cp .env.example .env
-```
-
-Customize the `.env` file as needed, for example:
-
-```
-LOAD_METHOD=fs
-DATAFILES_FILE=./bundle/bundle.json
-```
-
-To run an instance of the qontract GraphQL console:
+Build the TypeScript sources first if you haven't already:
 
 ```sh
+npm run build
+```
+
+Then start the server. The quickest way is with inline environment variables:
+
+```sh
+LOAD_METHOD=fs DATAFILES_FILE=./bundle/bundle.json npm run server
+```
+
+Or use `make run` as a shortcut (uses the bundle from `./bundle/bundle.json`):
+
+```sh
+make run
+```
+
+Alternatively, copy and customize the `.env` file and then run the server:
+
+```sh
+cp .env.example .env
+# edit .env to set LOAD_METHOD=fs and DATAFILES_FILE=./bundle/bundle.json
 npm run server
+```
+
+The server listens on port `4000`. To verify it is running:
+
+```sh
+curl http://localhost:4000/sha256
+```
+
+To run a GraphQL query:
+
+```sh
+curl -X POST http://localhost:4000/graphql \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"{ clusters_v1 { name serverUrl } }"}'
 ```
 
 ### Preload bundles
