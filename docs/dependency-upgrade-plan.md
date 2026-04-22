@@ -89,12 +89,13 @@ Intermediate step: graphql 15 is compatible with both apollo-server-express 2 an
 - `src/metrics.ts:54` — gauge for stack length
 
 **Approach:** Replace with a `Map<string, express.Router>` dispatch pattern:
-- Create a `Map<string, express.Router>` for per-SHA routers
-- Mount a single top-level middleware at `/graphqlsha` that dispatches to the correct sub-router by SHA
+- Store map in app state as `'shaRouters'` (`Map<string, express.Router>`)
+- Each Apollo middleware is registered with the full path `/graphqlsha/<sha>` via `getMiddleware()` and stored in the map (no `app.use()` call)
+- A single top-level middleware dispatches `/graphqlsha/:sha` requests by SHA lookup, passing `req.url` unchanged (no prefix stripping needed since Apollo is configured with the full path)
 - On expiration, `shaRouters.delete(sha)` instead of stack splicing
 - `/cache` and metrics report `shaRouters.size` instead of `_router.stack.length`
 
-**Test changes:** `test/multishas/multishas.test.ts` lines 130, 140 reference `_router.stack.length` — update to new mechanism.
+**Test changes:** `test/multishas/multishas.test.ts` lines 130, 140 reference `_router.stack.length` — replace with `app.get('shaRouters').size`.
 
 **Verify:** `npm test` + manual multi-SHA reload test
 

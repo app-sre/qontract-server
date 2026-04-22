@@ -126,8 +126,7 @@ describe('multishas', async () => {
 
   it('removes expired bundle', async () => {
     const sha: string = Object.keys(app.get('bundles'))[0];
-    // eslint-disable-next-line no-underscore-dangle
-    const stackLen = app._router.stack.length;
+    const routersBefore = app.get('shaRouters').size;
 
     // force expiration
     process.env.DATAFILES_FILE = 'test/multishas/multishas3.data.json';
@@ -136,8 +135,7 @@ describe('multishas', async () => {
 
     should.equal(app.get('bundles')[sha], undefined);
     should.equal(app.get('bundleCache')[sha], undefined);
-    // eslint-disable-next-line no-underscore-dangle
-    stackLen.should.equal(app._router.stack.length);
+    routersBefore.should.equal(app.get('shaRouters').size);
   });
 
   it('access via sha2', async () => {
