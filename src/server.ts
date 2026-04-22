@@ -375,8 +375,8 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     res.send(JSON.stringify(gitCommitInfo));
   });
 
-  app.get('/metrics', (req: express.Request, res: express.Response) => {
-    res.send(promClient.register.metrics());
+  app.get('/metrics', async (req: express.Request, res: express.Response) => {
+    res.send(await promClient.register.metrics());
   });
 
   app.get('/cache', (req: express.Request, res: express.Response) => {
