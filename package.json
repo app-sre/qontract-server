@@ -5,7 +5,7 @@
   "author": "Red Hat App SREs <sd-app-sre@redhat.com>",
   "license": "Apache-2.0",
   "engines": {
-    "node": ">= 18"
+    "node": ">= 24"
   },
   "scripts": {
     "watch": "rm -rf ./dist && tsc --watch",
