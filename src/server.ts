@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { ApolloServer } from 'apollo-server-express';
-import * as express from 'express';
+import express = require('express');
 
 import promClient = require('prom-client');
 import * as db from './db';
@@ -403,7 +403,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
 };
 
 // If this is main, load an app from the environment and run the server.
-if (!module.parent) {
+if (require.main === module) {
   appFromBundle(db.getInitialBundles())
     .then((app) => {
       const server = app.listen({ port: 4000 }, () => {

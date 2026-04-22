@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as util from 'util';
 import { createHash } from 'crypto';
 
-import { GetObjectCommand, S3, waitUntilObjectExists } from '@aws-sdk/client-s3';
+import { GetObjectCommand, S3Client, waitUntilObjectExists } from '@aws-sdk/client-s3';
 import { logger } from './logger';
 import { buildSyntheticBackRefTrie, SyntheticBackRefTrie } from './syntheticBackRefTrie';
 import { Datafile, GraphQLSchemaType } from './types';
@@ -158,7 +158,7 @@ const bundleFromS3 = async (
   bucket: string,
   key: string,
 ) => {
-  const client = new S3({
+  const client = new S3Client({
     credentials: {
       accessKeyId,
       secretAccessKey,

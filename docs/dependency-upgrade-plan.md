@@ -32,8 +32,8 @@ Bump dependencies with no code changes:
 - Verify `ts-node` `10.9.2` compatibility (should work)
 
 **Code changes:**
-- `tsconfig.json`: add `"esModuleInterop": true`
-- `src/server.ts:406`: `if (!module.parent)` -> `if (require.main === module)`
+- `src/server.ts`, `src/schema.ts`, `src/metrics.ts`: `import * as express from 'express'` -> `import express = require('express')` — TypeScript 5 correctly enforces that namespace imports are not callable; the `import =` form preserves direct CJS require semantics. Note: `esModuleInterop: true` was considered as an alternative but rejected — it causes `import * as chai from 'chai'` to use a `__importStar` wrapper that breaks chai-http's property injection in tests.
+- `src/server.ts:406`: `if (!module.parent)` -> `if (require.main === module)` (`module.parent` deprecated in Node 14+)
 - `src/db.ts:5,161`: `S3` -> `S3Client` (newer SDK types only expose `send()` on `S3Client`, not the high-level `S3` wrapper)
 
 **Risks:** Stricter type checking may surface latent errors. `skipLibCheck: true` mitigates third-party type issues. Fix any new type errors that appear.
