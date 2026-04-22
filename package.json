@@ -26,7 +26,7 @@
     "express-prom-bundle": "^6.0.0",
     "graphql": "^15.10.2",
     "jsonpointer": "^5.0.1",
-    "prom-client": "^12.0.0",
+    "prom-client": "^15.0.0",
     "winston": "^3.19.0"
   },
   "devDependencies": {
