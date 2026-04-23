@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import express = require('express');
 
 import promClient = require('prom-client');
@@ -61,6 +62,7 @@ const buildApolloServer = async (
     // is not needed and would break existing GET-based clients (qontract-reconcile, etc.)
     csrfPrevention: false,
     plugins: [
+      ApolloServerPluginLandingPageLocalDefault({ embed: true }),
       {
         async requestDidStart() {
           return {
