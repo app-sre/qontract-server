@@ -147,15 +147,27 @@ Depends on Phase 4a (router refactor — no more `_router.stack`).
 - `@types/express`: `^4.17.21` -> `^5.0.0`
 
 **Code changes:**
-- `src/server.ts:231`: wildcard route syntax change:
+- `src/server.ts`: wildcard route syntax change:
   ```
   // Before: '/diff/:base_sha/:head_sha/:filetype/*?'
   // After:  '/diff/:base_sha/:head_sha/:filetype/*rest'
   ```
-- `src/server.ts:244`: `req.params[0]` -> `req.params.rest`
+- `src/server.ts`: `req.params[0]` -> `req.params.rest`
+- `src/server.ts`: `@types/express` v5 changes `ParamsDictionary` from `{ [key: string]: string }` to `{ [key: string]: string | string[] }`. TypeScript rejects `string | string[]` as an object index key. Fix by destructuring params with a type assertion at the top of each affected route handler:
+  ```typescript
+  const { base_sha: baseSha, head_sha: headSha } = req.params as Record<string, string>;
+  ```
+  Affected routes: `/diff/:base_sha/:head_sha/:filetype/*rest`, `/diff/:base_sha/:head_sha`, `/git-commit/:sha`, `/git-commit-info/:sha`. Also rename `base_sha`/`head_sha` to camelCase in the handler body to satisfy the ESLint `camelcase` rule (use `// eslint-disable-next-line @typescript-eslint/naming-convention` on the destructuring line).
+- `src/server.ts`: In Express 5, `express.json()` does not set `req.body` for GET requests (leaves it `undefined`). Apollo v4's `expressMiddleware` checks `if (!req.body)` and returns 500. Add a middleware after `express.json()` that defaults `req.body` to `{}` when undefined, so GET GraphQL queries work:
+  ```typescript
+  app.use((req, _res, next) => {
+    if (req.body === undefined) { (req as any).body = {}; }
+    next();
+  });
+  ```
 - Update README.md Limitations section (router stack issue resolved by Phase 4a)
 
-**Verify:** `npm test` + manual endpoint testing
+**Verify:** `npm test` + manual endpoint testing (including GET GraphQL query)
 
 ---
 

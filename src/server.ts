@@ -194,8 +194,17 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     next();
   });
 
-  // expressMiddleware (Apollo v4) requires a parsed JSON body
+  // expressMiddleware (Apollo v4) requires a parsed JSON body.
+  // In Express 5, express.json() does not set req.body for GET requests (no body to parse),
+  // but Apollo v4 rejects requests where req.body is undefined. Default to {} so GET queries work.
   app.use(express.json());
+  app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    if (req.body === undefined) {
+      // eslint-disable-next-line no-param-reassign
+      (req as any).body = {};
+    }
+    next();
+  });
 
   // Single dispatcher for all /graphqlsha/:sha requests — routes to the correct Apollo middleware.
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -262,21 +271,25 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   });
 
   app.get(
-    '/diff/:base_sha/:head_sha/:filetype/*?',
+    '/diff/:base_sha/:head_sha/:filetype/*rest',
     (req: express.Request, res: express.Response) => {
-      const baseBundle: db.Bundle = req.app.get('bundles')[req.params.base_sha];
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      const {
+        base_sha: baseSha, head_sha: headSha, filetype, rest,
+      } = req.params as Record<string, string>;
+      const baseBundle: db.Bundle = req.app.get('bundles')[baseSha];
       if (baseBundle === undefined) {
-        res.status(404).send(`Bundle ${req.params.base_sha} not found`);
+        res.status(404).send(`Bundle ${baseSha} not found`);
         return;
       }
-      const headBundle: db.Bundle = req.app.get('bundles')[req.params.head_sha];
+      const headBundle: db.Bundle = req.app.get('bundles')[headSha];
       if (headBundle === undefined) {
-        res.status(404).send(`Bundle ${req.params.head_sha} not found`);
+        res.status(404).send(`Bundle ${headSha} not found`);
         return;
       }
 
-      const filepath = `/${req.params[0]}`;
-      switch (req.params.filetype) {
+      const filepath = `/${rest}`;
+      switch (filetype) {
         case 'datafile':
         {
           const oldRes = baseBundle.datafiles.get(filepath);
@@ -308,20 +321,22 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
           break;
         }
         default:
-          res.status(400).send(`unknown filetype ${req.params.filetype}`);
+          res.status(400).send(`unknown filetype ${filetype}`);
       }
     },
   );
 
   app.get('/diff/:base_sha/:head_sha', (req: express.Request, res: express.Response) => {
-    const baseBundle: db.Bundle = req.app.get('bundles')[req.params.base_sha];
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const { base_sha: baseSha, head_sha: headSha } = req.params as Record<string, string>;
+    const baseBundle: db.Bundle = req.app.get('bundles')[baseSha];
     if (baseBundle === undefined) {
-      res.status(404).send(`Bundle ${req.params.base_sha} not found`);
+      res.status(404).send(`Bundle ${baseSha} not found`);
       return;
     }
-    const headBundle: db.Bundle = req.app.get('bundles')[req.params.head_sha];
+    const headBundle: db.Bundle = req.app.get('bundles')[headSha];
     if (headBundle === undefined) {
-      res.status(404).send(`Bundle ${req.params.head_sha} not found`);
+      res.status(404).send(`Bundle ${headSha} not found`);
       return;
     }
 
@@ -376,9 +391,10 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   });
 
   app.get('/git-commit/:sha', (req: express.Request, res: express.Response) => {
-    const bundle = req.app.get('bundles')[req.params.sha];
+    const { sha } = req.params as Record<string, string>;
+    const bundle = req.app.get('bundles')[sha];
     if (bundle === undefined) {
-      res.status(404).send(`Bundle ${req.params.sha} not found`);
+      res.status(404).send(`Bundle ${sha} not found`);
       return;
     }
     res.send(bundle.gitCommit);
@@ -396,9 +412,10 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   });
 
   app.get('/git-commit-info/:sha', (req: express.Request, res: express.Response) => {
-    const bundle = req.app.get('bundles')[req.params.sha];
+    const { sha } = req.params as Record<string, string>;
+    const bundle = req.app.get('bundles')[sha];
     if (bundle === undefined) {
-      res.status(404).send(`Bundle ${req.params.sha} not found`);
+      res.status(404).send(`Bundle ${sha} not found`);
       return;
     }
     const gitCommitInfo = {
