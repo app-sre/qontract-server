@@ -256,14 +256,11 @@ const filterObjectPredicateBuilder = (
       if (fieldType == null) {
         throw new GraphQLError(
           `Field "${field}" does not exist on type "${gqlType.name}"`,
-          undefined,
-          null,
-          null,
-          null,
-          null,
           {
-            code: 'BAD_FILTER_FIELD',
-            gqlType: gqlType.name,
+            extensions: {
+              code: 'BAD_FILTER_FIELD',
+              gqlType: gqlType.name,
+            },
           },
         );
       }
@@ -453,7 +450,7 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
 
       if (fieldInfo.isList) {
         // make list elements non nullable
-        t = new GraphQLList(GraphQLNonNull(t));
+        t = new GraphQLList(new GraphQLNonNull(t));
       }
 
       if (fieldInfo.isRequired) {
@@ -523,6 +520,11 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
         }
       }
 
+      // fields without a custom resolver get the default resolver
+      if (!fieldDef.resolve) {
+        fieldDef.resolve = defaultResolver(app, bundleSha);
+      }
+
       // return
       objFields[fieldInfo.name] = fieldDef; // eslint-disable-line no-param-reassign
       return objFields;
@@ -565,9 +567,8 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
         resolveType = (source: any) => {
           const { field } = conf.interfaceResolve;
           const fieldValue = source[field];
-
           const { fieldMap } = conf.interfaceResolve;
-          return getObjectType(app, bundleSha, fieldMap[fieldValue]);
+          return fieldMap[fieldValue];
         };
         break;
       case 'schema':
@@ -578,7 +579,7 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
           if (interfaceType !== undefined) {
             return interfaceType.resolveType(source);
           }
-          return getObjectType(app, bundleSha, targetGraphqlType);
+          return targetGraphqlType;
         };
         break;
       default:

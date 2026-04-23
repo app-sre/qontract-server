@@ -72,7 +72,7 @@ describe('pathobject', async () => {
     resp.should.have.status(200);
     const expectedBody : any = {
       data: { test: [] },
-      extensions: {},
+      extensions: { schemas: [] },
     };
     resp.body.should.deep.equal(expectedBody);
   });

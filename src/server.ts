@@ -1,11 +1,13 @@
 import 'dotenv/config';
-import { ApolloServer } from 'apollo-server-express';
+import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import express = require('express');
 
 import promClient = require('prom-client');
 import * as db from './db';
 import * as metrics from './metrics';
-import { defaultResolver, generateAppSchema } from './schema';
+import { generateAppSchema } from './schema';
 import { logger } from './logger';
 
 const deepDiff = require('deep-diff');
@@ -13,28 +15,14 @@ const deepDiff = require('deep-diff');
 // sha expiration time (in ms). Defaults to 20m.
 const BUNDLE_SHA_TTL = Number(process.env.BUNDLE_SHA_TTL) || 20 * 60 * 1000;
 
+interface IContext {
+  schemas: string[];
+}
+
 // Interfaces
 interface ICacheInfo {
   expiration: number;
 }
-
-// registers a new ApolloServer into the app router and cache
-const registerApolloServer = (app: express.Express, bundleSha: string, server: any) => {
-  // getMiddleware returns a Router configured for the full path; store it in the Map
-  const serverMiddleware = server.getMiddleware({ path: `/graphqlsha/${bundleSha}` });
-  const expiration = Date.now() + BUNDLE_SHA_TTL;
-
-  app.get('shaRouters').set(bundleSha, serverMiddleware);
-
-  // add to the cache
-  // eslint-disable-next-line no-param-reassign
-  app.get('bundleCache')[bundleSha] = {
-    expiration,
-  } as ICacheInfo;
-
-  // set as latest sha
-  app.set('latestBundleSha', bundleSha);
-};
 
 const isEmptyObject = (obj: any): boolean => {
   if (obj === null || typeof obj !== 'object') {
@@ -61,24 +49,34 @@ function excludeEmptyObjectInArray(data: any): any {
   }, {});
 }
 
-const formatResponse = (response: any): any => excludeEmptyObjectInArray(response);
-
-// builds the ApolloServer for the specific bundleSha
-const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServer => {
+// builds and starts the ApolloServer for the specific bundleSha
+const buildApolloServer = async (
+  app: express.Express,
+  bundleSha: string,
+): Promise<ApolloServer<IContext>> => {
   const schema = generateAppSchema(app, bundleSha);
-  const server = new ApolloServer({
+  const server = new ApolloServer<IContext>({
     schema,
-    playground: true,
     introspection: true,
-    fieldResolver: defaultResolver(app, bundleSha),
-    formatResponse,
+    // qontract-server is an internal API with no cookie-based auth, so CSRF protection
+    // is not needed and would break existing GET-based clients (qontract-reconcile, etc.)
+    csrfPrevention: false,
     plugins: [
+      ApolloServerPluginLandingPageLocalDefault({ embed: true }),
       {
-        requestDidStart() {
+        async requestDidStart() {
           return {
-            willSendResponse(requestContext) {
-              // eslint-disable-next-line no-param-reassign
-              requestContext.response.extensions = { schemas: requestContext.context.schemas };
+            async willSendResponse(requestContext) {
+              const { response, contextValue } = requestContext;
+              if (response.body.kind === 'single') {
+                response.body.singleResult.data = excludeEmptyObjectInArray(
+                  response.body.singleResult.data,
+                );
+                response.body.singleResult.extensions = {
+                  ...response.body.singleResult.extensions,
+                  schemas: contextValue.schemas,
+                };
+              }
             },
           };
         },
@@ -86,7 +84,31 @@ const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServe
     ],
   });
 
+  await server.start();
   return server;
+};
+
+// registers a new ApolloServer into the app router and cache
+const registerApolloServer = (
+  app: express.Express,
+  bundleSha: string,
+  server: ApolloServer<IContext>,
+) => {
+  const middleware = expressMiddleware(server, {
+    context: async (): Promise<IContext> => ({ schemas: [] }),
+  });
+  const expiration = Date.now() + BUNDLE_SHA_TTL;
+
+  app.get('shaRouters').set(bundleSha, middleware);
+
+  // add to the cache
+  // eslint-disable-next-line no-param-reassign
+  app.get('bundleCache')[bundleSha] = {
+    expiration,
+  } as ICacheInfo;
+
+  // set as latest sha
+  app.set('latestBundleSha', bundleSha);
 };
 
 // remove expired bundles
@@ -103,7 +125,7 @@ const removeExpiredBundles = (app: express.Express) => {
       // eslint-disable-next-line no-param-reassign
       delete app.get('bundles')[sha];
 
-      // remove from shaRouters map — no router stack manipulation needed
+      // remove from shaRouters map
       app.get('shaRouters').delete(sha);
 
       // remove from bundleCache
@@ -136,7 +158,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   // Create cache object
   app.set('bundleCache', {});
 
-  // Per-SHA router map: sha -> Apollo middleware (configured with full /graphqlsha/<sha> path)
+  // Per-SHA router map: sha -> Apollo expressMiddleware
   app.set('shaRouters', new Map<string, express.Router>());
 
   // Middleware for prom metrics
@@ -154,10 +176,11 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   // Register a middleware that sends /graphql to the latest bundle. This middleware also
   // increases the expiration time for a bundle.
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    // rewrite to graphqlsha/<sha>
+    // rewrite to graphqlsha/<sha>, preserving any query string (needed for GET requests)
     if (req.path === '/graphql') {
       const bundleSha = req.app.get('latestBundleSha');
-      req.url = `/graphqlsha/${bundleSha}`;
+      const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
+      req.url = `/graphqlsha/${bundleSha}${qs}`;
     }
 
     const graphqlshaMatch = req.url.match(/\/graphqlsha\/(.*)$/);
@@ -171,8 +194,10 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     next();
   });
 
+  // expressMiddleware (Apollo v4) requires a parsed JSON body
+  app.use(express.json());
+
   // Single dispatcher for all /graphqlsha/:sha requests — routes to the correct Apollo middleware.
-  // Each middleware was configured with the full path, so req.url is passed through unchanged.
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
     const match = req.url.match(/^\/graphqlsha\/([^/?]+)/);
     if (match) {
@@ -192,7 +217,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     const sha = bundle.fileHash;
     app.get('bundles')[sha] = bundle;
     logger.info('loading initial bundle %s', sha);
-    const server: ApolloServer = buildApolloServer(app, sha);
+    const server = await buildApolloServer(app, sha); // eslint-disable-line no-await-in-loop
     registerApolloServer(app, sha, server);
   }
 
@@ -220,7 +245,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
 
     app.get('bundles')[bundleSha] = bundle;
     // register a new server exposing this bundle
-    const server = buildApolloServer(app, bundleSha);
+    const server = await buildApolloServer(app, bundleSha);
     registerApolloServer(app, bundleSha, server);
 
     metrics.updateResourceMetrics(bundle);

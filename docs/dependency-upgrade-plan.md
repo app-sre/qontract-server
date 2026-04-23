@@ -111,26 +111,28 @@ The largest and riskiest phase. Depends on Phase 1 (TS 5.x), Phase 2 (graphql 15
 - `graphql`: `^15.0.0` -> `^16.13.0`
 
 **Code changes in `src/schema.ts`:**
-- Line 456: `GraphQLNonNull(t)` -> `new GraphQLNonNull(t)`
-- Lines 257-268: `GraphQLError` positional args -> options object:
+- `GraphQLNonNull(t)` -> `new GraphQLNonNull(t)` (graphql 16 requires `new`)
+- `GraphQLError` positional args -> options object:
   ```typescript
   throw new GraphQLError(`Field "${field}" does not exist on type "${gqlType.name}"`, {
     extensions: { code: 'BAD_FILTER_FIELD', gqlType: gqlType.name },
   });
   ```
+- `resolveType` must return a type name **string** in graphql 16 — returning a `GraphQLObjectType` object (as v14/v15 allowed) throws at runtime. Return `fieldMap[fieldValue]` and `targetGraphqlType` directly instead of `getObjectType(...)`.
+- **`fieldResolver` solution**: Apollo v4 removed the top-level `fieldResolver` option. Wire `defaultResolver(app, bundleSha)` into every field definition without a custom resolver via `if (!fieldDef.resolve) { fieldDef.resolve = defaultResolver(app, bundleSha); }` at the end of `createSchemaType`'s field loop. No `@graphql-tools` needed.
 
 **Code changes in `src/server.ts`:**
-- Line 2: `import { ApolloServer } from 'apollo-server-express'` -> `import { ApolloServer } from '@apollo/server'` + `import { expressMiddleware } from '@apollo/server/express4'`
-- `buildApolloServer()` (lines 68-91): must become async, call `await server.start()`
-  - Remove `playground: true` (Apollo Sandbox replaces it)
-  - Remove `formatResponse` — move `excludeEmptyObjectInArray` into `willSendResponse` plugin
-  - `fieldResolver` is not a top-level option in v4 — integrate into schema construction or use schema transform
-  - Plugin signature: `requestDidStart` returns async, `willSendResponse` receives single context object, `requestContext.context` -> `requestContext.contextValue`
-- `registerApolloServer()` (lines 22-38): `server.getMiddleware()` -> `expressMiddleware(server, { context: async () => ({ schemas: [] }) })`; must add `express.json()` middleware before it
-- Lines 180-188: bundle loading loop must `await buildApolloServer()`
-- Lines 190-222: `/reload` handler must `await buildApolloServer()`
+- Imports: `apollo-server-express` -> `@apollo/server` + `@apollo/server/express4`
+- `buildApolloServer()`: async, `await server.start()`, remove `playground` and `fieldResolver`
+- Move `excludeEmptyObjectInArray` and schema extensions into `willSendResponse` plugin using `contextValue.schemas`
+- `registerApolloServer()`: `server.getMiddleware()` -> `expressMiddleware(server, { context: async () => ({ schemas: [] }) })`
+- Add `express.json()` globally before the dispatcher (required by `expressMiddleware`)
+- `csrfPrevention: false` — Apollo v4 adds CSRF protection by default, blocking GET requests without preflight headers. Safe to disable: qontract-server is an internal API with no cookie-based auth.
+- Preserve query string when rewriting `/graphql` -> `/graphqlsha/:sha`. Apollo v2 read the GraphQL query from `req.query` (parsed once from the original URL, unaffected by `req.url` rewrites). Apollo v4 reads from `req.url` directly, so stripping the query string broke GET requests.
+- Bundle loading loop and `/reload` handler must `await buildApolloServer()`
 
-**Key risk: `fieldResolver` removal.** The current `defaultResolver` (`src/schema.ts:387-406`) handles $ref resolution, schema tracking, and filtering. In Apollo 4 this needs to be wired directly into schema field definitions during construction, or via `@graphql-tools/utils` `mapSchema`.
+**Test changes:**
+- `extensions: {}` -> `extensions: { schemas: [] }` — Apollo v4 always includes the extensions object; v2 omitted it when empty.
 
 **Verify:** All 9 test files POST to `/graphql` and validate response shapes including `{ data, extensions }`. Full test suite must pass. Manual testing with local bundle recommended.
 
