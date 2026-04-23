@@ -177,22 +177,50 @@ Depends on Phase 4a (router refactor — no more `_router.stack`).
 
 ---
 
-## Phase 6: ESLint 8 to 9 + @typescript-eslint v8 (1 PR, ~3-5h)
+## Phase 6: ESLint 8 to 9 + switch to typescript-eslint flat config (1 PR, ~3-5h)
 
 Tooling-only, no runtime impact.
 
 **Package changes:**
-- `eslint`: `8.57.1` -> `^9.0.0`
-- `@typescript-eslint/eslint-plugin`: `5.60.1` -> `^8.0.0`
-- `@typescript-eslint/parser`: `5.60.1` -> `^8.0.0`
-- Evaluate `eslint-config-airbnb-base` flat config support; may need `@eslint/eslintrc` `FlatCompat` bridge
+- `eslint`: `8.57.1` -> `^9.x`
+- Replace `@typescript-eslint/eslint-plugin` + `@typescript-eslint/parser` v5 with `typescript-eslint` ^8.x (unified package with native flat config support)
+- Remove `eslint-config-airbnb-base` — has no ESLint 9 flat config support and no ETA (open issue since April 2024); maintainer confirmed it's blocked on all peer deps migrating first
+- Keep `eslint-plugin-import` (has native flat config support via `flatConfigs`)
 
 **File changes:**
 - Delete `.eslintrc.json`
-- Create `eslint.config.js` with flat config format
-- `package.json`: `"lint": "eslint . --ext .ts"` -> `"lint": "eslint ."`
+- Create `eslint.config.js` using `@eslint/js` + `typescript-eslint` recommended configs (no FlatCompat bridge needed):
+  - `eslint.configs.recommended` replaces airbnb-base's base ESLint rules
+  - `tseslint.configs.recommended` adds TypeScript-specific rules
+  - `globals.node` / `globals.mocha` set explicitly via `globals` package — the `env:` shorthand is not available in flat config
+  - `sourceType: 'commonjs'` for `.js` files so `require`/`module` globals are recognized
+  - `@typescript-eslint/no-require-imports: 'off'` — whole project is CJS
+  - `@typescript-eslint/no-explicit-any: 'off'` — widespread existing usage; cleanup is a separate task
+  - `caughtErrors: 'none'` on `no-unused-vars` — ESLint 9 changed the default from `'none'` to `'all'`
+  - Remove stale `eslint-disable` comments for airbnb-only rules (`no-param-reassign`, `no-restricted-syntax`, etc.)
+- `package.json`: `"lint": "eslint . --ext .ts"` -> `"lint": "eslint ."` (`--ext` is ignored in flat config mode)
 
-**Verify:** `npm run lint` produces same or comparable results
+**Verify:** `npm run lint && npm run build && npm test`
+
+---
+
+## Phase 7: Prettier (1 PR, ~1-2h)
+
+Add Prettier as the code formatter, complementing the ESLint setup. Removing `eslint-config-airbnb-base` in Phase 6 dropped all style enforcement (quotes, semicolons, trailing commas, etc.) — Prettier fills that gap as a dedicated formatter.
+
+**Package changes:**
+- Add `prettier`
+- Add `eslint-config-prettier` (disables any ESLint rules that conflict with Prettier's output)
+
+**File changes:**
+- Create `.prettierrc` with project preferences (e.g. `singleQuote: true`, `trailingComma: 'all'`)
+- Update `eslint.config.js`: spread `prettier` config last to disable conflicting rules
+- Add `"format": "prettier --write ."` and `"format:check": "prettier --check ."` scripts to `package.json`
+- Run `prettier --write .` on the whole codebase — large but purely mechanical diff
+
+**Note:** Keep as a dedicated PR so reviewers can skip the formatting noise. Do not mix with logic changes.
+
+**Verify:** `npm run format:check` passes, `npm run lint && npm test` still pass after formatting
 
 ---
 
@@ -219,6 +247,6 @@ Tooling-only, no runtime impact.
 | 5 | 4a | Router stack refactor (eliminate _router.stack) | ✅ Merged (#282) |
 | 6 | 4b | Apollo Server 2 -> @apollo/server 4, graphql 15 -> 16 | ✅ Merged (#283) |
 | 7 | 5 | Express 4 -> 5 | ✅ Merged (#285) |
-| 8 | 5 hotfix | Fix multi-segment wildcard array join in /diff route | 🔄 Open (fix/express5-wildcard-array-join) |
+| 8 | 5 hotfix | Fix multi-segment wildcard array join in /diff route | ✅ Merged (#287) |
 | 9 | 6 | ESLint 8 -> 9, @typescript-eslint v8, flat config, drop airbnb-base | 🔄 Open (#286) |
 | 10 | 7 | Prettier | 📋 Planned |
