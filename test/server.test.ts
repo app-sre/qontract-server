@@ -248,6 +248,27 @@ describe('server', async () => {
     response.should.not.have.status(200);
   });
 
+  it('GET /healthz returns 200', async () => {
+    const response = await chai.request(srv).get('/healthz');
+    response.should.have.status(200);
+  });
+
+  it('GET /metrics returns valid Prometheus format', async () => {
+    const response = await chai.request(srv).get('/metrics');
+    response.should.have.status(200);
+    response.text.should.match(/^# (HELP|TYPE) /m);
+  });
+
+  it('GET /cache returns cache state', async () => {
+    const response = await chai.request(srv).get('/cache');
+    response.should.have.status(200);
+    const body = JSON.parse(response.text);
+    body.should.have.all.keys('bundleCache', 'bundles', 'routerStack', 'searchableFields');
+    body.bundleCache.should.be.an('array').with.length.greaterThan(0);
+    body.bundles.should.be.an('array').with.length.greaterThan(0);
+    body.routerStack.should.be.a('number').greaterThan(0);
+  });
+
   it('can retrieve a field from an interface', async () => {
     const query = `{
       roles: roles_v1(path: "/role-A.yml") {
