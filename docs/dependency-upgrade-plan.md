@@ -71,8 +71,9 @@ Intermediate step: graphql 15 is compatible with both apollo-server-express 2 an
   // After:
   app.get('/metrics', async (req, res) => { res.send(await promClient.register.metrics()); });
   ```
-- `src/metrics.ts:24`: verify `collectDefaultMetrics({ prefix: ... })` still works (it does in prom-client 15)
-- Check for double-registration of default metrics between `metrics.ts` and `express-prom-bundle`
+- `src/metrics.ts:24`: `collectDefaultMetrics({ prefix: ... })` still works unchanged in prom-client 15 ✓
+- No double-registration issues between `metrics.ts` and `express-prom-bundle@8` ✓
+- `express-prom-bundle@8` configuration in `src/metrics.ts` required no changes ✓
 
 **Verify:** `npm test` + manual `curl http://localhost:4000/metrics` to confirm valid Prometheus output
 
