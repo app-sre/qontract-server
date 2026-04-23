@@ -51,7 +51,7 @@ const bundleCacheGauge = new promClient.Gauge({
 });
 
 export const updateCacheMetrics = (app: express.Express) => {
-  routerStackGauge.set(app._router.stack.length); // eslint-disable-line no-underscore-dangle
+  routerStackGauge.set(app.get('shaRouters').size);
   bundleGauge.set(Object.keys(app.get('bundles')).length);
   bundleCacheGauge.set(Object.keys(app.get('bundleCache')).length);
 };

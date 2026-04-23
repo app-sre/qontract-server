@@ -16,20 +16,19 @@ const BUNDLE_SHA_TTL = Number(process.env.BUNDLE_SHA_TTL) || 20 * 60 * 1000;
 // Interfaces
 interface ICacheInfo {
   expiration: number;
-  serverMiddleware: express.Router;
 }
 
 // registers a new ApolloServer into the app router and cache
 const registerApolloServer = (app: express.Express, bundleSha: string, server: any) => {
+  // getMiddleware returns a Router configured for the full path; store it in the Map
   const serverMiddleware = server.getMiddleware({ path: `/graphqlsha/${bundleSha}` });
   const expiration = Date.now() + BUNDLE_SHA_TTL;
 
-  app.use(serverMiddleware);
+  app.get('shaRouters').set(bundleSha, serverMiddleware);
 
   // add to the cache
   // eslint-disable-next-line no-param-reassign
   app.get('bundleCache')[bundleSha] = {
-    serverMiddleware,
     expiration,
   } as ICacheInfo;
 
@@ -92,7 +91,6 @@ const buildApolloServer = (app: express.Express, bundleSha: string): ApolloServe
 
 // remove expired bundles
 const removeExpiredBundles = (app: express.Express) => {
-  // remove expired bundles
   // eslint-disable-next-line no-restricted-syntax
   for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
     if (sha === app.get('latestBundleSha')) {
@@ -101,19 +99,12 @@ const removeExpiredBundles = (app: express.Express) => {
 
     const cacheInfo = cacheInfoObj as ICacheInfo;
     if (cacheInfo.expiration < Date.now()) {
-      // removing sha
       logger.info('removing expired bundle: %s', sha);
       // eslint-disable-next-line no-param-reassign
       delete app.get('bundles')[sha];
 
-      // remove from router. NOTE: this is not officially supported and may break in future
-      // versions of express without warning.
-      // eslint-disable-next-line no-underscore-dangle
-      const index = app._router.stack.findIndex(
-        (m: any) => m.handle === cacheInfo.serverMiddleware,
-      );
-      // eslint-disable-next-line no-underscore-dangle
-      app._router.stack.splice(index, 1);
+      // remove from shaRouters map — no router stack manipulation needed
+      app.get('shaRouters').delete(sha);
 
       // remove from bundleCache
       delete app.get('bundleCache')[sha]; // eslint-disable-line no-param-reassign
@@ -145,6 +136,9 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   // Create cache object
   app.set('bundleCache', {});
 
+  // Per-SHA router map: sha -> Apollo middleware (configured with full /graphqlsha/<sha> path)
+  app.set('shaRouters', new Map<string, express.Router>());
+
   // Middleware for prom metrics
   app.use(metrics.metricsMiddleware);
 
@@ -174,6 +168,21 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
       }
     }
 
+    next();
+  });
+
+  // Single dispatcher for all /graphqlsha/:sha requests — routes to the correct Apollo middleware.
+  // Each middleware was configured with the full path, so req.url is passed through unchanged.
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const match = req.url.match(/^\/graphqlsha\/([^/?]+)/);
+    if (match) {
+      const sha = match[1];
+      const handler = app.get('shaRouters').get(sha);
+      if (handler) {
+        handler(req, res, next);
+        return;
+      }
+    }
     next();
   });
 
@@ -389,8 +398,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     }
 
     fullCacheInfo.bundles = Object.keys(req.app.get('bundles'));
-    // eslint-disable-next-line no-underscore-dangle
-    fullCacheInfo.routerStack = app._router.stack.length;
+    fullCacheInfo.routerStack = app.get('shaRouters').size;
     fullCacheInfo.searchableFields = Object.keys(req.app.get('searchableFields'));
 
     res.send(JSON.stringify(fullCacheInfo));
