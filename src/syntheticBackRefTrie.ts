@@ -1,4 +1,4 @@
- 
+
 import { Datafile, GraphQLSchemaType } from './types';
 
 class TrieNode {
@@ -13,7 +13,7 @@ class TrieNode {
 
   insert(keys: string[], data: any, value: Datafile) {
     if (Array.isArray(data)) {
-       
+
       for (const d of data) {
         this.insert(keys, d, value);
       }
@@ -66,7 +66,7 @@ export class SyntheticBackRefTrie {
 
   private find(keys: string[]): TrieNode | undefined {
     let node = this.root;
-     
+
     for (const key of keys) {
       node = node.children.get(key);
       if (node === undefined) {
@@ -92,9 +92,9 @@ const getSyntheticFieldSubAttrsBySchema = (
 ): Map<string, Set<string>> => {
   const syntheticFieldSubAttrs = new Map<string, Set<string>>();
   const schemaData = 'confs' in schema && schema.confs ? schema.confs : schema as any[];
-   
+
   for (const conf of schemaData) {
-     
+
     for (const fieldInfo of conf.fields) {
       if (fieldInfo.synthetic) {
         const key = fieldInfo.synthetic.schema;
