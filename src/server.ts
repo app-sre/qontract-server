@@ -194,14 +194,13 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     next();
   });
 
+  app.use(express.json());
   // expressMiddleware (Apollo v4) requires a parsed JSON body.
   // In Express 5, express.json() does not set req.body for GET requests (no body to parse),
   // but Apollo v4 rejects requests where req.body is undefined. Default to {} so GET queries work.
-  app.use(express.json());
-  app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+  app.use(['/graphql', '/graphqlsha'], (req: express.Request, _res: express.Response, next: express.NextFunction) => {
     if (req.body === undefined) {
-      // eslint-disable-next-line no-param-reassign
-      (req as any).body = {};
+      Object.assign(req, { body: {} });
     }
     next();
   });
@@ -271,7 +270,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   });
 
   app.get(
-    '/diff/:base_sha/:head_sha/:filetype/*rest',
+    '/diff/:base_sha/:head_sha/:filetype{/*rest}',
     (req: express.Request, res: express.Response) => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       const {
@@ -288,7 +287,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
         return;
       }
 
-      const filepath = `/${rest}`;
+      const filepath = `/${rest ?? ''}`;
       switch (filetype) {
         case 'datafile':
         {

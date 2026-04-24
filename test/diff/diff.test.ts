@@ -114,6 +114,14 @@ describe('diff', async () => {
     resp.should.have.status(404);
   });
 
+  it('serve single datafile diff without trailing filepath matches route', async () => {
+    // {/*rest} makes the wildcard optional in Express 5 (same behaviour as /*? in Express 4)
+    const resp = await chai.request(srv)
+      .get(`/diff/${oldSha}/${newSha}/datafile`);
+    resp.should.have.status(404);
+    resp.text.should.equal('datafile not found');
+  });
+
   after(() => {
     delete process.env.INIT_BUNDLES;
   });
