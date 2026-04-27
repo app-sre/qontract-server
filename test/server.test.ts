@@ -300,7 +300,7 @@ describe('server', async () => {
     response2.body.extensions.schemas.should.eql(['/access/role-1.yml',
       '/access/permission-1.yml']);
 
-    // eslint-disable-next-line no-console
+
     console.log(JSON.stringify(response2.body.data));
 
     const perm = response2.body.data.roles[0].permissions[0];

@@ -102,7 +102,7 @@ const registerApolloServer = (
   app.get('shaRouters').set(bundleSha, middleware);
 
   // add to the cache
-  // eslint-disable-next-line no-param-reassign
+
   app.get('bundleCache')[bundleSha] = {
     expiration,
   } as ICacheInfo;
@@ -113,35 +113,35 @@ const registerApolloServer = (
 
 // remove expired bundles
 const removeExpiredBundles = (app: express.Express) => {
-  // eslint-disable-next-line no-restricted-syntax
+
   for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
     if (sha === app.get('latestBundleSha')) {
-      continue; // eslint-disable-line no-continue
+      continue;
     }
 
     const cacheInfo = cacheInfoObj as ICacheInfo;
     if (cacheInfo.expiration < Date.now()) {
       logger.info('removing expired bundle: %s', sha);
-      // eslint-disable-next-line no-param-reassign
+
       delete app.get('bundles')[sha];
 
       // remove from shaRouters map
       app.get('shaRouters').delete(sha);
 
       // remove from bundleCache
-      delete app.get('bundleCache')[sha]; // eslint-disable-line no-param-reassign
+      delete app.get('bundleCache')[sha];
 
       // remove from searchableFields
-      delete app.get('searchableFields')[sha]; // eslint-disable-line no-param-reassign
+      delete app.get('searchableFields')[sha];
 
       // remove from datafileSchemas
-      delete app.get('datafileSchemas')[sha]; // eslint-disable-line no-param-reassign
+      delete app.get('datafileSchemas')[sha];
 
       // remove from objectTypes
-      delete app.get('objectTypes')[sha]; // eslint-disable-line no-param-reassign
+      delete app.get('objectTypes')[sha];
 
       // remove from objectInterfaces
-      delete app.get('objectInterfaces')[sha]; // eslint-disable-line no-param-reassign
+      delete app.get('objectInterfaces')[sha];
     }
   }
 };
@@ -219,13 +219,13 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     next();
   });
 
-  // eslint-disable-next-line no-restricted-syntax
+
   for (const bp of bundlePromises) {
-    const bundle = await bp; // eslint-disable-line no-await-in-loop
+    const bundle = await bp;
     const sha = bundle.fileHash;
     app.get('bundles')[sha] = bundle;
     logger.info('loading initial bundle %s', sha);
-    const server = await buildApolloServer(app, sha); // eslint-disable-line no-await-in-loop
+    const server = await buildApolloServer(app, sha);
     registerApolloServer(app, sha, server);
   }
 
@@ -273,7 +273,6 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     '/diff/:base_sha/:head_sha/:filetype{/*rest}',
     (req: express.Request, res: express.Response) => {
       const params = req.params as Record<string, string>;
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       const { base_sha: baseSha, head_sha: headSha, filetype } = params;
       // Express 5 (path-to-regexp v8) returns wildcard segments as a string[]
       const restParam = req.params.rest as string | string[] | undefined;
@@ -328,7 +327,6 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   );
 
   app.get('/diff/:base_sha/:head_sha', (req: express.Request, res: express.Response) => {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const { base_sha: baseSha, head_sha: headSha } = req.params as Record<string, string>;
     const baseBundle: db.Bundle = req.app.get('bundles')[baseSha];
     if (baseBundle === undefined) {
@@ -434,7 +432,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   app.get('/cache', (req: express.Request, res: express.Response) => {
     const fullCacheInfo: any = { bundleCache: [] };
 
-    // eslint-disable-next-line no-restricted-syntax
+
     for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
       const cacheInfo = cacheInfoObj as ICacheInfo;
       fullCacheInfo.bundleCache.push({ sha, expiration: cacheInfo.expiration });
@@ -461,7 +459,7 @@ if (require.main === module) {
         logger.info('Running at http://localhost:4000/graphql');
       });
 
-      // eslint-disable-next-line no-restricted-syntax
+
       for (const signal of ['SIGINT', 'SIGTERM']) {
         process.on(signal, () => {
           logger.info(`${signal} received, shutting down HTTP server`);

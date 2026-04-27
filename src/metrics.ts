@@ -59,7 +59,7 @@ export const updateCacheMetrics = (app: express.Express) => {
 // Count number of files for each schema type
 const buildSchemaCount = (datafiles: Map<string, Datafile>) : IAcct => {
   const acc : IAcct = {};
-  // eslint-disable-next-line no-restricted-syntax
+
   for (const datafile of datafiles.values()) {
     const schema = datafile.$schema;
     const count = acc[schema];
