@@ -17,7 +17,9 @@ qontract-server is a GraphQL API server that exposes managed services configurat
 ### Testing and Linting
 
 - `npm test` - Run mocha test suite (tests in `test/**/*.ts`)
-- `npm run lint` - Run ESLint with airbnb-base config
+- `npm run format-check` - Check formatting with Prettier
+- `npm run format` - Auto-fix formatting with Prettier
+- `npm run lint` - Run ESLint (logic/correctness checks)
 - `npm run lint-fix` - Auto-fix linting issues
 
 ### Bundle Management
@@ -122,7 +124,8 @@ Create `.env` from `.env.example`:
 
 ## Code Style
 
-- Follows airbnb-base ESLint config
+- Formatting enforced by Prettier (`singleQuote`, `trailingComma`); run `npm run format-check` before committing
+- Logic/correctness enforced by ESLint (`@eslint/js` + `typescript-eslint` + `eslint-plugin-import`)
 - TypeScript with `noImplicitAny` enabled
 - Target ES2020, compile to CommonJS
 - Mocha tests use ts-node/register for direct `.ts` execution
