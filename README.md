@@ -5,7 +5,7 @@ available managed services to application developer teams.
 
 ## Overview
 
-![qontract overview](images/qontract.png?raw=true "Qontract overview")
+![qontract overview](images/qontract.png?raw=true 'Qontract overview')
 
 This repository comprises the server component, which is a GraphQL API server implemented in Typescript with the [apollo-server-express](https://www.npmjs.com/package/apollo-server-express) package.
 
@@ -33,7 +33,7 @@ This server is configured via environment variables.
 - `AWS_SECRET_ACCESS_KEY`: (required if `LOAD_METHOD=s3`) AWS secret access key.
 - `AWS_REGION`: (required if `LOAD_METHOD=s3`) AWS region.
 - `AWS_S3_BUCKET`: (required if `LOAD_METHOD=s3`) AWS s3 bucket name.
-- `AWS_S3_KEY`: (required if `LOAD_METHOD=s3`)  AWS s3 key name.
+- `AWS_S3_KEY`: (required if `LOAD_METHOD=s3`) AWS s3 key name.
 
 ## Bundle Caching
 
@@ -124,8 +124,9 @@ make bundle
 This requires Docker or Podman to be running on the host (auto-detected).
 
 Optionally, if you want to specify the path for the app-interface repo or qontract-schemas repo on your local filesystem, you can use the parameter:
-* `APP_INTERFACE_PATH` - (optional) path to a local app-interface repo (Default: `$PWD/../../service/app-interface`).
-* `SCHEMAS_PATH` - (optional) path to a local qontract-schemas repo (Default: `$PWD/../qontract-schemas`)
+
+- `APP_INTERFACE_PATH` - (optional) path to a local app-interface repo (Default: `$PWD/../../service/app-interface`).
+- `SCHEMAS_PATH` - (optional) path to a local qontract-schemas repo (Default: `$PWD/../qontract-schemas`)
 
 Example: To generate the bundle with a specific app-interface path:
 

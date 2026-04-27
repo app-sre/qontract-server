@@ -32,7 +32,8 @@ describe('synthetic', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -63,18 +64,23 @@ describe('synthetic', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
     const expectedData = {
-      test: [{
-        name: 'Pixiedust',
-        recipes: [{
-          name: 'Guillaumes Delux',
-        }],
-      }],
+      test: [
+        {
+          name: 'Pixiedust',
+          recipes: [
+            {
+              name: 'Guillaumes Delux',
+            },
+          ],
+        },
+      ],
     };
     resp.body.data.should.deep.equal(expectedData);
   });
@@ -90,18 +96,23 @@ describe('synthetic', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
     const expectedData = {
-      test: [{
-        name: 'Magical Ingredients Inc.',
-        shoppingLists: [{
-          name: 'Birthday Party',
-        }],
-      }],
+      test: [
+        {
+          name: 'Magical Ingredients Inc.',
+          shoppingLists: [
+            {
+              name: 'Birthday Party',
+            },
+          ],
+        },
+      ],
     };
     resp.body.data.should.deep.equal(expectedData);
   });

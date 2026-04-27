@@ -1,0 +1,3 @@
+dist/
+node_modules/
+test/multishas/multishas-invalid.data.json

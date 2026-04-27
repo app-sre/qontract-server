@@ -1,216 +1,216 @@
 {
-    "data": {
-        "/collections/magical-cakes.yml": {
-            "$schema": "/recipecollection-1.yml",
-            "name": "Magical Cakes",
-            "recipes": [
-                {
-                    "$ref": "/recipes/guillaumes-deluxe.yml"
-                },
-                {
-                    "$ref": "/recipes/guillaumes-deluxe.yml"
-                }
-            ]
+  "data": {
+    "/collections/magical-cakes.yml": {
+      "$schema": "/recipecollection-1.yml",
+      "name": "Magical Cakes",
+      "recipes": [
+        {
+          "$ref": "/recipes/guillaumes-deluxe.yml"
         },
-        "/recipes/guillaumes-deluxe.yml": {
-            "$schema": "/cakerecipe-1.yml",
-            "name": "Guillaumes Delux",
-            "inventor": "Guillaume",
-            "shoppingList": {
-                "cost": "999",
-                "ingredients": [
-                    {
-                        "$ref": "/ingredients/unicorn.yml"
-                    },
-                    {
-                        "$ref": "/ingredients/pixiedust.yml"
-                    },
-                    {
-                        "$ref": "/ingredients/choloclate.yml"
-                    }
-                ]
-            }
-        },
-        "/ingredients/unicorn.yml": {
-            "$schema": "/ingredient-1.yml",
-            "name": "Unicorn"
-        },
-        "/ingredients/pixiedust.yml": {
-            "$schema": "/ingredient-1.yml",
-            "name": "Pixiedust"
-        },
-        "/ingredients/choloclate.yml": {
-            "$schema": "/ingredient-1.yml",
-            "name": "Chocolate"
-        },
-        "/ingredients/cheese.yml": {
-            "$schema": "/ingredient-1.yml",
-            "name": "Cheese"
-        },
-        "/stores/magical-ingredients-inc.yml": {
-            "$schema": "/store-1.yml",
-            "name": "Magical Ingredients Inc."
-        },
-        "/shoppinglists/birthday-party.yml": {
-            "$schema": "/shoppinglist-1.yml",
-            "name": "Birthday Party",
-            "cost": "999",
-            "ingredients": [
-                {
-                    "$schema": "/ingredient-1.yml",
-                    "name": "Pixiedust",
-                    "store": {
-                        "$ref": "/stores/magical-ingredients-inc.yml"
-                    }
-                }
-            ]
+        {
+          "$ref": "/recipes/guillaumes-deluxe.yml"
         }
+      ]
     },
-    "graphql": {
-        "$schema" : "/app-interface/graphql-schemas-1.yml",
-        "confs": [
-            {
-                "name": "RecipeCollection_v1",
-                "fields": [
-                    {
-                        "isRequired": true,
-                        "type": "string",
-                        "name": "name"
-                    },
-                    {
-                        "type": "CakeRecipe_v1",
-                        "name": "recipes",
-                        "isList": true
-                    }
-                ]
-            },
-            {
-                "name": "Store_v1",
-                "fields": [
-                    {
-                        "isRequired": true,
-                        "type": "string",
-                        "name": "name"
-                    },
-                    {
-                        "name": "shoppingLists",
-                        "type": "ShoppingList_v1",
-                        "isList": true,
-                        "synthetic": {
-                            "schema": "/shoppinglist-1.yml",
-                            "subAttr": "ingredients.store"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "CakeRecipe_v1",
-                "fields": [
-                    {
-                        "isRequired": true,
-                        "type": "string",
-                        "name": "name"
-                    },
-                    {
-                        "isRequired": true,
-                        "type": "string",
-                        "name": "inventor"
-                    },
-                    {
-                        "type": "ShoppingList_v1",
-                        "name": "shoppingList"
-                    },
-                    {
-                        "name": "recipeCollections",
-                        "type": "RecipeCollection_v1",
-                        "isList": true,
-                        "synthetic": {
-                            "schema": "/recipecollection-1.yml",
-                            "subAttr": "recipes"
-                        }
-                    }
-                ]
-            },
-            {
-                "name": "ShoppingList_v1",
-                "fields": [
-                    {
-                        "isRequired": true,
-                        "type": "string",
-                        "name": "name"
-                    },
-                    {
-                        "isRequired": true,
-                        "type": "int",
-                        "name": "cost"
-                    },
-                    {
-                        "isRequired": true,
-                        "isList": true,
-                        "type": "Ingredient_v1",
-                        "name": "ingredients"
-                    }
-                ]
-            },
-            {
-                "name": "Ingredient_v1",
-                "fields": [
-                    {
-                        "isRequired": true,
-                        "type": "string",
-                        "name": "name"
-                    },
-                    {
-                        "type": "Store_v1",
-                        "name": "store"
-                    },
-                    {
-                        "name": "recipes",
-                        "type": "CakeRecipe_v1",
-                        "isList": true,
-                        "synthetic": {
-                            "schema": "/cakerecipe-1.yml",
-                            "subAttr": "shoppingList.ingredients"
-                        }
-                    }
-                ]
-            },
-            {
-                "fields": [
-                    {
-                        "type": "RecipeCollection_v1",
-                        "name": "recipecollection_v1",
-                        "isList": true,
-                        "datafileSchema": "/recipecollection-1.yml"
-                    },
-                    {
-                        "type": "CakeRecipe_v1",
-                        "name": "cakerecipe_v1",
-                        "isList": true,
-                        "datafileSchema": "/cakerecipe-1.yml"
-                    },
-                    {
-                        "type": "Ingredient_v1",
-                        "name": "ingredient_v1",
-                        "isList": true,
-                        "datafileSchema": "/ingredient-1.yml"
-                    },
-                    {
-                        "type": "Store_v1",
-                        "name": "store_v1",
-                        "isList": true,
-                        "datafileSchema": "/store-1.yml"
-                    },
-                    {
-                        "type": "ShoppingList_v1",
-                        "name": "shoppinglist_v1",
-                        "isList": true,
-                        "datafileSchema": "/shoppinglist-1.yml"
-                    }
-                ],
-                "name": "Query"
-            }
+    "/recipes/guillaumes-deluxe.yml": {
+      "$schema": "/cakerecipe-1.yml",
+      "name": "Guillaumes Delux",
+      "inventor": "Guillaume",
+      "shoppingList": {
+        "cost": "999",
+        "ingredients": [
+          {
+            "$ref": "/ingredients/unicorn.yml"
+          },
+          {
+            "$ref": "/ingredients/pixiedust.yml"
+          },
+          {
+            "$ref": "/ingredients/choloclate.yml"
+          }
         ]
+      }
     },
-    "resources": {}
+    "/ingredients/unicorn.yml": {
+      "$schema": "/ingredient-1.yml",
+      "name": "Unicorn"
+    },
+    "/ingredients/pixiedust.yml": {
+      "$schema": "/ingredient-1.yml",
+      "name": "Pixiedust"
+    },
+    "/ingredients/choloclate.yml": {
+      "$schema": "/ingredient-1.yml",
+      "name": "Chocolate"
+    },
+    "/ingredients/cheese.yml": {
+      "$schema": "/ingredient-1.yml",
+      "name": "Cheese"
+    },
+    "/stores/magical-ingredients-inc.yml": {
+      "$schema": "/store-1.yml",
+      "name": "Magical Ingredients Inc."
+    },
+    "/shoppinglists/birthday-party.yml": {
+      "$schema": "/shoppinglist-1.yml",
+      "name": "Birthday Party",
+      "cost": "999",
+      "ingredients": [
+        {
+          "$schema": "/ingredient-1.yml",
+          "name": "Pixiedust",
+          "store": {
+            "$ref": "/stores/magical-ingredients-inc.yml"
+          }
+        }
+      ]
+    }
+  },
+  "graphql": {
+    "$schema": "/app-interface/graphql-schemas-1.yml",
+    "confs": [
+      {
+        "name": "RecipeCollection_v1",
+        "fields": [
+          {
+            "isRequired": true,
+            "type": "string",
+            "name": "name"
+          },
+          {
+            "type": "CakeRecipe_v1",
+            "name": "recipes",
+            "isList": true
+          }
+        ]
+      },
+      {
+        "name": "Store_v1",
+        "fields": [
+          {
+            "isRequired": true,
+            "type": "string",
+            "name": "name"
+          },
+          {
+            "name": "shoppingLists",
+            "type": "ShoppingList_v1",
+            "isList": true,
+            "synthetic": {
+              "schema": "/shoppinglist-1.yml",
+              "subAttr": "ingredients.store"
+            }
+          }
+        ]
+      },
+      {
+        "name": "CakeRecipe_v1",
+        "fields": [
+          {
+            "isRequired": true,
+            "type": "string",
+            "name": "name"
+          },
+          {
+            "isRequired": true,
+            "type": "string",
+            "name": "inventor"
+          },
+          {
+            "type": "ShoppingList_v1",
+            "name": "shoppingList"
+          },
+          {
+            "name": "recipeCollections",
+            "type": "RecipeCollection_v1",
+            "isList": true,
+            "synthetic": {
+              "schema": "/recipecollection-1.yml",
+              "subAttr": "recipes"
+            }
+          }
+        ]
+      },
+      {
+        "name": "ShoppingList_v1",
+        "fields": [
+          {
+            "isRequired": true,
+            "type": "string",
+            "name": "name"
+          },
+          {
+            "isRequired": true,
+            "type": "int",
+            "name": "cost"
+          },
+          {
+            "isRequired": true,
+            "isList": true,
+            "type": "Ingredient_v1",
+            "name": "ingredients"
+          }
+        ]
+      },
+      {
+        "name": "Ingredient_v1",
+        "fields": [
+          {
+            "isRequired": true,
+            "type": "string",
+            "name": "name"
+          },
+          {
+            "type": "Store_v1",
+            "name": "store"
+          },
+          {
+            "name": "recipes",
+            "type": "CakeRecipe_v1",
+            "isList": true,
+            "synthetic": {
+              "schema": "/cakerecipe-1.yml",
+              "subAttr": "shoppingList.ingredients"
+            }
+          }
+        ]
+      },
+      {
+        "fields": [
+          {
+            "type": "RecipeCollection_v1",
+            "name": "recipecollection_v1",
+            "isList": true,
+            "datafileSchema": "/recipecollection-1.yml"
+          },
+          {
+            "type": "CakeRecipe_v1",
+            "name": "cakerecipe_v1",
+            "isList": true,
+            "datafileSchema": "/cakerecipe-1.yml"
+          },
+          {
+            "type": "Ingredient_v1",
+            "name": "ingredient_v1",
+            "isList": true,
+            "datafileSchema": "/ingredient-1.yml"
+          },
+          {
+            "type": "Store_v1",
+            "name": "store_v1",
+            "isList": true,
+            "datafileSchema": "/store-1.yml"
+          },
+          {
+            "type": "ShoppingList_v1",
+            "name": "shoppinglist_v1",
+            "isList": true,
+            "datafileSchema": "/shoppinglist-1.yml"
+          }
+        ],
+        "name": "Query"
+      }
+    ]
+  },
+  "resources": {}
 }

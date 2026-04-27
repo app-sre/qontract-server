@@ -40,16 +40,22 @@ describe('server', async () => {
 
   it('GET /git-commit-info returns commit information', async () => {
     const response = await chai.request(srv).get('/git-commit-info');
-    response.body.commit.should.equal('cf639ded4b97808ffae8bfd4dc3f4c183508e1ca');
+    response.body.commit.should.equal(
+      'cf639ded4b97808ffae8bfd4dc3f4c183508e1ca',
+    );
     response.body.timestamp.should.equal('1606295532');
     response.should.have.status(200);
   });
 
   it('GET /git-commit-info/:sha returns commit information from sha', async () => {
     const shaResponse = await chai.request(srv).get('/sha256');
-    const commitResponse = await chai.request(srv).get(`/git-commit-info/${shaResponse.text}`);
+    const commitResponse = await chai
+      .request(srv)
+      .get(`/git-commit-info/${shaResponse.text}`);
     commitResponse.should.have.status(200);
-    commitResponse.body.commit.should.equal('cf639ded4b97808ffae8bfd4dc3f4c183508e1ca');
+    commitResponse.body.commit.should.equal(
+      'cf639ded4b97808ffae8bfd4dc3f4c183508e1ca',
+    );
     commitResponse.body.timestamp.should.equal('1606295532');
   });
 
@@ -60,9 +66,13 @@ describe('server', async () => {
 
   it('GET /git-commit/:sha returns commit from sha', async () => {
     const shaResponse = await chai.request(srv).get('/sha256');
-    const commitResponse = await chai.request(srv).get(`/git-commit/${shaResponse.text}`);
+    const commitResponse = await chai
+      .request(srv)
+      .get(`/git-commit/${shaResponse.text}`);
     commitResponse.should.have.status(200);
-    commitResponse.text.should.equal('cf639ded4b97808ffae8bfd4dc3f4c183508e1ca');
+    commitResponse.text.should.equal(
+      'cf639ded4b97808ffae8bfd4dc3f4c183508e1ca',
+    );
   });
 
   it('GET /git-commit/:sha returns 404 on unknown sha', async () => {
@@ -80,14 +90,20 @@ describe('server', async () => {
           }
         }`;
 
-    const response = await chai.request(srv)
+    const response = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     responseIsNotAnError(response);
 
-    response.body.extensions.schemas.should.eql(['/access/role-1.yml', '/access/permission-1.yml']);
-    response.body.data.roles[0].permissions[0].service.should.equal('github-org-team');
+    response.body.extensions.schemas.should.eql([
+      '/access/role-1.yml',
+      '/access/permission-1.yml',
+    ]);
+    response.body.data.roles[0].permissions[0].service.should.equal(
+      'github-org-team',
+    );
   });
 
   it('resolves object refs', async () => {
@@ -101,7 +117,8 @@ describe('server', async () => {
           }
       }`;
 
-    const response = await chai.request(srv)
+    const response = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -118,7 +135,8 @@ describe('server', async () => {
           }
       }`;
 
-    const response = await chai.request(srv)
+    const response = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -137,13 +155,16 @@ describe('server', async () => {
           }
       }`;
 
-    const response = await chai.request(srv)
+    const response = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     responseIsNotAnError(response);
     response.body.data.resources.length.should.equal(1);
-    response.body.data.resources[0].schema.should.equal('/openshift/prometheus-rule-1.yml');
+    response.body.data.resources[0].schema.should.equal(
+      '/openshift/prometheus-rule-1.yml',
+    );
   });
 
   it('can search a resource by schema', async () => {
@@ -156,13 +177,16 @@ describe('server', async () => {
           }
       }`;
 
-    const response = await chai.request(srv)
+    const response = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     responseIsNotAnError(response);
     response.body.data.resources.length.should.equal(1);
-    response.body.data.resources[0].path.should.equal('/prometheus-resource.yml');
+    response.body.data.resources[0].path.should.equal(
+      '/prometheus-resource.yml',
+    );
   });
 
   it('can retrieve all resources', async () => {
@@ -175,7 +199,8 @@ describe('server', async () => {
           }
       }`;
 
-    const response = await chai.request(srv)
+    const response = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -191,7 +216,8 @@ describe('server', async () => {
       }
     }`;
 
-    const response = await chai.request(srv)
+    const response = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -207,7 +233,8 @@ describe('server', async () => {
       }
     }`;
 
-    const response = await chai.request(srv)
+    const response = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -224,7 +251,8 @@ describe('server', async () => {
       }
     }`;
 
-    const response = await chai.request(srv)
+    const response = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -240,7 +268,8 @@ describe('server', async () => {
       }
     }`;
 
-    const response = await chai.request(srv)
+    const response = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -263,7 +292,12 @@ describe('server', async () => {
     const response = await chai.request(srv).get('/cache');
     response.should.have.status(200);
     const body = JSON.parse(response.text);
-    body.should.have.all.keys('bundleCache', 'bundles', 'routerStack', 'searchableFields');
+    body.should.have.all.keys(
+      'bundleCache',
+      'bundles',
+      'routerStack',
+      'searchableFields',
+    );
     body.bundleCache.should.be.an('array').with.length.greaterThan(0);
     body.bundles.should.be.an('array').with.length.greaterThan(0);
     body.routerStack.should.be.a('number').greaterThan(0);
@@ -282,24 +316,37 @@ describe('server', async () => {
     }
     `;
 
-    const response1 = await chai.request(srv).post('/graphql').set('content-type', 'application/json').send({ query });
+    const response1 = await chai
+      .request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     responseIsNotAnError(response1);
-    response1.body.extensions.schemas.should.eql(['/access/role-1.yml',
-      '/access/permission-1.yml']);
+    response1.body.extensions.schemas.should.eql([
+      '/access/role-1.yml',
+      '/access/permission-1.yml',
+    ]);
     response1.body.data.roles.length.should.equal(1);
     response1.body.data.roles[0].permissions.length.should.equal(1);
-    response1.body.data.roles[0].permissions[0].service.should.equal('github-org-team');
+    response1.body.data.roles[0].permissions[0].service.should.equal(
+      'github-org-team',
+    );
     response1.body.data.roles[0].permissions[0].org.should.equal('org-A');
 
     // check that it continues to work after a reload
     await chai.request(srv).post('/reload');
 
-    const response2 = await chai.request(srv).post('/graphql').set('content-type', 'application/json').send({ query });
+    const response2 = await chai
+      .request(srv)
+      .post('/graphql')
+      .set('content-type', 'application/json')
+      .send({ query });
     responseIsNotAnError(response2);
 
-    response2.body.extensions.schemas.should.eql(['/access/role-1.yml',
-      '/access/permission-1.yml']);
-
+    response2.body.extensions.schemas.should.eql([
+      '/access/role-1.yml',
+      '/access/permission-1.yml',
+    ]);
 
     console.log(JSON.stringify(response2.body.data));
 
@@ -313,10 +360,11 @@ describe('bundle loading', async () => {
     process.env.INIT_BUNDLES = 'fs://test/schemas/schemas.data.json';
     const app = await server.appFromBundle(db.getInitialBundles());
     const srv = app.listen({ port: 4000 });
-    const resp = await chai.request(srv)
-      .get('/sha256');
+    const resp = await chai.request(srv).get('/sha256');
     resp.should.have.status(200);
-    return resp.text.should.eql('242acb1998e9d37c26186ba9be0262fb34e3ef388b503390d143164f7658c24e');
+    return resp.text.should.eql(
+      '242acb1998e9d37c26186ba9be0262fb34e3ef388b503390d143164f7658c24e',
+    );
   });
 
   after(() => {

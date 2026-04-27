@@ -31,7 +31,8 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -47,7 +48,8 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -63,7 +65,8 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -79,12 +82,15 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
-    resp.body.errors[0].message.should.equal('Field "unknown_field" does not exist on type "Resource_v1"');
+    resp.body.errors[0].message.should.equal(
+      'Field "unknown_field" does not exist on type "Resource_v1"',
+    );
   });
 
   it('filter object - in (contains) condition', async () => {
@@ -95,12 +101,15 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
-    new Set(resp.body.data.test.map((r: { name: string; }) => r.name)).should.deep.equal(new Set(['resource A', 'resource B']));
+    new Set(
+      resp.body.data.test.map((r: { name: string }) => r.name),
+    ).should.deep.equal(new Set(['resource A', 'resource B']));
   });
 
   it('filter object - unknown field', async () => {
@@ -111,7 +120,8 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -127,7 +137,8 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -147,13 +158,14 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
     resp.body.data.test.length.should.be.above(0);
-    resp.body.data.test.forEach((r: { reference?: any; }) => {
+    resp.body.data.test.forEach((r: { reference?: any }) => {
       should.exist(r.reference);
     });
   });
@@ -167,13 +179,14 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
     resp.body.data.test.length.should.be.above(0);
-    resp.body.data.test.forEach((r: { optional_field?: string; }) => {
+    resp.body.data.test.forEach((r: { optional_field?: string }) => {
       should.not.equal(r.optional_field, 'E');
     });
   });
@@ -186,7 +199,8 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -202,12 +216,24 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
-    new Set(resp.body.data.test.map((r: { name: string; }) => r.name)).should.deep.equal(new Set(['resource A', 'resource B', 'resource C', 'resource D', 'resource G', 'resource H']));
+    new Set(
+      resp.body.data.test.map((r: { name: string }) => r.name),
+    ).should.deep.equal(
+      new Set([
+        'resource A',
+        'resource B',
+        'resource C',
+        'resource D',
+        'resource G',
+        'resource H',
+      ]),
+    );
   });
 
   it('filter object - referenced object - field value eq', async () => {
@@ -218,7 +244,8 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -235,12 +262,15 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
-    resp.body.errors[0].message.should.equal('Field "unknown_field" does not exist on type "Resource_v1"');
+    resp.body.errors[0].message.should.equal(
+      'Field "unknown_field" does not exist on type "Resource_v1"',
+    );
   });
 
   it('filter object - referenced object - field null', async () => {
@@ -251,7 +281,8 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -268,7 +299,8 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
@@ -286,7 +318,8 @@ describe('pathobject', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });

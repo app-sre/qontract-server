@@ -5,8 +5,9 @@ metadata:
     build.appstudio.openshift.io/repo: https://github.com/app-sre/qontract-server?rev={{revision}}
     build.appstudio.redhat.com/commit_sha: '{{revision}}'
     build.appstudio.redhat.com/target_branch: '{{target_branch}}'
-    pipelinesascode.tekton.dev/max-keep-runs: "3"
-    pipelinesascode.tekton.dev/on-cel-expression: event == "push" && target_branch
+    pipelinesascode.tekton.dev/max-keep-runs: '3'
+    pipelinesascode.tekton.dev/on-cel-expression:
+      event == "push" && target_branch
       == "master"
   creationTimestamp: null
   labels:
@@ -17,49 +18,42 @@ metadata:
   namespace: app-sre-tenant
 spec:
   params:
-  - name: git-url
-    value: '{{source_url}}'
-  - name: revision
-    value: '{{revision}}'
-  - name: output-image
-    value: quay.io/redhat-user-workloads/app-sre-tenant/qontract-server-master/qontract-server-master:{{revision}}
-  - name: dockerfile
-    value: Dockerfile
-  - name: path-context
-    value: .
-  - name: target-stage
-    value: prod
-  - name: github-user-id
-    value: |-
-      {{sender}}
-  - name: sqs-pr-type
-    value: promote_qontract_server
-  - name: sqs-delay-seconds
-    value: "300"
+    - name: git-url
+      value: '{{source_url}}'
+    - name: revision
+      value: '{{revision}}'
+    - name: output-image
+      value: quay.io/redhat-user-workloads/app-sre-tenant/qontract-server-master/qontract-server-master:{{revision}}
+    - name: dockerfile
+      value: Dockerfile
+    - name: path-context
+      value: .
+    - name: target-stage
+      value: prod
   pipelineRef:
     params:
-    - name: url
-      value: https://github.com/app-sre/shared-pipelines
-    - name: revision
-      value: main
-    - name: pathInRepo
-      value: pipelines/multi-arch-build-pipeline.yaml
+      - name: url
+        value: https://github.com/app-sre/shared-pipelines
+      - name: revision
+        value: main
+      - name: pathInRepo
+        value: pipelines/multi-arch-build-pipeline.yaml
     resolver: git
   taskRunTemplate:
     serviceAccountName: build-pipeline-qontract-server-master
   workspaces:
-  - name: workspace
-    volumeClaimTemplate:
-      metadata:
-        creationTimestamp: null
-      spec:
-        accessModes:
-        - ReadWriteOnce
-        resources:
-          requests:
-            storage: 1Gi
-      status: {}
-  - name: git-auth
-    secret:
-      secretName: '{{ git_auth_secret }}'
+    - name: workspace
+      volumeClaimTemplate:
+        metadata:
+          creationTimestamp: null
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+        status: {}
+    - name: git-auth
+      secret:
+        secretName: '{{ git_auth_secret }}'
 status: {}

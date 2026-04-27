@@ -13,11 +13,10 @@ interface IAcct {
 export const metricsMiddleware = promBundle({
   includeMethod: true,
   includePath: true,
-  normalizePath: [
-    ['^/graphqlsha/.*', '/graphqlsha/#sha'],
-  ],
+  normalizePath: [['^/graphqlsha/.*', '/graphqlsha/#sha']],
   buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10],
-  formatStatusCode: (res: express.Response) => `${Math.floor(res.statusCode / 100)}xx`,
+  formatStatusCode: (res: express.Response) =>
+    `${Math.floor(res.statusCode / 100)}xx`,
 });
 
 // enable prom-client to expose default application metrics
@@ -57,8 +56,8 @@ export const updateCacheMetrics = (app: express.Express) => {
 };
 
 // Count number of files for each schema type
-const buildSchemaCount = (datafiles: Map<string, Datafile>) : IAcct => {
-  const acc : IAcct = {};
+const buildSchemaCount = (datafiles: Map<string, Datafile>): IAcct => {
+  const acc: IAcct = {};
 
   for (const datafile of datafiles.values()) {
     const schema = datafile.$schema;
@@ -72,8 +71,9 @@ export const updateResourceMetrics = (bundle: db.Bundle) => {
   const schemaCount: IAcct = buildSchemaCount(bundle.datafiles);
 
   // Set the Gauge based on counted metrics
-  Object.entries(schemaCount)
-    .forEach(([schemaName, count]) => datafilesGauge.set({ schema: schemaName }, count));
+  Object.entries(schemaCount).forEach(([schemaName, count]) =>
+    datafilesGauge.set({ schema: schemaName }, count),
+  );
 
   reloadCounter.inc(1);
 };
