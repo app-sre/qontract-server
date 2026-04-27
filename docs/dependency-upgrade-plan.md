@@ -4,7 +4,7 @@
 
 The project has 17 outdated dependencies, ranging from trivial semver-minor bumps to fundamental rewrites (Apollo Server 2 is EOL, TypeScript is 6+ major versions behind). Several dependencies are coupled: Apollo Server 4 requires graphql 16, which requires modern TypeScript; Express 5 requires eliminating the private `_router.stack` hack. Chai 5+ is ESM-only and incompatible with this CommonJS project.
 
-The plan breaks upgrades into 7 phases across ~8 PRs, each independently mergeable.
+The plan breaks upgrades into 8 phases across ~10 PRs, each independently mergeable.
 
 ---
 
@@ -138,36 +138,42 @@ The largest and riskiest phase. Depends on Phase 1 (TS 5.x), Phase 2 (graphql 15
 
 ---
 
-## Phase 5: Express 4 to 5 (1 PR, ~3-5h)
+## Phase 5: Express 4 to 5 (1 PR + 1 hotfix, ~3-5h)
 
 Depends on Phase 4a (router refactor — no more `_router.stack`).
 
 **Package changes:**
-- `express`: `^4.17.1` -> `^5.2.0`
-- `@types/express`: `^4.17.21` -> `^5.0.0`
+- `express`: pinned to exact `"5.2.1"` (not `^5.2.1` — avoid surprises from patch releases)
+- `@types/express`: pinned to exact `"5.0.6"`
 
 **Code changes:**
-- `src/server.ts`: wildcard route syntax change:
+- `src/server.ts`: wildcard route syntax — path-to-regexp v8 (bundled with Express 5) uses `{/*rest}` for an **optional** wildcard (zero or more segments). `/*rest` (without braces) is non-optional and causes a 404 when no path follows the filetype:
   ```
   // Before: '/diff/:base_sha/:head_sha/:filetype/*?'
-  // After:  '/diff/:base_sha/:head_sha/:filetype/*rest'
+  // After:  '/diff/:base_sha/:head_sha/:filetype{/*rest}'
   ```
-- `src/server.ts`: `req.params[0]` -> `req.params.rest`
-- `src/server.ts`: `@types/express` v5 changes `ParamsDictionary` from `{ [key: string]: string }` to `{ [key: string]: string | string[] }`. TypeScript rejects `string | string[]` as an object index key. Fix by destructuring params with a type assertion at the top of each affected route handler:
+- `src/server.ts`: `req.params[0]` -> `req.params.rest`. **Critical:** in Express 5 (path-to-regexp v8), `req.params.rest` for a multi-segment path (e.g. `services/app-interface/app.yml`) is a **`string[]`**, not a `string`. Coercing it naively (template literal or `.toString()`) joins segments with commas, producing an invalid filepath. Must join explicitly:
+  ```typescript
+  const restParam = req.params.rest as string | string[] | undefined;
+  const restPath = Array.isArray(restParam) ? restParam.join('/') : (restParam ?? '');
+  ```
+- `src/server.ts`: `@types/express` v5 changes `ParamsDictionary` to `{ [key: string]: string | string[] }`. TypeScript rejects `string | string[]` as an index key. Fix by asserting params type at the top of affected route handlers:
   ```typescript
   const { base_sha: baseSha, head_sha: headSha } = req.params as Record<string, string>;
   ```
-  Affected routes: `/diff/:base_sha/:head_sha/:filetype/*rest`, `/diff/:base_sha/:head_sha`, `/git-commit/:sha`, `/git-commit-info/:sha`. Also rename `base_sha`/`head_sha` to camelCase in the handler body to satisfy the ESLint `camelcase` rule (use `// eslint-disable-next-line @typescript-eslint/naming-convention` on the destructuring line).
-- `src/server.ts`: In Express 5, `express.json()` does not set `req.body` for GET requests (leaves it `undefined`). Apollo v4's `expressMiddleware` checks `if (!req.body)` and returns 500. Add a middleware after `express.json()` that defaults `req.body` to `{}` when undefined, so GET GraphQL queries work:
+  Affected routes: `/diff/:base_sha/:head_sha/:filetype{/*rest}`, `/diff/:base_sha/:head_sha`, `/git-commit/:sha`, `/git-commit-info/:sha`. Use `// eslint-disable-next-line @typescript-eslint/naming-convention` on the destructuring line for the snake_case param names.
+- `src/server.ts`: In Express 5, `express.json()` does not set `req.body` for GET requests (leaves it `undefined`). Apollo v4's `expressMiddleware` rejects requests where `req.body` is undefined. Scope a defaulting middleware to GraphQL routes only:
   ```typescript
-  app.use((req, _res, next) => {
-    if (req.body === undefined) { (req as any).body = {}; }
+  app.use(['/graphql', '/graphqlsha'], (req, _res, next) => {
+    if (req.body === undefined) { Object.assign(req, { body: {} }); }
     next();
   });
   ```
 - Update README.md Limitations section (router stack issue resolved by Phase 4a)
 
-**Verify:** `npm test` + manual endpoint testing (including GET GraphQL query)
+**Post-merge hotfix:** The single-segment test path (`cluster.yml`) masked the `req.params.rest` array bug — `['cluster.yml'].toString()` happens to equal `'cluster.yml'`. Multi-segment paths used in production (e.g. `services/app-interface/app.yml`) hit `404` immediately after Phase 5 merged. Fixed in a follow-up PR with the explicit `Array.isArray` join and a regression test covering multi-segment paths.
+
+**Verify:** `npm test` + manual endpoint testing (including GET GraphQL query and multi-segment `/diff/` path)
 
 ---
 
@@ -202,17 +208,17 @@ Tooling-only, no runtime impact.
 
 ---
 
-## Suggested PR Order
+## PR Status
 
-| # | Phase | Description | Risk | Effort |
-|---|---|---|---|---|
-| 1 | 0 | Safe bumps (winston, dotenv, eslint-plugin-import) | LOW | ~1h |
-| 2 | 1 | TypeScript 3.8 -> 5.8 + @aws-sdk/client-s3 | MODERATE | ~2-4h |
-| 3 | 2 | graphql 14 -> 15, remove @types/graphql, update @types/express | LOW | ~1h |
-| 4 | 3 | prom-client 12 -> 15, express-prom-bundle 6 -> 8 | LOW-MOD | ~2-3h |
-| 5 | 4a | Router stack refactor (eliminate _router.stack) | MODERATE | ~4-6h |
-| 6 | 4b | Apollo Server 2 -> @apollo/server 4, graphql 15 -> 16 | HIGH | ~8-16h |
-| 7 | 5 | Express 4 -> 5 | MODERATE | ~3-5h |
-| 8 | 6 | ESLint 8 -> 9, @typescript-eslint v8, flat config | MODERATE | ~3-5h |
-
-**Total estimated effort: ~24-40h**
+| # | Phase | Description | Status |
+|---|---|---|---|
+| 1 | 0 | Safe bumps (winston, dotenv, eslint-plugin-import) | ✅ Merged (#277) |
+| 2 | 1 | TypeScript 3.8 -> 5.8 + @aws-sdk/client-s3 | ✅ Merged (#278) |
+| 3 | 2 | graphql 14 -> 15, remove @types/graphql, update @types/express | ✅ Merged (#280) |
+| 4 | 3 | prom-client 12 -> 15, express-prom-bundle 6 -> 8 | ✅ Merged (#281) |
+| 5 | 4a | Router stack refactor (eliminate _router.stack) | ✅ Merged (#282) |
+| 6 | 4b | Apollo Server 2 -> @apollo/server 4, graphql 15 -> 16 | ✅ Merged (#283) |
+| 7 | 5 | Express 4 -> 5 | ✅ Merged (#285) |
+| 8 | 5 hotfix | Fix multi-segment wildcard array join in /diff route | 🔄 Open (fix/express5-wildcard-array-join) |
+| 9 | 6 | ESLint 8 -> 9, @typescript-eslint v8, flat config, drop airbnb-base | 🔄 Open (#286) |
+| 10 | 7 | Prettier | 📋 Planned |
