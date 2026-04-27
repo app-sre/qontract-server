@@ -273,7 +273,6 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     '/diff/:base_sha/:head_sha/:filetype{/*rest}',
     (req: express.Request, res: express.Response) => {
       const params = req.params as Record<string, string>;
-      // eslint-disable-next-line @typescript-eslint/naming-convention
       const { base_sha: baseSha, head_sha: headSha, filetype } = params;
       // Express 5 (path-to-regexp v8) returns wildcard segments as a string[]
       const restParam = req.params.rest as string | string[] | undefined;
@@ -328,7 +327,6 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   );
 
   app.get('/diff/:base_sha/:head_sha', (req: express.Request, res: express.Response) => {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     const { base_sha: baseSha, head_sha: headSha } = req.params as Record<string, string>;
     const baseBundle: db.Bundle = req.app.get('bundles')[baseSha];
     if (baseBundle === undefined) {
