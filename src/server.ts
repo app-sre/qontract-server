@@ -272,10 +272,12 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   app.get(
     '/diff/:base_sha/:head_sha/:filetype{/*rest}',
     (req: express.Request, res: express.Response) => {
+      const params = req.params as Record<string, string>;
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      const {
-        base_sha: baseSha, head_sha: headSha, filetype, rest,
-      } = req.params as Record<string, string>;
+      const { base_sha: baseSha, head_sha: headSha, filetype } = params;
+      // Express 5 (path-to-regexp v8) returns wildcard segments as an array
+      const restParam = req.params.rest as unknown as string[] | string | undefined;
+      const restPath = Array.isArray(restParam) ? restParam.join('/') : (restParam ?? '');
       const baseBundle: db.Bundle = req.app.get('bundles')[baseSha];
       if (baseBundle === undefined) {
         res.status(404).send(`Bundle ${baseSha} not found`);
@@ -287,7 +289,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
         return;
       }
 
-      const filepath = `/${rest ?? ''}`;
+      const filepath = `/${restPath}`;
       switch (filetype) {
         case 'datafile':
         {

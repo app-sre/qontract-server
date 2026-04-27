@@ -13,8 +13,8 @@ chai.use(chaiHttp);
 chai.should();
 
 const diskBundles = 'fs://test/diff/old.data.json,fs://test/diff/new.data.json';
-const oldSha = 'bf56095bf2ada36a6b2deca9cb9b6616d536b5c9ce230f0905296165d221a66b';
-const newSha = '302071115aa5dda8559f6e582fa7b6db7e0b64b5a9a6a9e3e9c22e2f86567f4b';
+const oldSha = 'c1571df5261ca8ad3344a93c474e325f8cd5628df14f20569d12b22f467b81fb';
+const newSha = '66d95c6b4a8c49317b9be0765190d0f487651d0e305e3062374124f79d955c2e';
 
 describe('diff', async () => {
   let srv: http.Server;
@@ -74,6 +74,15 @@ describe('diff', async () => {
     resp.body.datafileschema.should.equal('/openshift/cluster-1.yml');
     resp.body.old.automationToken.path.should.equals('secret-old');
     resp.body.new.automationToken.path.should.equals('secret-new');
+  });
+
+  it('serve single datafile diff with multi-segment path', async () => {
+    // Express 5 (path-to-regexp v8) returns wildcard segments as string[]; verify they are
+    // joined back with '/' so multi-segment paths resolve correctly (regression for /*rest)
+    const resp = await chai.request(srv)
+      .get(`/diff/${oldSha}/${newSha}/datafile/services/app-interface/app.yml`);
+    resp.should.have.status(200);
+    resp.body.datafilepath.should.equal('/services/app-interface/app.yml');
   });
 
   it('serve single datafile diff missing', async () => {

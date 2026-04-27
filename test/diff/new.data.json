@@ -9,6 +9,10 @@
       "automationToken": {
         "path": "secret-new"
       }
+    },
+    "/services/app-interface/app.yml": {
+      "$schema": "/app-interface/app-1.yml",
+      "name": "app-new"
     }
   },
   "graphql": [
@@ -89,10 +93,10 @@
       "sha256sum": "new_sha",
       "backrefs": [
         {
-            "path": "/cluster.yml",
-            "datafileSchema": "/openshift/cluster-1.yml",
-            "type": "Cluster_v1",
-            "jsonpath": "important.resource"
+          "path": "/cluster.yml",
+          "datafileSchema": "/openshift/cluster-1.yml",
+          "type": "Cluster_v1",
+          "jsonpath": "important.resource"
         }
       ]
     }
