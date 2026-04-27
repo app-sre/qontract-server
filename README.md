@@ -189,14 +189,19 @@ The bundles listed in `INIT_BUNDLES` are added to the `qontract-server` in the o
 
 ## Style
 
-All code should follow the [airbnb style guide], which is enforced by this
-projects lint script:
+Code style is enforced by [ESLint] (logic/correctness) and [Prettier] (formatting).
 
-[airbnb style guide]: https://github.com/airbnb/javascript
+[ESLint]: https://eslint.org
+[Prettier]: https://prettier.io
 
 ```sh
-npm run lint
+npm run format-check   # check formatting
+npm run lint           # check logic/correctness
+npm run format         # auto-fix formatting
+npm run lint-fix       # auto-fix lint issues
 ```
+
+Both checks run automatically in CI via the `test` stage of the Dockerfile.
 
 ## GQL query filtering
 
