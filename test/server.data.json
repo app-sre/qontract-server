@@ -64,9 +64,7 @@
     "/quay-org-A.yml": {
       "$schema": "/dependencies/quay-org-1.yml",
       "labels": {},
-      "managedTeams": [
-        "teamA"
-      ],
+      "managedTeams": ["teamA"],
       "description": "desc",
       "name": "quay-org-A"
     }

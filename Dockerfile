@@ -9,7 +9,7 @@ COPY . ./
 RUN npm run build
 
 FROM dev AS test
-RUN npm run lint && npm test
+RUN npm run format-check && npm run lint && npm test
 RUN echo "true" > /tmp/is_tested && chmod 777 /tmp/is_tested
 
 FROM base AS pre-prod

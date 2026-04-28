@@ -2,9 +2,16 @@ import * as fs from 'fs';
 import * as util from 'util';
 import { createHash } from 'crypto';
 
-import { GetObjectCommand, S3Client, waitUntilObjectExists } from '@aws-sdk/client-s3';
+import {
+  GetObjectCommand,
+  S3Client,
+  waitUntilObjectExists,
+} from '@aws-sdk/client-s3';
 import { logger } from './logger';
-import { buildSyntheticBackRefTrie, SyntheticBackRefTrie } from './syntheticBackRefTrie';
+import {
+  buildSyntheticBackRefTrie,
+  SyntheticBackRefTrie,
+} from './syntheticBackRefTrie';
 import { Datafile, GraphQLSchemaType } from './types';
 
 // cannot use `import` (old package with no associated types)
@@ -46,18 +53,18 @@ export type Referencing = {
   $ref: string;
 };
 
-export const resolveRef = (bundle: Bundle, itemRef: Referencing) : any => {
+export const resolveRef = (bundle: Bundle, itemRef: Referencing): any => {
   const path = getRefPath(itemRef.$ref);
   const expr = getRefExpr(itemRef.$ref);
 
   const datafile = bundle.datafiles.get(path);
-  if (typeof (datafile) === 'undefined') {
+  if (typeof datafile === 'undefined') {
     logger.error('Error retrieving datafile: %s', path);
     return null;
   }
 
   const resolvedData = jsonpointer.get(datafile, expr);
-  if (typeof (resolvedData) === 'undefined') {
+  if (typeof resolvedData === 'undefined') {
     logger.error(
       'Error resolving ref: datafile: "%s", expr: "%s"',
       JSON.stringify(datafile),
@@ -69,9 +76,17 @@ export const resolveRef = (bundle: Bundle, itemRef: Referencing) : any => {
   return resolvedData;
 };
 
-const validateObject = (path: string, data: object, requiredFields: string[]) : void => {
-  if (typeof path !== 'string') { throw new Error('Expecting string for path'); }
-  if (typeof data !== 'object') { throw new Error('Expecting object for data'); }
+const validateObject = (
+  path: string,
+  data: object,
+  requiredFields: string[],
+): void => {
+  if (typeof path !== 'string') {
+    throw new Error('Expecting string for path');
+  }
+  if (typeof data !== 'object') {
+    throw new Error('Expecting object for data');
+  }
 
   const fields = new Set(Object.keys(data));
   if (fields.size === 0) {
@@ -85,10 +100,9 @@ const validateObject = (path: string, data: object, requiredFields: string[]) : 
   });
 };
 
-const parseDatafiles = (jsonData: object) : Map<string, Datafile> => {
-  const entries : [string, Datafile][] = Object
-    .entries(jsonData)
-    .map(([path, data]: [string, Datafile]) => {
+const parseDatafiles = (jsonData: object): Map<string, Datafile> => {
+  const entries: [string, Datafile][] = Object.entries(jsonData).map(
+    ([path, data]: [string, Datafile]) => {
       validateObject(path, data, ['$schema']);
       return [
         path,
@@ -97,16 +111,17 @@ const parseDatafiles = (jsonData: object) : Map<string, Datafile> => {
           path,
         },
       ];
-    });
+    },
+  );
   return new Map(entries);
 };
 
-const hashDatafile = (contents: string) => createHash('sha256').update(contents).digest('hex');
+const hashDatafile = (contents: string) =>
+  createHash('sha256').update(contents).digest('hex');
 
-const parseResourcefiles = (jsonData: object) : Map<string, Resourcefile> => {
-  const entries : [string, Resourcefile][] = Object
-    .entries(jsonData)
-    .map(([path, data]: [string, Resourcefile]) => {
+const parseResourcefiles = (jsonData: object): Map<string, Resourcefile> => {
+  const entries: [string, Resourcefile][] = Object.entries(jsonData).map(
+    ([path, data]: [string, Resourcefile]) => {
       validateObject(path, data, ['path', 'content', 'sha256sum']);
       return [
         path,
@@ -115,11 +130,14 @@ const parseResourcefiles = (jsonData: object) : Map<string, Resourcefile> => {
           path,
         },
       ];
-    });
+    },
+  );
   return new Map(entries);
 };
 
-const buildDatafilesBySchema = (datafiles: Map<string, Datafile>): Map<string, Array<Datafile>> => {
+const buildDatafilesBySchema = (
+  datafiles: Map<string, Datafile>,
+): Map<string, Array<Datafile>> => {
   const datafilesBySchema = new Map<string, Array<Datafile>>();
   datafiles.forEach((datafile) => {
     const schema = datafile.$schema;
@@ -133,12 +151,15 @@ const buildDatafilesBySchema = (datafiles: Map<string, Datafile>): Map<string, A
   return datafilesBySchema;
 };
 
-const parseBundle = (contents: string) : Bundle => {
+const parseBundle = (contents: string): Bundle => {
   const parsedContents = JSON.parse(contents);
   const datafiles = parseDatafiles(parsedContents.data);
   const datafilesBySchema = buildDatafilesBySchema(datafiles);
   const schema = parsedContents.graphql;
-  const syntheticBackRefTrie = buildSyntheticBackRefTrie(datafilesBySchema, schema);
+  const syntheticBackRefTrie = buildSyntheticBackRefTrie(
+    datafilesBySchema,
+    schema,
+  );
   return {
     datafiles,
     datafilesBySchema,
@@ -166,13 +187,16 @@ const bundleFromS3 = async (
     region,
   });
   try {
-    await waitUntilObjectExists({
-      client,
-      maxWaitTime: 200,
-    }, {
-      Bucket: bucket,
-      Key: key,
-    });
+    await waitUntilObjectExists(
+      {
+        client,
+        maxWaitTime: 200,
+      },
+      {
+        Bucket: bucket,
+        Key: key,
+      },
+    );
   } catch (error) {
     throw new Error(`key ${key} not found in s3 bucket ${bucket}`);
   }
@@ -188,7 +212,8 @@ const bundleFromS3 = async (
 };
 
 export const bundleFromDisk = async (path: string) => {
-  const loadPath = typeof (path) === 'undefined' ? process.env.DATAFILES_FILE : path;
+  const loadPath =
+    typeof path === 'undefined' ? process.env.DATAFILES_FILE : path;
   const readFile = util.promisify(fs.readFile);
   const contents = String(await readFile(loadPath));
   return parseBundle(contents);

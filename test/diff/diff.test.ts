@@ -13,8 +13,10 @@ chai.use(chaiHttp);
 chai.should();
 
 const diskBundles = 'fs://test/diff/old.data.json,fs://test/diff/new.data.json';
-const oldSha = 'c1571df5261ca8ad3344a93c474e325f8cd5628df14f20569d12b22f467b81fb';
-const newSha = '66d95c6b4a8c49317b9be0765190d0f487651d0e305e3062374124f79d955c2e';
+const oldSha =
+  '3b69e28668aed14deaae5a4cfb1dddfddd5eb97575cca541f5ba621fe1d3946f';
+const newSha =
+  '0ac4adfbcb7bf94d382e3fd7cf9002c00491d5e4ea090a54a86c33c0ab29afc6';
 
 describe('diff', async () => {
   let srv: http.Server;
@@ -30,8 +32,7 @@ describe('diff', async () => {
   });
 
   it('serve full diff', async () => {
-    const resp = await chai.request(srv)
-      .get(`/diff/${oldSha}/${newSha}`);
+    const resp = await chai.request(srv).get(`/diff/${oldSha}/${newSha}`);
     resp.should.have.status(200);
 
     const changed = resp.body.datafiles['/cluster.yml'];
@@ -43,8 +44,7 @@ describe('diff', async () => {
   });
 
   it('serve full diff with identical changes', async () => {
-    const resp = await chai.request(srv)
-      .get(`/diff/${oldSha}/${oldSha}`);
+    const resp = await chai.request(srv).get(`/diff/${oldSha}/${oldSha}`);
     resp.should.have.status(200);
     const expectedBody = {
       datafiles: {},
@@ -54,19 +54,18 @@ describe('diff', async () => {
   });
 
   it('serve full diff with unknown old sha', async () => {
-    const resp = await chai.request(srv)
-      .get(`/diff/unknown/${newSha}`);
+    const resp = await chai.request(srv).get(`/diff/unknown/${newSha}`);
     resp.should.have.status(404);
   });
 
   it('serve full diff with unknown new sha', async () => {
-    const resp = await chai.request(srv)
-      .get(`/diff/${oldSha}/unknown`);
+    const resp = await chai.request(srv).get(`/diff/${oldSha}/unknown`);
     resp.should.have.status(404);
   });
 
   it('serve single datafile diff', async () => {
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .get(`/diff/${oldSha}/${newSha}/datafile/cluster.yml`);
     resp.should.have.status(200);
 
@@ -79,20 +78,23 @@ describe('diff', async () => {
   it('serve single datafile diff with multi-segment path', async () => {
     // Express 5 (path-to-regexp v8) returns wildcard segments as string[]; verify they are
     // joined back with '/' so multi-segment paths resolve correctly (regression for /*rest)
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .get(`/diff/${oldSha}/${newSha}/datafile/services/app-interface/app.yml`);
     resp.should.have.status(200);
     resp.body.datafilepath.should.equal('/services/app-interface/app.yml');
   });
 
   it('serve single datafile diff missing', async () => {
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .get(`/diff/${oldSha}/${newSha}/datafile/does_not_exit.yml`);
     resp.should.have.status(404);
   });
 
   it('serve single resourcefile diff', async () => {
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .get(`/diff/${oldSha}/${newSha}/resourcefile/changed_resource.yml`);
     resp.should.have.status(200);
 
@@ -100,32 +102,37 @@ describe('diff', async () => {
   });
 
   it('serve single resourcefile diff not found', async () => {
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .get(`/diff/${oldSha}/${newSha}/resourcefile/does_not_exist.yml`);
     resp.should.have.status(404);
   });
 
   it('serve single diff unknown file type', async () => {
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .get(`/diff/${oldSha}/${newSha}/unknown_file_type/does_not_exist.yml`);
     resp.should.have.status(400);
   });
 
   it('serve single diff with unknown old sha', async () => {
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .get(`/diff/unknown/${newSha}/datafile/cluster.yml`);
     resp.should.have.status(404);
   });
 
   it('serve single diff with unknown new sha', async () => {
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .get(`/diff/${oldSha}/unknown/datafile/cluster.yml`);
     resp.should.have.status(404);
   });
 
   it('serve single datafile diff without trailing filepath matches route', async () => {
     // {/*rest} makes the wildcard optional in Express 5 (same behaviour as /*? in Express 4)
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .get(`/diff/${oldSha}/${newSha}/datafile`);
     resp.should.have.status(404);
     resp.text.should.equal('datafile not found');

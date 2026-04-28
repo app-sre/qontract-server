@@ -33,14 +33,19 @@ describe('clusters', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
     resp.body.extensions.schemas.should.eql(['/test-type-1.yml']);
     resp.body.data.test[0].name.should.equal('name');
-    resp.body.data.test[0].unresolvable_resource_ref.should.equal('/resource1.yml');
-    resp.body.data.test[0].resolvable_resource_ref.content.should.equal('test resource');
+    resp.body.data.test[0].unresolvable_resource_ref.should.equal(
+      '/resource1.yml',
+    );
+    resp.body.data.test[0].resolvable_resource_ref.content.should.equal(
+      'test resource',
+    );
   });
 });

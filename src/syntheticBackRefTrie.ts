@@ -1,4 +1,3 @@
-
 import { Datafile, GraphQLSchemaType } from './types';
 
 class TrieNode {
@@ -13,7 +12,6 @@ class TrieNode {
 
   insert(keys: string[], data: any, value: Datafile) {
     if (Array.isArray(data)) {
-
       for (const d of data) {
         this.insert(keys, d, value);
       }
@@ -91,10 +89,10 @@ const getSyntheticFieldSubAttrsBySchema = (
   schema: GraphQLSchemaType | any[],
 ): Map<string, Set<string>> => {
   const syntheticFieldSubAttrs = new Map<string, Set<string>>();
-  const schemaData = 'confs' in schema && schema.confs ? schema.confs : schema as any[];
+  const schemaData =
+    'confs' in schema && schema.confs ? schema.confs : (schema as any[]);
 
   for (const conf of schemaData) {
-
     for (const fieldInfo of conf.fields) {
       if (fieldInfo.synthetic) {
         const key = fieldInfo.synthetic.schema;
@@ -116,7 +114,8 @@ export const buildSyntheticBackRefTrie = (
   schema: GraphQLSchemaType | any[],
 ): SyntheticBackRefTrie => {
   const syntheticBackRefTrie = new SyntheticBackRefTrie();
-  const syntheticFieldSubAttrsBySchema = getSyntheticFieldSubAttrsBySchema(schema);
+  const syntheticFieldSubAttrsBySchema =
+    getSyntheticFieldSubAttrsBySchema(schema);
   syntheticFieldSubAttrsBySchema.forEach((subAttrs: Set<string>, s: string) => {
     (datafilesBySchema.get(s) || []).forEach((df: Datafile) => {
       subAttrs.forEach((subAttr: string) => {

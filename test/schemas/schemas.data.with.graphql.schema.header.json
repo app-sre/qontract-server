@@ -9,7 +9,7 @@
     }
   },
   "graphql": {
-    "$schema" : "/app-interface/graphql-schemas-1.yml",
+    "$schema": "/app-interface/graphql-schemas-1.yml",
     "confs": [
       {
         "fields": [
@@ -1184,8 +1184,7 @@
         ],
         "name": "Query"
       }
-      
     ]
-},
+  },
   "resources": {}
 }

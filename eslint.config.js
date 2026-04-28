@@ -2,6 +2,7 @@ const eslint = require('@eslint/js');
 const tseslint = require('typescript-eslint');
 const importPlugin = require('eslint-plugin-import');
 const globals = require('globals');
+const prettier = require('eslint-config-prettier');
 
 module.exports = tseslint.config(
   {
@@ -43,12 +44,15 @@ module.exports = tseslint.config(
       },
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', {
-        vars: 'all',
-        args: 'after-used',
-        argsIgnorePattern: '^_',
-        caughtErrors: 'none',
-      }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          vars: 'all',
+          args: 'after-used',
+          argsIgnorePattern: '^_',
+          caughtErrors: 'none',
+        },
+      ],
       'import/extensions': [
         'error',
         'ignorePackages',
@@ -58,8 +62,10 @@ module.exports = tseslint.config(
           ts: 'never',
         },
       ],
-      'import/no-extraneous-dependencies': ['error', { devDependencies: ['test/**/*.ts'] }],
-      'import/prefer-default-export': 'off',
+      'import/no-extraneous-dependencies': [
+        'error',
+        { devDependencies: ['test/**/*.ts'] },
+      ],
     },
   },
   {
@@ -70,4 +76,5 @@ module.exports = tseslint.config(
       },
     },
   },
+  prettier,
 );

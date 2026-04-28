@@ -17,23 +17,35 @@ import {
 import * as db from './db';
 import { Datafile } from './types';
 
-const isRef = (obj: object): boolean => (obj as any).constructor === Object && Object.keys(obj).length === 1 && '$ref' in obj;
+const isRef = (obj: object): boolean =>
+  (obj as any).constructor === Object &&
+  Object.keys(obj).length === 1 &&
+  '$ref' in obj;
 
 // object types helpers
-const addObjectType = (app: express.Express, bundleSha: string, name: string, obj: any) => {
-  if (typeof (app.get('objectTypes')[bundleSha]) === 'undefined') {
+const addObjectType = (
+  app: express.Express,
+  bundleSha: string,
+  name: string,
+  obj: any,
+) => {
+  if (typeof app.get('objectTypes')[bundleSha] === 'undefined') {
     app.get('objectTypes')[bundleSha] = {};
   }
   app.get('objectTypes')[bundleSha][name] = obj;
 };
 
-const getObjectType = (app: express.Express, bundleSha: string, name: string) => app.get('objectTypes')[bundleSha][name];
+const getObjectType = (app: express.Express, bundleSha: string, name: string) =>
+  app.get('objectTypes')[bundleSha][name];
 
-const getInterfaceType = (app: express.Express, bundleSha: string, name: string) => app.get('objectInterfaces')[bundleSha][name];
+const getInterfaceType = (
+  app: express.Express,
+  bundleSha: string,
+  name: string,
+) => app.get('objectInterfaces')[bundleSha][name];
 
-const getGqlType = (app: express.Express, bundleSha: string, name: string) => (
-  app.get('bundles')[bundleSha].schema.confs.find((t: any) => t.name === name)
-);
+const getGqlType = (app: express.Express, bundleSha: string, name: string) =>
+  app.get('bundles')[bundleSha].schema.confs.find((t: any) => t.name === name);
 
 const jsonType = new GraphQLScalarType({
   name: 'JSON',
@@ -62,36 +74,47 @@ const falsePredicate = (_: any): boolean => false;
 
 const truePredicate = (_: any): boolean => true;
 
-const fieldEqPredicate = (field: string, value: any, source: any): boolean => (
-  (source[field] ?? null) === value
-);
+const fieldEqPredicate = (field: string, value: any, source: any): boolean =>
+  (source[field] ?? null) === value;
 
-const fieldNotEqualPredicate = (field: string, value: any, source: any): boolean => {
-  const sourceValue = (source[field] ?? null);
+const fieldNotEqualPredicate = (
+  field: string,
+  value: any,
+  source: any,
+): boolean => {
+  const sourceValue = source[field] ?? null;
   return value !== sourceValue;
 };
 
-const arrayEqPredicate = (field: string, comparisonArray: any, source: any): boolean => {
-  const sourceArray = (source[field] ?? null);
+const arrayEqPredicate = (
+  field: string,
+  comparisonArray: any,
+  source: any,
+): boolean => {
+  const sourceArray = source[field] ?? null;
   if (sourceArray === comparisonArray) {
     return true;
   }
-  return sourceArray != null && comparisonArray != null
-    && sourceArray.length === comparisonArray.length
-    && sourceArray.every((val: any, index: number) => val === comparisonArray[index]);
+  return (
+    sourceArray != null &&
+    comparisonArray != null &&
+    sourceArray.length === comparisonArray.length &&
+    sourceArray.every(
+      (val: any, index: number) => val === comparisonArray[index],
+    )
+  );
 };
 
-const fieldEqPredicateIgnoreNullBuilder = (field: string): FilterPredicateBuilder => (
-  (value: any): FilterPredicate => (
-    value === null
-      ? truePredicate
-      : fieldEqPredicate.bind(null, field, value)
-  )
-);
+const fieldEqPredicateIgnoreNullBuilder =
+  (field: string): FilterPredicateBuilder =>
+  (value: any): FilterPredicate =>
+    value === null ? truePredicate : fieldEqPredicate.bind(null, field, value);
 
-const containsPredicate = (field: string, value: Set<string>, source: any): boolean => (
-  field in source && value.has(source[field])
-);
+const containsPredicate = (
+  field: string,
+  value: Set<string>,
+  source: any,
+): boolean => field in source && value.has(source[field]);
 
 const isNonEmptyArray = (obj: any) => Array.isArray(obj) && obj.length > 0;
 
@@ -106,7 +129,7 @@ const resolveValue = (
     return null;
   }
   // add root.$schema to the schemas extensions
-  if (typeof (root.$schema) !== 'undefined' && root.$schema) {
+  if (typeof root.$schema !== 'undefined' && root.$schema) {
     if ('schemas' in context) {
       if (!context.schemas.includes(root.$schema)) {
         context.schemas.push(root.$schema);
@@ -121,7 +144,7 @@ const resolveValue = (
   const val = root[info.fieldName];
 
   // if the item is null, return as is
-  if (typeof (val) === 'undefined') {
+  if (typeof val === 'undefined') {
     return null;
   }
 
@@ -135,7 +158,9 @@ const resolveValue = (
     }
 
     // resolve all the elements of the array
-    let arrayResolve = val.map((x: db.Referencing) => db.resolveRef(app.get('bundles')[bundleSha], x));
+    let arrayResolve = val.map((x: db.Referencing) =>
+      db.resolveRef(app.get('bundles')[bundleSha], x),
+    );
 
     // `info.returnType` has information about what the GraphQL schema expects
     // as a return type. If it starts with `[` it means that we need to return
@@ -159,15 +184,13 @@ const getFilters = (
 
 const SUPPORTED_FILTER_OPERATORS = ['in', 'filter', 'ne'];
 
-const isConditionsObject = (
-  conditionsObject: any,
-): boolean => {
+const isConditionsObject = (conditionsObject: any): boolean => {
   if (conditionsObject == null) {
     return false;
   }
-  return SUPPORTED_FILTER_OPERATORS.some((operator) => (
-    Object.prototype.hasOwnProperty.call(conditionsObject, operator)
-  ));
+  return SUPPORTED_FILTER_OPERATORS.some((operator) =>
+    Object.prototype.hasOwnProperty.call(conditionsObject, operator),
+  );
 };
 
 const filterPredicate = (
@@ -179,7 +202,13 @@ const filterPredicate = (
   source: any,
 ): boolean => {
   const filterSpecs = getFilters(app, bundleSha, fieldGqlType.name);
-  const fieldValue = resolveValue(app, bundleSha, source, {}, { fieldName: field });
+  const fieldValue = resolveValue(
+    app,
+    bundleSha,
+    source,
+    {},
+    { fieldName: field },
+  );
   if (fieldValue == null) return false;
   return filterSpecs.filter.predicateBuilder(filter)(fieldValue);
 };
@@ -196,14 +225,19 @@ const conditionsObjectPredicate = (
     return containsPredicate(field, new Set(value.in as Array<string>), source);
   }
   if (Object.prototype.hasOwnProperty.call(value, 'filter')) {
-    return filterPredicate(field, value.filter, fieldGqlType, app, bundleSha, source);
+    return filterPredicate(
+      field,
+      value.filter,
+      fieldGqlType,
+      app,
+      bundleSha,
+      source,
+    );
   }
   if (Object.prototype.hasOwnProperty.call(value, 'ne')) {
     return fieldNotEqualPredicate(field, value.ne, source);
   }
-  throw new GraphQLError(
-    `Condition object ${value} unsupported`,
-  );
+  throw new GraphQLError(`Condition object ${value} unsupported`);
 };
 
 const conditionsObjectPredicateDeconstructor = (
@@ -215,10 +249,8 @@ const conditionsObjectPredicateDeconstructor = (
   source: any,
 ): boolean => {
   const sources = Array.isArray(source) ? source : [source];
-  return sources.every(
-    (e: any) => (
-      conditionsObjectPredicate(field, value, fieldGqlType, app, bundleSha, e)
-    ),
+  return sources.every((e: any) =>
+    conditionsObjectPredicate(field, value, fieldGqlType, app, bundleSha, e),
   );
 };
 
@@ -229,61 +261,67 @@ const getGraphGQLTypeFields = (
 ): any => {
   const gqlType = getGqlType(app, bundleSha, gqlTypeName);
   let fieldsMap = new Map<string, any>(
-    gqlType.fields.map(
-      (f: any) => [f.name, f],
-    ),
+    gqlType.fields.map((f: any) => [f.name, f]),
   );
 
   if (gqlType.isInterface && gqlType.interfaceResolve.strategy === 'fieldMap') {
-    Object.values(gqlType.interfaceResolve.fieldMap).forEach((typeName: string) => {
-      const interfaceFields = getGraphGQLTypeFields(app, bundleSha, typeName);
-      fieldsMap = new Map([...fieldsMap, ...interfaceFields]);
-    });
+    Object.values(gqlType.interfaceResolve.fieldMap).forEach(
+      (typeName: string) => {
+        const interfaceFields = getGraphGQLTypeFields(app, bundleSha, typeName);
+        fieldsMap = new Map([...fieldsMap, ...interfaceFields]);
+      },
+    );
   }
   return fieldsMap;
 };
 
-const filterObjectPredicateBuilder = (
-  gqlType: any,
-  app: express.Express,
-  bundleSha: string,
-): FilterPredicateBuilder => (
+const filterObjectPredicateBuilder =
+  (
+    gqlType: any,
+    app: express.Express,
+    bundleSha: string,
+  ): FilterPredicateBuilder =>
   (filterObject: any): FilterPredicate => {
-    const supportedFieldsInSchema = getGraphGQLTypeFields(app, bundleSha, gqlType.name);
+    const supportedFieldsInSchema = getGraphGQLTypeFields(
+      app,
+      bundleSha,
+      gqlType.name,
+    );
     if (typeof filterObject !== 'object') return falsePredicate;
-    const filters: FilterPredicate[] = Object.entries(filterObject).map(([field, value]) => {
-      const fieldType = supportedFieldsInSchema.get(field);
-      if (fieldType == null) {
-        throw new GraphQLError(
-          `Field "${field}" does not exist on type "${gqlType.name}"`,
-          {
-            extensions: {
-              code: 'BAD_FILTER_FIELD',
-              gqlType: gqlType.name,
+    const filters: FilterPredicate[] = Object.entries(filterObject).map(
+      ([field, value]) => {
+        const fieldType = supportedFieldsInSchema.get(field);
+        if (fieldType == null) {
+          throw new GraphQLError(
+            `Field "${field}" does not exist on type "${gqlType.name}"`,
+            {
+              extensions: {
+                code: 'BAD_FILTER_FIELD',
+                gqlType: gqlType.name,
+              },
             },
-          },
-        );
-      }
-      const fieldGglType = getGqlType(app, bundleSha, fieldType.type);
-      switch (true) {
-        case fieldType.isList && Array.isArray(value):
-          return arrayEqPredicate.bind(null, field, value);
-        case isConditionsObject(value):
-          return conditionsObjectPredicateDeconstructor.bind(
-            null,
-            field,
-            value,
-            fieldGglType,
-            app,
-            bundleSha,
           );
-        default:
-          return fieldEqPredicate.bind(null, field, value);
-      }
-    });
+        }
+        const fieldGglType = getGqlType(app, bundleSha, fieldType.type);
+        switch (true) {
+          case fieldType.isList && Array.isArray(value):
+            return arrayEqPredicate.bind(null, field, value);
+          case isConditionsObject(value):
+            return conditionsObjectPredicateDeconstructor.bind(
+              null,
+              field,
+              value,
+              fieldGglType,
+              app,
+              bundleSha,
+            );
+          default:
+            return fieldEqPredicate.bind(null, field, value);
+        }
+      },
+    );
     return (source: any): boolean => filters.every((f) => f(source));
-  }
-);
+  };
 
 const registerFilterArgs = (
   app: express.Express,
@@ -291,7 +329,7 @@ const registerFilterArgs = (
   gqlType: any,
   fields: string[],
 ) => {
-  if (typeof (app.get('searchableFields')[bundleSha]) === 'undefined') {
+  if (typeof app.get('searchableFields')[bundleSha] === 'undefined') {
     app.get('searchableFields')[bundleSha] = {};
   }
 
@@ -315,8 +353,13 @@ const registerFilterArgs = (
 };
 
 // interface types helpers
-const addInterfaceType = (app: express.Express, bundleSha: string, name: string, obj: any) => {
-  if (typeof (app.get('objectInterfaces')[bundleSha]) === 'undefined') {
+const addInterfaceType = (
+  app: express.Express,
+  bundleSha: string,
+  name: string,
+  obj: any,
+) => {
+  if (typeof app.get('objectInterfaces')[bundleSha] === 'undefined') {
     app.get('objectInterfaces')[bundleSha] = {};
   }
   app.get('objectInterfaces')[bundleSha][name] = obj;
@@ -329,7 +372,7 @@ const addDatafileSchema = (
   datafileSchema: string,
   graphqlType: string,
 ) => {
-  if (typeof (app.get('datafileSchemas')[bundleSha]) === 'undefined') {
+  if (typeof app.get('datafileSchemas')[bundleSha] === 'undefined') {
     app.get('datafileSchemas')[bundleSha] = {};
   }
   app.get('datafileSchemas')[bundleSha][datafileSchema] = graphqlType;
@@ -347,7 +390,8 @@ const resolveSyntheticField = (
   path: string,
   schema: string,
   subAttr: string,
-): Datafile[] => bundle.syntheticBackRefTrie.getDatafiles(schema, subAttr.split('.'), path);
+): Datafile[] =>
+  bundle.syntheticBackRefTrie.getDatafiles(schema, subAttr.split('.'), path);
 
 const resolveDatafileSchemaField = (
   bundle: db.Bundle,
@@ -361,19 +405,17 @@ const resolveDatafileSchemaField = (
 
   if (!datafiles) return [];
 
-  const filterArgs = Object.entries(args)
-    .filter(([_, value]) => value != null);
+  const filterArgs = Object.entries(args).filter(([_, value]) => value != null);
 
-  const predicates = filterArgs.map(
-    ([key, value]) => searchableFields[key].predicateBuilder(value),
+  const predicates = filterArgs.map(([key, value]) =>
+    searchableFields[key].predicateBuilder(value),
   );
-  return datafiles
-    .filter((df: Datafile) => predicates.every((predicate) => predicate(df)));
+  return datafiles.filter((df: Datafile) =>
+    predicates.every((predicate) => predicate(df)),
+  );
 };
 
-const getInnerGqlType = (
-  gqlType: any,
-): any => {
+const getInnerGqlType = (gqlType: any): any => {
   if ('ofType' in gqlType) {
     return getInnerGqlType(gqlType.ofType);
   }
@@ -381,38 +423,48 @@ const getInnerGqlType = (
 };
 
 // default resolver
-export const defaultResolver = (
-  app: express.Express,
-  bundleSha: string,
-) => (root: any, args: any, context: any, info: any) => {
-  const resolved = resolveValue(app, bundleSha, root, context, info);
-  if (Object.keys(args).length !== 0) {
-    const filterSpecs = getFilters(app, bundleSha, getInnerGqlType(info.returnType));
-    const filterArgs = Object.entries(args)
-      .filter(([_, value]) => value != null);
+export const defaultResolver =
+  (app: express.Express, bundleSha: string) =>
+  (root: any, args: any, context: any, info: any) => {
+    const resolved = resolveValue(app, bundleSha, root, context, info);
+    if (Object.keys(args).length !== 0) {
+      const filterSpecs = getFilters(
+        app,
+        bundleSha,
+        getInnerGqlType(info.returnType),
+      );
+      const filterArgs = Object.entries(args).filter(
+        ([_, value]) => value != null,
+      );
 
-    const predicates = filterArgs.map(
-      ([key, value]) => filterSpecs[key].predicateBuilder(value),
-    );
-    if (Array.isArray(resolved)) {
-      return resolved.filter((e) => predicates.every((predicate) => predicate(e)));
+      const predicates = filterArgs.map(([key, value]) =>
+        filterSpecs[key].predicateBuilder(value),
+      );
+      if (Array.isArray(resolved)) {
+        return resolved.filter((e) =>
+          predicates.every((predicate) => predicate(e)),
+        );
+      }
+      return !predicates.every((predicate) => predicate(resolved));
     }
-    return !predicates.every((predicate) => predicate(resolved));
-  }
-  return resolved;
-};
+    return resolved;
+  };
 
 // ------------------ START SCHEMA ------------------
 
-const createSchemaType = (app: express.Express, bundleSha: string, conf: any) => {
+const createSchemaType = (
+  app: express.Express,
+  bundleSha: string,
+  conf: any,
+) => {
   const objTypeConf: any = {};
 
   // name
   objTypeConf.name = conf.name;
 
   // fields
-  objTypeConf.fields = () => conf.fields.reduce(
-    (objFields: any, fieldInfo: any) => {
+  objTypeConf.fields = () =>
+    conf.fields.reduce((objFields: any, fieldInfo: any) => {
       const fieldDef: any = {};
 
       // type
@@ -444,8 +496,10 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
         }
       }
 
-      if (typeof (t) === 'undefined') {
-        throw new Error(`fieldInfo type is undefined: ${JSON.stringify(fieldInfo)}`);
+      if (typeof t === 'undefined') {
+        throw new Error(
+          `fieldInfo type is undefined: ${JSON.stringify(fieldInfo)}`,
+        );
       }
 
       if (fieldInfo.isList) {
@@ -476,40 +530,52 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
           ),
         );
 
-        fieldDef.resolve = (root: any, args: any) => resolveDatafileSchemaField(
-          app.get('bundles')[bundleSha],
-          fieldInfo.datafileSchema,
-          filterSpecs,
-          args,
-        );
+        fieldDef.resolve = (root: any, args: any) =>
+          resolveDatafileSchemaField(
+            app.get('bundles')[bundleSha],
+            fieldInfo.datafileSchema,
+            filterSpecs,
+            args,
+          );
       } else if (fieldInfo.synthetic) {
         // synthetic
-        fieldDef.resolve = (root: any) => resolveSyntheticField(
-          app.get('bundles')[bundleSha],
-          root.path,
-          fieldInfo.synthetic.schema,
-          fieldInfo.synthetic.subAttr,
-        );
+        fieldDef.resolve = (root: any) =>
+          resolveSyntheticField(
+            app.get('bundles')[bundleSha],
+            root.path,
+            fieldInfo.synthetic.schema,
+            fieldInfo.synthetic.subAttr,
+          );
       } else if (fieldInfo.isResource) {
         if (fieldInfo.type === 'string' && fieldInfo.resolveResource) {
           // a resource reference
           fieldDef.type = getObjectType(app, bundleSha, 'Resource_v1');
           fieldDef.resolve = (root: any) => {
             if (root[fieldInfo.name] !== undefined) {
-              return app.get('bundles')[bundleSha].resourcefiles.get(root[fieldInfo.name]);
+              return app
+                .get('bundles')
+                [bundleSha].resourcefiles.get(root[fieldInfo.name]);
             }
             return null;
           };
-
-        } else if (fieldInfo.type == getObjectType(app, bundleSha, 'Resource_v1')) {
+        } else if (
+          fieldInfo.type == getObjectType(app, bundleSha, 'Resource_v1')
+        ) {
           // a resource
-          fieldDef.args = { path: { type: GraphQLString }, schema: { type: GraphQLString } };
+          fieldDef.args = {
+            path: { type: GraphQLString },
+            schema: { type: GraphQLString },
+          };
           fieldDef.resolve = (root: any, args: any) => {
             if (args.path) {
-              return [app.get('bundles')[bundleSha].resourcefiles.get(args.path)];
+              return [
+                app.get('bundles')[bundleSha].resourcefiles.get(args.path),
+              ];
             }
 
-            let results = Array.from(app.get('bundles')[bundleSha].resourcefiles.values());
+            let results = Array.from(
+              app.get('bundles')[bundleSha].resourcefiles.values(),
+            );
 
             if (args.schema) {
               results = results.filter((r: any) => r.$schema === args.schema);
@@ -528,9 +594,7 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
       // return
       objFields[fieldInfo.name] = fieldDef;
       return objFields;
-    },
-    {},
-  );
+    }, {});
 
   // interface
   if (conf.interface || conf.datafile) {
@@ -538,20 +602,21 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
       const interfaceType = getInterfaceType(app, bundleSha, conf.interface);
       const interfaces = interfaceType !== undefined ? [interfaceType] : [];
       const datafileGraphqlTypeNames = [
-        ...(interfaces.map((i) => i.name)),
+        ...interfaces.map((i) => i.name),
         conf.name,
       ];
       // TODO: prebuild graphql type to datafile schema mapping to speedup check
-      const isDatafile = Object.values(app.get('datafileSchemas')[bundleSha] || {}).some(
-        (graphqlType) => datafileGraphqlTypeNames.includes(graphqlType),
-      );
+      const isDatafile = Object.values(
+        app.get('datafileSchemas')[bundleSha] || {},
+      ).some((graphqlType) => datafileGraphqlTypeNames.includes(graphqlType));
       if (isDatafile) {
-        const datafileObject = getInterfaceType(app, bundleSha, 'DatafileObject_v1');
+        const datafileObject = getInterfaceType(
+          app,
+          bundleSha,
+          'DatafileObject_v1',
+        );
         if (datafileObject !== undefined) {
-          return [
-            ...interfaces,
-            datafileObject,
-          ];
+          return [...interfaces, datafileObject];
         }
       }
       return interfaces;
@@ -574,8 +639,16 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
       case 'schema':
         resolveType = (source: any) => {
           const schema = source.$schema;
-          const targetGraphqlType = getGraphqlTypeForDatafileSchema(app, bundleSha, schema);
-          const interfaceType = getInterfaceType(app, bundleSha, targetGraphqlType);
+          const targetGraphqlType = getGraphqlTypeForDatafileSchema(
+            app,
+            bundleSha,
+            schema,
+          );
+          const interfaceType = getInterfaceType(
+            app,
+            bundleSha,
+            targetGraphqlType,
+          );
           if (interfaceType !== undefined) {
             return interfaceType.resolveType(source);
           }
@@ -606,36 +679,41 @@ const createSchemaType = (app: express.Express, bundleSha: string, conf: any) =>
   return objType;
 };
 
-export const generateAppSchema = (app: express.Express, bundleSha: string): GraphQLSchema => {
+export const generateAppSchema = (
+  app: express.Express,
+  bundleSha: string,
+): GraphQLSchema => {
   let schemaData = app.get('bundles')[bundleSha].schema;
 
-  if (typeof (schemaData.confs) !== 'undefined') {
+  if (typeof schemaData.confs !== 'undefined') {
     schemaData = schemaData.confs;
   }
 
-  if (typeof (app.get('objectTypes')) === 'undefined') {
+  if (typeof app.get('objectTypes') === 'undefined') {
     app.set('objectTypes', {});
   }
 
-  if (typeof (app.get('objectInterfaces')) === 'undefined') {
+  if (typeof app.get('objectInterfaces') === 'undefined') {
     app.set('objectInterfaces', {});
   }
 
-  if (typeof (app.get('datafileSchemas')) === 'undefined') {
+  if (typeof app.get('datafileSchemas') === 'undefined') {
     app.set('datafileSchemas', {});
   }
 
-  if (typeof (app.get('searchableFields')) === 'undefined') {
+  if (typeof app.get('searchableFields') === 'undefined') {
     app.set('searchableFields', {});
   }
 
   // populate searchable fields
-  schemaData.map((gqlType: any) => registerFilterArgs(
-    app,
-    bundleSha,
-    gqlType,
-    gqlType.fields.filter((f: any) => f.isSearchable).map((f: any) => f.name),
-  ));
+  schemaData.map((gqlType: any) =>
+    registerFilterArgs(
+      app,
+      bundleSha,
+      gqlType,
+      gqlType.fields.filter((f: any) => f.isSearchable).map((f: any) => f.name),
+    ),
+  );
 
   schemaData.map((t: any) => createSchemaType(app, bundleSha, t));
 

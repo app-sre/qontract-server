@@ -43,19 +43,28 @@ describe('datafileobject fieldmap', async () => {
         }
       }
       `;
-    const resp = await chai.request(srv)
+    const resp = await chai
+      .request(srv)
       .post('/graphql')
       .set('content-type', 'application/json')
       .send({ query });
     resp.should.have.status(200);
-    resp.body.data.test[0].datafiles[0].path.should.equal('/cakerecipe/guillaumes-deluxe.yml');
+    resp.body.data.test[0].datafiles[0].path.should.equal(
+      '/cakerecipe/guillaumes-deluxe.yml',
+    );
     resp.body.data.test[0].datafiles[0].schema.should.equal('/recipe-1.yml');
-    resp.body.data.test[0].recipes[0].path.should.equal('/cakerecipe/guillaumes-deluxe.yml');
+    resp.body.data.test[0].recipes[0].path.should.equal(
+      '/cakerecipe/guillaumes-deluxe.yml',
+    );
     resp.body.data.test[0].recipes[0].schema.should.equal('/recipe-1.yml');
     resp.body.data.test[0].recipes[0].inventor.should.equal('Guillaume');
-    resp.body.data.test[0].datafiles[1].path.should.equal('/beerrecipe/unicorn-ale.yml');
+    resp.body.data.test[0].datafiles[1].path.should.equal(
+      '/beerrecipe/unicorn-ale.yml',
+    );
     resp.body.data.test[0].datafiles[1].schema.should.equal('/recipe-1.yml');
-    resp.body.data.test[0].recipes[1].path.should.equal('/beerrecipe/unicorn-ale.yml');
+    resp.body.data.test[0].recipes[1].path.should.equal(
+      '/beerrecipe/unicorn-ale.yml',
+    );
     resp.body.data.test[0].recipes[1].schema.should.equal('/recipe-1.yml');
     resp.body.data.test[0].recipes[1].brewery.should.equal('Equestrias Finest');
   });

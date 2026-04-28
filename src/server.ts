@@ -113,7 +113,6 @@ const registerApolloServer = (
 
 // remove expired bundles
 const removeExpiredBundles = (app: express.Express) => {
-
   for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
     if (sha === app.get('latestBundleSha')) {
       continue;
@@ -165,60 +164,89 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   app.use(metrics.metricsMiddleware);
 
   // Register a middleware that will 503 if we haven't loaded a Bundle yet.
-  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if ((!['/', '/reload'].includes(req.url)) && typeof (req.app.get('bundles')) === 'undefined') {
-      res.status(503).send('No loaded data.');
-      return;
-    }
-    next();
-  });
+  app.use(
+    (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      if (
+        !['/', '/reload'].includes(req.url) &&
+        typeof req.app.get('bundles') === 'undefined'
+      ) {
+        res.status(503).send('No loaded data.');
+        return;
+      }
+      next();
+    },
+  );
 
   // Register a middleware that sends /graphql to the latest bundle. This middleware also
   // increases the expiration time for a bundle.
-  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    // rewrite to graphqlsha/<sha>, preserving any query string (needed for GET requests)
-    if (req.path === '/graphql') {
-      const bundleSha = req.app.get('latestBundleSha');
-      const qs = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
-      req.url = `/graphqlsha/${bundleSha}${qs}`;
-    }
-
-    const graphqlshaMatch = req.url.match(/\/graphqlsha\/(.*)$/);
-    if (graphqlshaMatch) {
-      const sha = graphqlshaMatch[1];
-      if (app.get('bundleCache')[sha]) {
-        app.get('bundleCache')[sha].expiration = Date.now() + BUNDLE_SHA_TTL;
+  app.use(
+    (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      // rewrite to graphqlsha/<sha>, preserving any query string (needed for GET requests)
+      if (req.path === '/graphql') {
+        const bundleSha = req.app.get('latestBundleSha');
+        const qs = req.url.includes('?')
+          ? req.url.substring(req.url.indexOf('?'))
+          : '';
+        req.url = `/graphqlsha/${bundleSha}${qs}`;
       }
-    }
 
-    next();
-  });
+      const graphqlshaMatch = req.url.match(/\/graphqlsha\/(.*)$/);
+      if (graphqlshaMatch) {
+        const sha = graphqlshaMatch[1];
+        if (app.get('bundleCache')[sha]) {
+          app.get('bundleCache')[sha].expiration = Date.now() + BUNDLE_SHA_TTL;
+        }
+      }
+
+      next();
+    },
+  );
 
   app.use(express.json());
   // expressMiddleware (Apollo v4) requires a parsed JSON body.
   // In Express 5, express.json() does not set req.body for GET requests (no body to parse),
   // but Apollo v4 rejects requests where req.body is undefined. Default to {} so GET queries work.
-  app.use(['/graphql', '/graphqlsha'], (req: express.Request, _res: express.Response, next: express.NextFunction) => {
-    if (req.body === undefined) {
-      Object.assign(req, { body: {} });
-    }
-    next();
-  });
+  app.use(
+    ['/graphql', '/graphqlsha'],
+    (
+      req: express.Request,
+      _res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      if (req.body === undefined) {
+        Object.assign(req, { body: {} });
+      }
+      next();
+    },
+  );
 
   // Single dispatcher for all /graphqlsha/:sha requests — routes to the correct Apollo middleware.
-  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    const match = req.url.match(/^\/graphqlsha\/([^/?]+)/);
-    if (match) {
-      const sha = match[1];
-      const handler = app.get('shaRouters').get(sha);
-      if (handler) {
-        handler(req, res, next);
-        return;
+  app.use(
+    (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction,
+    ) => {
+      const match = req.url.match(/^\/graphqlsha\/([^/?]+)/);
+      if (match) {
+        const sha = match[1];
+        const handler = app.get('shaRouters').get(sha);
+        if (handler) {
+          handler(req, res, next);
+          return;
+        }
       }
-    }
-    next();
-  });
-
+      next();
+    },
+  );
 
   for (const bp of bundlePromises) {
     const bundle = await bp;
@@ -276,7 +304,9 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
       const { base_sha: baseSha, head_sha: headSha, filetype } = params;
       // Express 5 (path-to-regexp v8) returns wildcard segments as a string[]
       const restParam = req.params.rest as string | string[] | undefined;
-      const restPath = Array.isArray(restParam) ? restParam.join('/') : (restParam ?? '');
+      const restPath = Array.isArray(restParam)
+        ? restParam.join('/')
+        : (restParam ?? '');
       const baseBundle: db.Bundle = req.app.get('bundles')[baseSha];
       if (baseBundle === undefined) {
         res.status(404).send(`Bundle ${baseSha} not found`);
@@ -290,8 +320,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
 
       const filepath = `/${restPath}`;
       switch (filetype) {
-        case 'datafile':
-        {
+        case 'datafile': {
           const oldRes = baseBundle.datafiles.get(filepath);
           const newRes = headBundle.datafiles.get(filepath);
           if (oldRes === undefined && newRes === undefined) {
@@ -326,63 +355,75 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     },
   );
 
-  app.get('/diff/:base_sha/:head_sha', (req: express.Request, res: express.Response) => {
-    const { base_sha: baseSha, head_sha: headSha } = req.params as Record<string, string>;
-    const baseBundle: db.Bundle = req.app.get('bundles')[baseSha];
-    if (baseBundle === undefined) {
-      res.status(404).send(`Bundle ${baseSha} not found`);
-      return;
-    }
-    const headBundle: db.Bundle = req.app.get('bundles')[headSha];
-    if (headBundle === undefined) {
-      res.status(404).send(`Bundle ${headSha} not found`);
-      return;
-    }
+  app.get(
+    '/diff/:base_sha/:head_sha',
+    (req: express.Request, res: express.Response) => {
+      const { base_sha: baseSha, head_sha: headSha } = req.params as Record<
+        string,
+        string
+      >;
+      const baseBundle: db.Bundle = req.app.get('bundles')[baseSha];
+      if (baseBundle === undefined) {
+        res.status(404).send(`Bundle ${baseSha} not found`);
+        return;
+      }
+      const headBundle: db.Bundle = req.app.get('bundles')[headSha];
+      if (headBundle === undefined) {
+        res.status(404).send(`Bundle ${headSha} not found`);
+        return;
+      }
 
-    // deepDiff can only diff objects, Map is not supported
-    const dataDiffs = deepDiff(
-      Object.fromEntries(baseBundle.datafiles),
-      Object.fromEntries(headBundle.datafiles),
-    );
-    const resourceDiffs = deepDiff(
-      Object.fromEntries(
-        Array.from(baseBundle.resourcefiles, ([path, resource]) => [path, resource.sha256sum]),
-      ),
-      Object.fromEntries(
-        Array.from(headBundle.resourcefiles, ([path, resource]) => [path, resource.sha256sum]),
-      ),
-    );
+      // deepDiff can only diff objects, Map is not supported
+      const dataDiffs = deepDiff(
+        Object.fromEntries(baseBundle.datafiles),
+        Object.fromEntries(headBundle.datafiles),
+      );
+      const resourceDiffs = deepDiff(
+        Object.fromEntries(
+          Array.from(baseBundle.resourcefiles, ([path, resource]) => [
+            path,
+            resource.sha256sum,
+          ]),
+        ),
+        Object.fromEntries(
+          Array.from(headBundle.resourcefiles, ([path, resource]) => [
+            path,
+            resource.sha256sum,
+          ]),
+        ),
+      );
 
-    const changes: any = {
-      datafiles: {},
-      resources: {},
-    };
-
-    (resourceDiffs || []).forEach((diff: any) => {
-      const path = diff.path[0];
-      const oldRes = baseBundle.resourcefiles.get(path);
-      const newRes = headBundle.resourcefiles.get(path);
-      changes.resources[path] = {
-        resourcepath: path,
-        old: oldRes,
-        new: newRes,
+      const changes: any = {
+        datafiles: {},
+        resources: {},
       };
-    });
 
-    (dataDiffs || []).forEach((diff: any) => {
-      const path = diff.path[0];
-      const oldRes = baseBundle.datafiles.get(path);
-      const newRes = headBundle.datafiles.get(path);
-      changes.datafiles[path] = {
-        datafilepath: path,
-        datafileschema: (newRes !== undefined ? newRes : oldRes).$schema,
-        old: oldRes,
-        new: newRes,
-      };
-    });
+      (resourceDiffs || []).forEach((diff: any) => {
+        const path = diff.path[0];
+        const oldRes = baseBundle.resourcefiles.get(path);
+        const newRes = headBundle.resourcefiles.get(path);
+        changes.resources[path] = {
+          resourcepath: path,
+          old: oldRes,
+          new: newRes,
+        };
+      });
 
-    res.send(changes);
-  });
+      (dataDiffs || []).forEach((diff: any) => {
+        const path = diff.path[0];
+        const oldRes = baseBundle.datafiles.get(path);
+        const newRes = headBundle.datafiles.get(path);
+        changes.datafiles[path] = {
+          datafilepath: path,
+          datafileschema: (newRes !== undefined ? newRes : oldRes).$schema,
+          old: oldRes,
+          new: newRes,
+        };
+      });
+
+      res.send(changes);
+    },
+  );
 
   app.get('/git-commit', (req: express.Request, res: express.Response) => {
     const bundleSha = req.app.get('latestBundleSha');
@@ -410,20 +451,23 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     res.send(JSON.stringify(gitCommitInfo));
   });
 
-  app.get('/git-commit-info/:sha', (req: express.Request, res: express.Response) => {
-    const { sha } = req.params as Record<string, string>;
-    const bundle = req.app.get('bundles')[sha];
-    if (bundle === undefined) {
-      res.status(404).send(`Bundle ${sha} not found`);
-      return;
-    }
-    const gitCommitInfo = {
-      commit: bundle.gitCommit,
-      timestamp: bundle.gitCommitTimestamp,
-    };
-    res.setHeader('Content-Type', 'application/json');
-    res.send(JSON.stringify(gitCommitInfo));
-  });
+  app.get(
+    '/git-commit-info/:sha',
+    (req: express.Request, res: express.Response) => {
+      const { sha } = req.params as Record<string, string>;
+      const bundle = req.app.get('bundles')[sha];
+      if (bundle === undefined) {
+        res.status(404).send(`Bundle ${sha} not found`);
+        return;
+      }
+      const gitCommitInfo = {
+        commit: bundle.gitCommit,
+        timestamp: bundle.gitCommitTimestamp,
+      };
+      res.setHeader('Content-Type', 'application/json');
+      res.send(JSON.stringify(gitCommitInfo));
+    },
+  );
 
   app.get('/metrics', async (req: express.Request, res: express.Response) => {
     res.send(await promClient.register.metrics());
@@ -432,7 +476,6 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   app.get('/cache', (req: express.Request, res: express.Response) => {
     const fullCacheInfo: any = { bundleCache: [] };
 
-
     for (const [sha, cacheInfoObj] of Object.entries(app.get('bundleCache'))) {
       const cacheInfo = cacheInfoObj as ICacheInfo;
       fullCacheInfo.bundleCache.push({ sha, expiration: cacheInfo.expiration });
@@ -440,36 +483,42 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
 
     fullCacheInfo.bundles = Object.keys(req.app.get('bundles'));
     fullCacheInfo.routerStack = app.get('shaRouters').size;
-    fullCacheInfo.searchableFields = Object.keys(req.app.get('searchableFields'));
+    fullCacheInfo.searchableFields = Object.keys(
+      req.app.get('searchableFields'),
+    );
 
     res.send(JSON.stringify(fullCacheInfo));
   });
 
-  app.get('/healthz', (req: express.Request, res: express.Response) => { res.send(); });
-  app.get('/', (req: express.Request, res: express.Response) => { res.redirect('/graphql'); });
+  app.get('/healthz', (req: express.Request, res: express.Response) => {
+    res.send();
+  });
+  app.get('/', (req: express.Request, res: express.Response) => {
+    res.redirect('/graphql');
+  });
 
   return app;
 };
 
 // If this is main, load an app from the environment and run the server.
 if (require.main === module) {
-  appFromBundle(db.getInitialBundles())
-    .then((app) => {
-      const server = app.listen({ port: 4000 }, () => {
-        logger.info('Running at http://localhost:4000/graphql');
-      });
-
-
-      for (const signal of ['SIGINT', 'SIGTERM']) {
-        process.on(signal, () => {
-          logger.info(`${signal} received, shutting down HTTP server`);
-          server.close(() => {
-            logger.info('HTTP server closed');
-          });
-        });
-      }
-
-      metrics.updateCacheMetrics(app);
-      metrics.updateResourceMetrics(app.get('bundles')[app.get('latestBundleSha')]);
+  appFromBundle(db.getInitialBundles()).then((app) => {
+    const server = app.listen({ port: 4000 }, () => {
+      logger.info('Running at http://localhost:4000/graphql');
     });
+
+    for (const signal of ['SIGINT', 'SIGTERM']) {
+      process.on(signal, () => {
+        logger.info(`${signal} received, shutting down HTTP server`);
+        server.close(() => {
+          logger.info('HTTP server closed');
+        });
+      });
+    }
+
+    metrics.updateCacheMetrics(app);
+    metrics.updateResourceMetrics(
+      app.get('bundles')[app.get('latestBundleSha')],
+    );
+  });
 }

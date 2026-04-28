@@ -14,13 +14,14 @@ const should = chai.should();
 
 const gql = (srv: http.Server, query: string, sha?: string) => {
   let url;
-  if (typeof (sha) === 'undefined') {
+  if (typeof sha === 'undefined') {
     url = '/graphql';
   } else {
     url = `/graphqlsha/${sha}`;
   }
 
-  return chai.request(srv)
+  return chai
+    .request(srv)
     .post(url)
     .set('content-type', 'application/json')
     .send({ query });
@@ -67,9 +68,7 @@ describe('multishas', async () => {
   });
 
   it('serves a basic graphql query using GET', async () => {
-    const resp = await chai.request(srv)
-      .get('/graphql')
-      .query({ query });
+    const resp = await chai.request(srv).get('/graphql').query({ query });
     resp.should.have.status(200);
     resp.body.data.resources_v1[0].name.should.equal('sha1');
     resp.body.data.resources_v1[0].resourceAField.should.equal('sha1');

@@ -5,7 +5,7 @@ available managed services to application developer teams.
 
 ## Overview
 
-![qontract overview](images/qontract.png?raw=true "Qontract overview")
+![qontract overview](images/qontract.png?raw=true 'Qontract overview')
 
 This repository comprises the server component, which is a GraphQL API server implemented in Typescript with the [apollo-server-express](https://www.npmjs.com/package/apollo-server-express) package.
 
@@ -33,7 +33,7 @@ This server is configured via environment variables.
 - `AWS_SECRET_ACCESS_KEY`: (required if `LOAD_METHOD=s3`) AWS secret access key.
 - `AWS_REGION`: (required if `LOAD_METHOD=s3`) AWS region.
 - `AWS_S3_BUCKET`: (required if `LOAD_METHOD=s3`) AWS s3 bucket name.
-- `AWS_S3_KEY`: (required if `LOAD_METHOD=s3`)  AWS s3 key name.
+- `AWS_S3_KEY`: (required if `LOAD_METHOD=s3`) AWS s3 key name.
 
 ## Bundle Caching
 
@@ -124,8 +124,9 @@ make bundle
 This requires Docker or Podman to be running on the host (auto-detected).
 
 Optionally, if you want to specify the path for the app-interface repo or qontract-schemas repo on your local filesystem, you can use the parameter:
-* `APP_INTERFACE_PATH` - (optional) path to a local app-interface repo (Default: `$PWD/../../service/app-interface`).
-* `SCHEMAS_PATH` - (optional) path to a local qontract-schemas repo (Default: `$PWD/../qontract-schemas`)
+
+- `APP_INTERFACE_PATH` - (optional) path to a local app-interface repo (Default: `$PWD/../../service/app-interface`).
+- `SCHEMAS_PATH` - (optional) path to a local qontract-schemas repo (Default: `$PWD/../qontract-schemas`)
 
 Example: To generate the bundle with a specific app-interface path:
 
@@ -188,14 +189,19 @@ The bundles listed in `INIT_BUNDLES` are added to the `qontract-server` in the o
 
 ## Style
 
-All code should follow the [airbnb style guide], which is enforced by this
-projects lint script:
+Code style is enforced by [ESLint] (logic/correctness) and [Prettier] (formatting).
 
-[airbnb style guide]: https://github.com/airbnb/javascript
+[ESLint]: https://eslint.org
+[Prettier]: https://prettier.io
 
 ```sh
-npm run lint
+npm run format-check   # check formatting
+npm run lint           # check logic/correctness
+npm run format         # auto-fix formatting
+npm run lint-fix       # auto-fix lint issues
 ```
+
+Both checks run automatically in CI via the `test` stage of the Dockerfile.
 
 ## GQL query filtering
 
