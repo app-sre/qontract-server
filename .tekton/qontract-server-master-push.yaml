@@ -29,6 +29,13 @@ spec:
     value: .
   - name: target-stage
     value: prod
+  - name: github-user-id
+    value: |-
+      {{sender}}
+  - name: sqs-pr-type
+    value: promote_qontract_server
+  - name: sqs-delay-seconds
+    value: "300"
   pipelineRef:
     params:
     - name: url
