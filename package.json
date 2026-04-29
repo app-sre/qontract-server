@@ -20,7 +20,7 @@
     "debug": "node --inspect --require ts-node/register src/server.ts"
   },
   "dependencies": {
-    "@apollo/server": "^4.13.0",
+    "@apollo/server": "^5.0.0",
     "@aws-sdk/client-s3": "^3.1033.0",
     "deep-diff": "1.0.2",
     "dotenv": "^16.6.1",
