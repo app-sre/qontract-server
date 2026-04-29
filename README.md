@@ -7,7 +7,7 @@ available managed services to application developer teams.
 
 ![qontract overview](images/qontract.png?raw=true 'Qontract overview')
 
-This repository comprises the server component, which is a GraphQL API server implemented in Typescript with the [apollo-server-express](https://www.npmjs.com/package/apollo-server-express) package.
+This repository comprises the server component, which is a GraphQL API server implemented in Typescript with the [@apollo/server](https://www.npmjs.com/package/@apollo/server) package.
 
 The [JSON Schema Validation](https://github.com/app-sre/qontract-validator) lives in a [separate repo](https://github.com/app-sre/qontract-validator).
 
@@ -44,8 +44,8 @@ The shas will expire after a certain amount of time:
 - When the data is loaded for the first time, the expiration time is set to 20 minutes in the future (can be overriden by the `BUNDLE_SHA_TTL` environment variable).
 - Each time a sha is queried specifically the expiration is refreshed to the `BUNDLE_SHA_TTL` in the future again. This means that shas can be kept available forever by querying them before the `BUNDLE_SHA_TTL` has passed.
 - The latest sha, which is the one pointed at by `POST /graphql` will never expire.
-- Shas are only expired when `GET /reload` is queried.
-- If `GET /reload` is called and there is no new data available, then no shas will be expired.
+- Shas are only expired when `POST /reload` is queried.
+- If `POST /reload` is called and there is no new data available, then no shas will be expired.
 
 ## API
 
@@ -71,15 +71,11 @@ It includes some custom metrics:
 
 - `qontract_server_reloads_total`: Number of reloads for qontract server.
 - `qontract_server_datafiles`: Number of datafiles for a specific schema.
-- `qontract_server_router_stack_layers`: Number of layers in the router stack.
+- `qontract_server_router_stack_layers`: Number of active bundle SHA routers.
 - `qontract_server_bundle_object_shas`: Number of shas cached by the application in the bundle object.
 - `qontract_server_bundle_cache_object_shas`: Number of shas cached by the application in the bundleCache object.
 
 In addition, it also contains the metrics exposed by the [express prometheus bundle](https://github.com/jochen-schweizer/express-prom-bundle). Note that the `/graphqlsha/<sha>` path has been normalized to avoid cardinality explosion.
-
-## Limitations
-
-- Removing SHAs from the router stack is currently being done using an unsafe mechanism: splicing the private parameter `app._router.stack` which is unsupported and may cause issues. This functionality may break if the Express version is upgraded. However, the testing suite should catch this specific regression. The right solution for this is to replace the entire router, instead of removing the middleware. This has been discussed in this issue: https://github.com/expressjs/express/issues/4436.
 
 ## Development Environment
 
