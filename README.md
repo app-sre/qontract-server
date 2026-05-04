@@ -71,7 +71,6 @@ It includes some custom metrics:
 
 - `qontract_server_reloads_total`: Number of reloads for qontract server.
 - `qontract_server_datafiles`: Number of datafiles for a specific schema.
-- `qontract_server_router_stack_layers`: Number of active bundle SHA routers.
 - `qontract_server_bundle_object_shas`: Number of shas cached by the application in the bundle object.
 - `qontract_server_bundle_cache_object_shas`: Number of shas cached by the application in the bundleCache object.
 
