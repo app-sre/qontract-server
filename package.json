@@ -35,8 +35,8 @@
     "@types/chai": "4.3.20",
     "@types/express": "5.0.6",
     "@types/mocha": "10.0.10",
-    "@typescript-eslint/eslint-plugin": "8.59.0",
-    "@typescript-eslint/parser": "8.59.0",
+    "@typescript-eslint/eslint-plugin": "8.59.1",
+    "@typescript-eslint/parser": "8.59.1",
     "chai": "4.5.0",
     "chai-http": "4.4.0",
     "eslint": "9.39.4",
@@ -46,7 +46,7 @@
     "prettier": "3.8.3",
     "ts-node": "10.9.2",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.59.0"
+    "typescript-eslint": "8.59.1"
   },
   "mocha": {
     "require": "ts-node/register",
