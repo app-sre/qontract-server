@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
+import { expressMiddleware } from '@as-integrations/express5';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import express = require('express');
 
@@ -211,22 +211,6 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   );
 
   app.use(express.json());
-  // expressMiddleware (Apollo v4) requires a parsed JSON body.
-  // In Express 5, express.json() does not set req.body for GET requests (no body to parse),
-  // but Apollo v4 rejects requests where req.body is undefined. Default to {} so GET queries work.
-  app.use(
-    ['/graphql', '/graphqlsha'],
-    (
-      req: express.Request,
-      _res: express.Response,
-      next: express.NextFunction,
-    ) => {
-      if (req.body === undefined) {
-        Object.assign(req, { body: {} });
-      }
-      next();
-    },
-  );
 
   // Single dispatcher for all /graphqlsha/:sha requests — routes to the correct Apollo middleware.
   app.use(
