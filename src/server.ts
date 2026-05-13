@@ -10,7 +10,7 @@ import * as metrics from './metrics';
 import { generateAppSchema } from './schema';
 import { logger } from './logger';
 
-const deepDiff = require('deep-diff');
+import microdiff from 'microdiff';
 
 // sha expiration time (in ms). Defaults to 20m.
 const BUNDLE_SHA_TTL = Number(process.env.BUNDLE_SHA_TTL) || 20 * 60 * 1000;
@@ -357,12 +357,12 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
         return;
       }
 
-      // deepDiff can only diff objects, Map is not supported
-      const dataDiffs = deepDiff(
+      const dataDiffs = microdiff(
         Object.fromEntries(baseBundle.datafiles),
         Object.fromEntries(headBundle.datafiles),
+        { cyclesFix: false },
       );
-      const resourceDiffs = deepDiff(
+      const resourceDiffs = microdiff(
         Object.fromEntries(
           Array.from(baseBundle.resourcefiles, ([path, resource]) => [
             path,
@@ -375,6 +375,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
             resource.sha256sum,
           ]),
         ),
+        { cyclesFix: false },
       );
 
       const changes: any = {
@@ -382,8 +383,8 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
         resources: {},
       };
 
-      (resourceDiffs || []).forEach((diff: any) => {
-        const path = diff.path[0];
+      resourceDiffs.forEach((diff) => {
+        const path = String(diff.path[0]);
         const oldRes = baseBundle.resourcefiles.get(path);
         const newRes = headBundle.resourcefiles.get(path);
         changes.resources[path] = {
@@ -393,8 +394,8 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
         };
       });
 
-      (dataDiffs || []).forEach((diff: any) => {
-        const path = diff.path[0];
+      dataDiffs.forEach((diff) => {
+        const path = String(diff.path[0]);
         const oldRes = baseBundle.datafiles.get(path);
         const newRes = headBundle.datafiles.get(path);
         changes.datafiles[path] = {
