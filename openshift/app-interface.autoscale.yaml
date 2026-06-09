@@ -168,7 +168,7 @@ objects:
             timeoutSeconds: 1
             initialDelaySeconds: 10
           resources: "${{S3RELOADER_RESOURCES}}"
-        - image: ${IMAGE}:${IMAGE_TAG}
+        - image: ${IMAGE}:${IMAGE_TAG}@${IMAGE_DIGEST}
           imagePullPolicy: Always
           name: app-interface
           env:
@@ -280,6 +280,10 @@ parameters:
   value: latest
   displayName: App interface version
   description: App interface version which defaults to latest
+- name: IMAGE_DIGEST
+  value: ''
+  displayName: App interface image digest
+  description: App interface image digest.
 - name: IMAGE_PULL_SECRETS
   value: '[]'
   description: Secrets to use for pulling qontract-server images
