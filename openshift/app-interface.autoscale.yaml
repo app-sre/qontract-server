@@ -281,7 +281,7 @@ parameters:
   displayName: App interface version
   description: App interface version which defaults to latest
 - name: IMAGE_DIGEST
-  value: ''
+  required: true
   displayName: App interface image digest
   description: App interface image digest.
 - name: IMAGE_PULL_SECRETS
