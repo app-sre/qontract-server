@@ -167,7 +167,7 @@ objects:
             timeoutSeconds: 1
             initialDelaySeconds: 10
           resources: "${{S3RELOADER_RESOURCES}}"
-        - image: ${IMAGE}:${IMAGE_TAG}
+        - image: ${REGISTRY_IMG}:${IMAGE_TAG}
           imagePullPolicy: Always
           name: app-interface
           env:
@@ -257,7 +257,7 @@ objects:
     selector:
       deployment: app-interface
 parameters:
-- name: IMAGE
+- name: REGISTRY_IMG
   value: quay.io/app-sre/qontract-server
   displayName: App interface image
   description: App interface docker image. Defaults to quay.io/app-sre/app-interface
