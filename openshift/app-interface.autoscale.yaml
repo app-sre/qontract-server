@@ -74,7 +74,7 @@ objects:
           emptyDir:
             medium: Memory
         containers:
-        - image: ${IMAGE_GATE}:${IMAGE_GATE_TAG}
+        - image: ${IMAGE_GATE}:${IMAGE_GATE_TAG}@${IMAGE_GATE_DIGEST}
           imagePullPolicy: Always
           name: app-interface-nginx-gate
           env:
@@ -122,7 +122,7 @@ objects:
             initialDelaySeconds: 10
           resources: "${{GATE_RESOURCES}}"
 
-        - image: ${IMAGE_RELOADER}:${IMAGE_RELOADER_TAG}
+        - image: ${IMAGE_RELOADER}:${IMAGE_RELOADER_TAG}@${IMAGE_RELOADER_DIGEST}
           imagePullPolicy: Always
           name: s3-reloader
           env:
@@ -299,6 +299,9 @@ parameters:
   value: latest
   displayName: App interface nginx gate version
   description: App interface nginx gate version which defaults to latest
+- name: IMAGE_GATE_DIGEST
+  displayName: App interface nginx gate image digest
+  description: App interface nginx gate image digest.
 - name: IMAGE_GATE_AUTH_DISABLE
   value: "false"
   description: Set to true to disable authentication for accessing qontract server
@@ -310,6 +313,9 @@ parameters:
   value: quay.io/app-sre/s3-reload
 - name: IMAGE_RELOADER_TAG
   value: 0bc8c97
+- name: IMAGE_RELOADER_DIGEST
+  displayName: s3-reloader image digest
+  description: s3-reloader image digest.
 - name: MAX_OLD_SPACE_SIZE
   value: "400"
 
