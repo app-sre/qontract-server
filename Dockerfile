@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi9/nodejs-24-minimal:9.8-1782826304@sha256:80f9b905bd8d13e852982a7825f27c8c1ec0a3fc992d244c24879d7f284d8108 AS base
+FROM registry.access.redhat.com/ubi9/nodejs-24-minimal:9.8-1790168840@sha256:55e2df6921cbe253f492ac951e3074690a8de2354f3724f10c1898f4fb3d23d2 AS base
 WORKDIR $HOME
 COPY package.json package-lock.json ./
 
@@ -16,7 +16,7 @@ FROM base AS pre-prod
 RUN npm ci --omit=dev && \
     npm cache clean --force
 
-FROM registry.access.redhat.com/ubi9/nodejs-24-minimal:9.8-1782826304@sha256:80f9b905bd8d13e852982a7825f27c8c1ec0a3fc992d244c24879d7f284d8108 AS prod
+FROM registry.access.redhat.com/ubi9/nodejs-24-minimal:9.8-1790168840@sha256:55e2df6921cbe253f492ac951e3074690a8de2354f3724f10c1898f4fb3d23d2 AS prod
 WORKDIR $HOME
 COPY --from=pre-prod $HOME/node_modules $HOME/node_modules
 COPY --from=dev ${HOME}/dist ./dist
