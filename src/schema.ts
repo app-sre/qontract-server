@@ -17,8 +17,10 @@ import {
 import * as db from './db';
 import { Datafile } from './types';
 
-const isRef = (obj: object): boolean =>
-  (obj as any).constructor === Object &&
+const isRef = (obj: unknown): boolean =>
+  obj !== null &&
+  typeof obj === 'object' &&
+  obj.constructor === Object &&
   Object.keys(obj).length === 1 &&
   '$ref' in obj;
 
