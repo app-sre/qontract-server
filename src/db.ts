@@ -226,9 +226,13 @@ const waitForFile = async (
   }
 };
 
+const DEFAULT_DATAFILES_FILE = '/bundle/bundle.json';
+
 export const bundleFromDisk = async (path: string) => {
   const loadPath =
-    typeof path === 'undefined' ? process.env.DATAFILES_FILE : path;
+    typeof path === 'undefined'
+      ? (process.env.DATAFILES_FILE ?? DEFAULT_DATAFILES_FILE)
+      : path;
   if (process.env.DATAFILES_WAIT_TIMEOUT_SECONDS) {
     await waitForFile(
       loadPath,

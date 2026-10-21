@@ -56,3 +56,18 @@ describe('bundleFromDisk DATAFILES_WAIT_TIMEOUT_SECONDS', () => {
     }
   });
 });
+
+describe('bundleFromDisk default path', () => {
+  beforeEach(() => {
+    delete process.env.DATAFILES_FILE;
+  });
+
+  it('defaults to /bundle/bundle.json when DATAFILES_FILE is unset', async () => {
+    try {
+      await db.bundleFromDisk(undefined);
+      chai.assert.fail('expected bundleFromDisk to reject');
+    } catch (err) {
+      (err as NodeJS.ErrnoException).path.should.equal('/bundle/bundle.json');
+    }
+  });
+});
