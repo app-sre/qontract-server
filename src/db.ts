@@ -211,9 +211,30 @@ const bundleFromS3 = async (
   return parseBundle(contents);
 };
 
+const waitForFile = async (
+  path: string,
+  timeoutSeconds: number,
+): Promise<void> => {
+  const deadline = Date.now() + timeoutSeconds * 1000;
+  while (!fs.existsSync(path)) {
+    if (Date.now() >= deadline) {
+      throw new Error(
+        `Timed out after ${timeoutSeconds}s waiting for ${path} to exist`,
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+};
+
 export const bundleFromDisk = async (path: string) => {
   const loadPath =
     typeof path === 'undefined' ? process.env.DATAFILES_FILE : path;
+  if (process.env.DATAFILES_WAIT_TIMEOUT_SECONDS) {
+    await waitForFile(
+      loadPath,
+      Number(process.env.DATAFILES_WAIT_TIMEOUT_SECONDS),
+    );
+  }
   const readFile = util.promisify(fs.readFile);
   const contents = String(await readFile(loadPath));
   return parseBundle(contents);
