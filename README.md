@@ -30,7 +30,7 @@ This server is configured via environment variables.
 - `BUNDLE_SHA_TTL`: (not required) Expiration time for bundles. Defaults to `20m`.
 - `LOAD_METHOD`: (required) `fs` | `s3`. Source of the data.
 - `DATAFILES_FILE`: (not required, only used if `LOAD_METHOD=fs`) Path to the bundle JSON file. Defaults to `/bundle/bundle.json`, matching the `docker-run`/`bundle` Makefile targets' mount convention.
-- `DATAFILES_WAIT_TIMEOUT_SECONDS`: (not required, only used if `LOAD_METHOD=fs`) If set, wait up to this many seconds for `DATAFILES_FILE` to appear on disk before giving up, polling once a second. Defaults to off (unset), which preserves the original behavior of failing immediately if the file doesn't exist yet. Useful when the file is produced by another process/container that may not have finished writing it by the time this server starts (e.g. a sibling container sharing a volume).
+- `DATAFILES_WAIT_TIMEOUT_SECONDS`: (not required, only used if `LOAD_METHOD=fs`) Wait up to this many seconds for `DATAFILES_FILE` to appear on disk before giving up, polling once a second. Defaults to `1`. Set to `0` to fail immediately instead if the file doesn't exist yet. Useful when the file is produced by another process/container that may not have finished writing it by the time this server starts (e.g. a sibling container sharing a volume).
 - `AWS_ACCESS_KEY_ID`: (required if `LOAD_METHOD=s3`) AWS access key ID.
 - `AWS_SECRET_ACCESS_KEY`: (required if `LOAD_METHOD=s3`) AWS secret access key.
 - `AWS_REGION`: (required if `LOAD_METHOD=s3`) AWS region.

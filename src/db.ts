@@ -227,17 +227,18 @@ const waitForFile = async (
 };
 
 const DEFAULT_DATAFILES_FILE = '/bundle/bundle.json';
+const DEFAULT_DATAFILES_WAIT_TIMEOUT_SECONDS = 1;
 
 export const bundleFromDisk = async (path: string) => {
   const loadPath =
     typeof path === 'undefined'
       ? (process.env.DATAFILES_FILE ?? DEFAULT_DATAFILES_FILE)
       : path;
-  if (process.env.DATAFILES_WAIT_TIMEOUT_SECONDS) {
-    await waitForFile(
-      loadPath,
-      Number(process.env.DATAFILES_WAIT_TIMEOUT_SECONDS),
-    );
+  const waitTimeoutSeconds = process.env.DATAFILES_WAIT_TIMEOUT_SECONDS
+    ? Number(process.env.DATAFILES_WAIT_TIMEOUT_SECONDS)
+    : DEFAULT_DATAFILES_WAIT_TIMEOUT_SECONDS;
+  if (waitTimeoutSeconds > 0) {
+    await waitForFile(loadPath, waitTimeoutSeconds);
   }
   const readFile = util.promisify(fs.readFile);
   const contents = String(await readFile(loadPath));

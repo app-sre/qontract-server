@@ -25,7 +25,20 @@ describe('bundleFromDisk DATAFILES_WAIT_TIMEOUT_SECONDS', () => {
     delete process.env.DATAFILES_WAIT_TIMEOUT_SECONDS;
   });
 
-  it('without the env var, fails immediately if the file is missing (current behavior)', async () => {
+  it('without the env var, waits up to the default 1s then fails', async function () {
+    this.timeout(5000);
+    const start = Date.now();
+    try {
+      await db.bundleFromDisk(bundlePath);
+      chai.assert.fail('expected bundleFromDisk to reject');
+    } catch (err) {
+      (err as Error).message.should.match(/Timed out after 1s waiting for/);
+    }
+    (Date.now() - start).should.be.at.least(900);
+  });
+
+  it('set to 0, fails immediately instead of waiting', async () => {
+    process.env.DATAFILES_WAIT_TIMEOUT_SECONDS = '0';
     const start = Date.now();
     try {
       await db.bundleFromDisk(bundlePath);
@@ -60,6 +73,11 @@ describe('bundleFromDisk DATAFILES_WAIT_TIMEOUT_SECONDS', () => {
 describe('bundleFromDisk default path', () => {
   beforeEach(() => {
     delete process.env.DATAFILES_FILE;
+    process.env.DATAFILES_WAIT_TIMEOUT_SECONDS = '0';
+  });
+
+  afterEach(() => {
+    delete process.env.DATAFILES_WAIT_TIMEOUT_SECONDS;
   });
 
   it('defaults to /bundle/bundle.json when DATAFILES_FILE is unset', async () => {
