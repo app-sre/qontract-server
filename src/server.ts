@@ -261,12 +261,51 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
       return;
     }
 
-    removeExpiredBundles(app);
-
+    const previousLatestBundleSha = app.get('latestBundleSha');
     app.get('bundles')[bundleSha] = bundle;
-    // register a new server exposing this bundle
-    const server = await buildApolloServer(app, bundleSha);
-    registerApolloServer(app, bundleSha, server);
+    let candidateServer:
+      Awaited<ReturnType<typeof buildApolloServer>> | undefined;
+    try {
+      // register a new server exposing this bundle
+      candidateServer = await buildApolloServer(app, bundleSha);
+      registerApolloServer(app, bundleSha, candidateServer);
+    } catch (e) {
+      if (candidateServer) {
+        try {
+          await candidateServer.stop();
+        } catch (stopError) {
+          const errorMessage =
+            stopError instanceof Error ? stopError.message : 'unknown error';
+          logger.error(
+            'failed to stop Apollo server for bundle %s: %s',
+            bundleSha,
+            errorMessage,
+          );
+        }
+      }
+
+      delete app.get('bundles')[bundleSha];
+      app.get('shaRouters').delete(bundleSha);
+      delete app.get('bundleCache')[bundleSha];
+      delete app.get('searchableFields')[bundleSha];
+      delete app.get('datafileSchemas')[bundleSha];
+      delete app.get('objectTypes')[bundleSha];
+      delete app.get('objectInterfaces')[bundleSha];
+      if (app.get('latestBundleSha') === bundleSha) {
+        app.set('latestBundleSha', previousLatestBundleSha);
+      }
+
+      const errorMessage = e instanceof Error ? e.message : 'unknown error';
+      logger.error(
+        'failed to build GraphQL server for bundle %s: %s',
+        bundleSha,
+        errorMessage,
+      );
+      res.status(503).send('error building GraphQL schema, not replacing');
+      return;
+    }
+
+    removeExpiredBundles(app);
 
     metrics.updateResourceMetrics(bundle);
     metrics.updateCacheMetrics(app);
