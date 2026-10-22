@@ -198,7 +198,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
         req.url = `/graphqlsha/${bundleSha}${qs}`;
       }
 
-      const graphqlshaMatch = req.url.match(/\/graphqlsha\/(.*)$/);
+      const graphqlshaMatch = req.url.match(/^\/graphqlsha\/([^/?]+)/);
       if (graphqlshaMatch) {
         const sha = graphqlshaMatch[1];
         if (app.get('bundleCache')[sha]) {
