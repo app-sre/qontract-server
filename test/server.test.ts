@@ -286,6 +286,12 @@ describe('server', async () => {
     const response = await chai.request(srv).get('/metrics');
     response.should.have.status(200);
     response.text.should.match(/^# (HELP|TYPE) /m);
+    response.text.should.include(
+      'qontract_server_graphql_operation_duration_seconds_count{operation="anonymous",root_field="roles_v1"}',
+    );
+    response.text.should.include(
+      'qontract_server_graphql_postprocess_duration_seconds_count{operation="anonymous"}',
+    );
   });
 
   it('GET /cache returns cache state', async () => {

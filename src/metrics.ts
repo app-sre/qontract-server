@@ -44,6 +44,20 @@ const bundleCacheGauge = new promClient.Gauge({
   help: 'Number of shas cached by the application in the bundleCache object',
 });
 
+export const graphqlOperationDuration = new promClient.Histogram({
+  name: 'qontract_server_graphql_operation_duration_seconds',
+  help: 'Duration of GraphQL execution by operation and primary root field',
+  labelNames: ['operation', 'root_field'],
+  buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5],
+});
+
+export const graphqlPostprocessDuration = new promClient.Histogram({
+  name: 'qontract_server_graphql_postprocess_duration_seconds',
+  help: 'Duration of excludeEmptyObjectInArray response post-processing',
+  labelNames: ['operation'],
+  buckets: [0.0005, 0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5],
+});
+
 export const updateCacheMetrics = (app: express.Express) => {
   bundleGauge.set(Object.keys(app.get('bundles')).length);
   bundleCacheGauge.set(Object.keys(app.get('bundleCache')).length);
