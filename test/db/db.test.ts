@@ -58,6 +58,16 @@ describe('bundleFromDisk DATAFILES_WAIT_TIMEOUT_SECONDS', () => {
     bundle.datafiles.size.should.equal(0);
   });
 
+  it('with the env var, waits for a partially written bundle to complete before loading', async function () {
+    this.timeout(5000);
+    process.env.DATAFILES_WAIT_TIMEOUT_SECONDS = '5';
+    fs.writeFileSync(bundlePath, emptyBundle.slice(0, 10));
+    setTimeout(() => fs.appendFileSync(bundlePath, emptyBundle.slice(10)), 300);
+
+    const bundle = await db.bundleFromDisk(bundlePath);
+    bundle.datafiles.size.should.equal(0);
+  });
+
   it('with the env var, times out if the file never appears', async function () {
     this.timeout(5000);
     process.env.DATAFILES_WAIT_TIMEOUT_SECONDS = '1';
