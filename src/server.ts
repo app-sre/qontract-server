@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { performance } from 'perf_hooks';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
+import { ApolloServerPluginCacheControlDisabled } from '@apollo/server/plugin/disabled';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { FieldNode } from 'graphql';
 import express = require('express');
@@ -64,6 +65,7 @@ const buildApolloServer = async (
     // is not needed and would break existing GET-based clients (qontract-reconcile, etc.)
     csrfPrevention: false,
     plugins: [
+      ApolloServerPluginCacheControlDisabled(),
       ApolloServerPluginLandingPageLocalDefault({ embed: true }),
       {
         async requestDidStart() {
