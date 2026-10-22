@@ -211,12 +211,54 @@ const bundleFromS3 = async (
   return parseBundle(contents);
 };
 
+const readBundle = async (path: string): Promise<Bundle> => {
+  const readFile = util.promisify(fs.readFile);
+  const contents = String(await readFile(path));
+  return parseBundle(contents);
+};
+
+const isRetryableBundleError = (error: unknown): boolean =>
+  (error as NodeJS.ErrnoException)?.code === 'ENOENT' ||
+  error instanceof SyntaxError;
+
+const waitForBundle = async (
+  path: string,
+  timeoutSeconds: number,
+  deadline = Date.now() + timeoutSeconds * 1000,
+): Promise<Bundle> => {
+  try {
+    return await readBundle(path);
+  } catch (error) {
+    if (!isRetryableBundleError(error)) {
+      throw error;
+    }
+    if (Date.now() >= deadline) {
+      throw new Error(
+        `Timed out after ${timeoutSeconds}s waiting for ${path} to be a readable bundle: ${
+          (error as Error).message
+        }`,
+      );
+    }
+  }
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  return waitForBundle(path, timeoutSeconds, deadline);
+};
+
+const DEFAULT_DATAFILES_FILE = '/bundle/bundle.json';
+const DEFAULT_DATAFILES_WAIT_TIMEOUT_SECONDS = 1;
+
 export const bundleFromDisk = async (path: string) => {
   const loadPath =
-    typeof path === 'undefined' ? process.env.DATAFILES_FILE : path;
-  const readFile = util.promisify(fs.readFile);
-  const contents = String(await readFile(loadPath));
-  return parseBundle(contents);
+    typeof path === 'undefined'
+      ? (process.env.DATAFILES_FILE ?? DEFAULT_DATAFILES_FILE)
+      : path;
+  const waitTimeoutSeconds = process.env.DATAFILES_WAIT_TIMEOUT_SECONDS
+    ? Number(process.env.DATAFILES_WAIT_TIMEOUT_SECONDS)
+    : DEFAULT_DATAFILES_WAIT_TIMEOUT_SECONDS;
+  if (waitTimeoutSeconds > 0) {
+    return waitForBundle(loadPath, waitTimeoutSeconds);
+  }
+  return readBundle(loadPath);
 };
 
 export const bundleFromEnvironment = async () => {
