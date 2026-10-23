@@ -1,8 +1,10 @@
 import 'dotenv/config';
+import { performance } from 'perf_hooks';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 import { ApolloServerPluginCacheControlDisabled } from '@apollo/server/plugin/disabled';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import { FieldNode } from 'graphql';
 import express = require('express');
 
 import promClient = require('prom-client');
@@ -67,13 +69,33 @@ const buildApolloServer = async (
       ApolloServerPluginLandingPageLocalDefault({ embed: true }),
       {
         async requestDidStart() {
+          const execStart = performance.now();
           return {
             async willSendResponse(requestContext) {
-              const { response, contextValue } = requestContext;
+              const { response, contextValue, operationName, operation } =
+                requestContext;
+              const opLabel = operationName || 'anonymous';
+              const rootField =
+                operation?.selectionSet.selections.find(
+                  (s): s is FieldNode => s.kind === 'Field',
+                )?.name.value || 'unknown';
+
               if (response.body.kind === 'single') {
+                const postStart = performance.now();
                 response.body.singleResult.data = excludeEmptyObjectInArray(
                   response.body.singleResult.data,
                 );
+                const postEnd = performance.now();
+
+                metrics.graphqlPostprocessDuration.observe(
+                  { operation: opLabel },
+                  (postEnd - postStart) / 1000,
+                );
+                metrics.graphqlOperationDuration.observe(
+                  { operation: opLabel, root_field: rootField },
+                  (postEnd - execStart) / 1000,
+                );
+
                 response.body.singleResult.extensions = {
                   ...response.body.singleResult.extensions,
                   schemas: contextValue.schemas,
