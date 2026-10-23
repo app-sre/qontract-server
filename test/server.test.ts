@@ -17,6 +17,7 @@ const { expect } = chai;
 
 const responseIsNotAnError = (res: any) => {
   res.should.have.status(200);
+  res.should.not.have.header('cache-control');
   res.body.should.not.have.any.keys('errors');
   res.body.should.have.all.keys('data', 'extensions');
 };
@@ -352,6 +353,20 @@ describe('server', async () => {
 
     const perm = response2.body.data.roles[0].permissions[0];
     expect(perm.org).to.equal('org-A');
+  });
+
+  it('does not emit cache-control header on /graphqlsha/:sha responses', async () => {
+    const shaResponse = await chai.request(srv).get('/sha256');
+    const query = '{ roles: roles_v1 { name } }';
+
+    const response = await chai
+      .request(srv)
+      .post(`/graphqlsha/${shaResponse.text}`)
+      .set('content-type', 'application/json')
+      .send({ query });
+
+    responseIsNotAnError(response);
+    expect(response).to.not.have.header('cache-control');
   });
 });
 
