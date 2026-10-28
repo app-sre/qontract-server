@@ -26,28 +26,40 @@ interface ICacheInfo {
 }
 
 const isEmptyObject = (obj: any): boolean => {
-  if (obj === null || typeof obj !== 'object') {
+  if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
     return false;
   }
-  if (Array.isArray(obj)) {
-    return false;
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      return false;
+    }
   }
-  return Object.keys(obj).length === 0;
+  return true;
 };
 
-function excludeEmptyObjectInArray(data: any): any {
-  if (data == null || typeof data !== 'object') {
+// Strips empty `{}` elements from arrays (produced when GraphQL inline fragments
+// do not match an interface implementation's concrete type) in a single pass
+// while returning new arrays and objects so the input is never mutated.
+export function excludeEmptyObjectInArray(data: any): any {
+  if (data === null || typeof data !== 'object') {
     return data;
   }
   if (Array.isArray(data)) {
-    return data
-      .filter((i) => !isEmptyObject(i))
-      .map((i) => excludeEmptyObjectInArray(i));
+    const result = [];
+    for (const item of data) {
+      if (!isEmptyObject(item)) {
+        result.push(excludeEmptyObjectInArray(item));
+      }
+    }
+    return result;
   }
-  return Object.entries(data).reduce((acc: any, [key, value]) => {
-    acc[key] = excludeEmptyObjectInArray(value);
-    return acc;
-  }, {});
+  const result: Record<string, any> = {};
+  for (const key in data) {
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
+      result[key] = excludeEmptyObjectInArray(data[key]);
+    }
+  }
+  return result;
 }
 
 // builds and starts the ApolloServer for the specific bundleSha

@@ -368,6 +368,77 @@ describe('server', async () => {
     responseIsNotAnError(response);
     expect(response).to.not.have.header('cache-control');
   });
+
+  it('excludeEmptyObjectInArray removes empty objects without mutating input', () => {
+    const deepFreeze = <T>(obj: T): T => {
+      if (obj !== null && typeof obj === 'object') {
+        Object.freeze(obj);
+        for (const key of Object.keys(obj as Record<string, unknown>)) {
+          deepFreeze((obj as Record<string, unknown>)[key]);
+        }
+      }
+      return obj;
+    };
+
+    const proto = { inheritedProp: 'should-be-ignored' };
+    const inheritedEmpty = Object.create(proto);
+
+    const input = deepFreeze({
+      roles: [
+        {
+          name: 'role-a',
+          permissions: [{ service: 'github-org-team' }, {}, inheritedEmpty],
+        },
+        {},
+      ],
+      mixedArray: [null, undefined, 0, false, '', [], {}, { keep: 'value' }],
+      deeplyNested: [[{}, { deep: [{}, 'kept', { emptyObjProp: {} }] }]],
+      nonArrayEmptyObjects: {
+        emptyObj: {},
+        nestedEmptyObj: { inner: {} },
+        nullProp: null,
+        undefProp: undefined,
+      },
+      unchanged: {
+        items: [{ id: 1 }, { id: 2 }],
+      },
+    });
+
+    expect(server.excludeEmptyObjectInArray(null)).to.equal(null);
+    expect(server.excludeEmptyObjectInArray(undefined)).to.equal(undefined);
+
+    const output = server.excludeEmptyObjectInArray(input);
+
+    expect(output).to.not.equal(input);
+    expect(output.roles).to.have.lengthOf(1);
+    expect(output.roles[0].permissions).to.eql([
+      { service: 'github-org-team' },
+    ]);
+    expect(output.mixedArray).to.eql([
+      null,
+      undefined,
+      0,
+      false,
+      '',
+      [],
+      { keep: 'value' },
+    ]);
+    expect(output.deeplyNested).to.eql([
+      [{ deep: ['kept', { emptyObjProp: {} }] }],
+    ]);
+    // Empty objects in non-array contexts remain untouched
+    expect(output.nonArrayEmptyObjects).to.not.equal(
+      input.nonArrayEmptyObjects,
+    );
+    expect(output.nonArrayEmptyObjects.emptyObj).to.eql({});
+    expect(output.nonArrayEmptyObjects.nestedEmptyObj.inner).to.eql({});
+    // Fresh containers are created without mutating the original input
+    expect(output.unchanged).to.not.equal(input.unchanged);
+    expect(output.unchanged).to.eql(input.unchanged);
+    expect(input.roles).to.have.lengthOf(2);
+    expect(input.roles[0].permissions).to.have.lengthOf(3);
+    expect(input.mixedArray).to.have.lengthOf(8);
+  });
 });
 
 describe('bundle loading', async () => {
