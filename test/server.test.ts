@@ -284,9 +284,21 @@ describe('server', async () => {
   });
 
   it('GET /metrics returns valid Prometheus format', async () => {
+    const queryResponse = await chai
+      .request(srv)
+      .post('/graphql')
+      .send({ query: '{ roles_v1 { name } }' });
+    responseIsNotAnError(queryResponse);
+
     const response = await chai.request(srv).get('/metrics');
     response.should.have.status(200);
     response.text.should.match(/^# (HELP|TYPE) /m);
+    response.text.should.include(
+      'qontract_server_graphql_operation_duration_seconds_count{operation="anonymous",root_field="roles_v1",outcome="success"}',
+    );
+    response.text.should.include(
+      'qontract_server_graphql_postprocess_duration_seconds_count{operation="anonymous"}',
+    );
   });
 
   it('GET /cache returns cache state', async () => {

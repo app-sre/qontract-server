@@ -1942,14 +1942,388 @@ data:
               "datasource": {
                 "uid": "$datasource"
               },
-              "expr": "qontract_server_nodejs_eventloop_lag_seconds",
+              "expr": "qontract_server_nodejs_eventloop_lag_seconds{namespace=\"$namespace\",endpoint=\"app-interface\"}",
               "interval": "",
-              "legendFormat": "{{pod}}",
+              "legendFormat": "lag {{pod}}",
               "refId": "A"
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "qontract_server_nodejs_eventloop_lag_p99_seconds{namespace=\"$namespace\",endpoint=\"app-interface\"}",
+              "legendFormat": "p99 {{pod}}",
+              "refId": "B"
             }
           ],
           "title": "NodeJS eventloop lag",
-          "type": "timeseries"
+          "type": "timeseries",
+          "description": "Existing prom-client event-loop delay metrics, per pod. p99 covers the interval since the preceding metrics collection; do not average pod percentiles."
+        },
+        {
+          "collapsed": false,
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "gridPos": {
+            "h": 1,
+            "w": 24,
+            "x": 0,
+            "y": 54
+          },
+          "id": 42,
+          "panels": [],
+          "targets": [
+            {
+              "datasource": {
+                "type": "prometheus",
+                "uid": "$datasource"
+              },
+              "refId": "A"
+            }
+          ],
+          "title": "GraphQL operation phases",
+          "type": "row"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 0,
+            "y": 55
+          },
+          "id": 43,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.4.1",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "histogram_quantile(0.5, sum by (le, operation, root_field) (rate(qontract_server_graphql_operation_duration_seconds_bucket{namespace=\"$namespace\",endpoint=\"app-interface\",outcome=\"success\"}[$__rate_interval])))",
+              "legendFormat": "p50 {{operation}} {{root_field}}",
+              "refId": "A",
+              "range": true
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "histogram_quantile(0.95, sum by (le, operation, root_field) (rate(qontract_server_graphql_operation_duration_seconds_bucket{namespace=\"$namespace\",endpoint=\"app-interface\",outcome=\"success\"}[$__rate_interval])))",
+              "legendFormat": "p95 {{operation}} {{root_field}}",
+              "refId": "B",
+              "range": true
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "histogram_quantile(0.99, sum by (le, operation, root_field) (rate(qontract_server_graphql_operation_duration_seconds_bucket{namespace=\"$namespace\",endpoint=\"app-interface\",outcome=\"success\"}[$__rate_interval])))",
+              "legendFormat": "p99 {{operation}} {{root_field}}",
+              "refId": "C",
+              "range": true
+            }
+          ],
+          "title": "Apollo operation latency",
+          "type": "timeseries",
+          "description": "Successful Apollo processing through post-processing; excludes socket completion and proxy cache hits."
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 8,
+            "y": 55
+          },
+          "id": 44,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.4.1",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "histogram_quantile(0.5, sum by (le, operation, root_field) (rate(qontract_server_graphql_execution_duration_seconds_bucket{namespace=\"$namespace\",endpoint=\"app-interface\"}[$__rate_interval])))",
+              "legendFormat": "p50 {{operation}} {{root_field}}",
+              "refId": "A",
+              "range": true
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "histogram_quantile(0.95, sum by (le, operation, root_field) (rate(qontract_server_graphql_execution_duration_seconds_bucket{namespace=\"$namespace\",endpoint=\"app-interface\"}[$__rate_interval])))",
+              "legendFormat": "p95 {{operation}} {{root_field}}",
+              "refId": "B",
+              "range": true
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "histogram_quantile(0.99, sum by (le, operation, root_field) (rate(qontract_server_graphql_execution_duration_seconds_bucket{namespace=\"$namespace\",endpoint=\"app-interface\"}[$__rate_interval])))",
+              "legendFormat": "p99 {{operation}} {{root_field}}",
+              "refId": "C",
+              "range": true
+            }
+          ],
+          "title": "GraphQL execution latency",
+          "type": "timeseries",
+          "description": "Execution phase including failed executions. Root labels describe operation shape, not individual field timing."
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "$datasource"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": false,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 8,
+            "x": 16,
+            "y": 55
+          },
+          "id": 45,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "multi",
+              "sort": "none"
+            }
+          },
+          "pluginVersion": "10.4.1",
+          "targets": [
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "histogram_quantile(0.5, sum by (le, operation) (rate(qontract_server_graphql_postprocess_duration_seconds_bucket{namespace=\"$namespace\",endpoint=\"app-interface\"}[$__rate_interval])))",
+              "legendFormat": "p50 {{operation}}",
+              "refId": "A",
+              "range": true
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "histogram_quantile(0.95, sum by (le, operation) (rate(qontract_server_graphql_postprocess_duration_seconds_bucket{namespace=\"$namespace\",endpoint=\"app-interface\"}[$__rate_interval])))",
+              "legendFormat": "p95 {{operation}}",
+              "refId": "B",
+              "range": true
+            },
+            {
+              "datasource": {
+                "uid": "$datasource"
+              },
+              "expr": "histogram_quantile(0.99, sum by (le, operation) (rate(qontract_server_graphql_postprocess_duration_seconds_bucket{namespace=\"$namespace\",endpoint=\"app-interface\"}[$__rate_interval])))",
+              "legendFormat": "p99 {{operation}}",
+              "refId": "C",
+              "range": true
+            }
+          ],
+          "title": "GraphQL post-processing latency",
+          "type": "timeseries",
+          "description": "Time removing empty objects from response data; errors without data have no observation."
         }
       ],
       "refresh": "1m",
@@ -2048,7 +2422,8 @@ data:
       "timezone": "",
       "title": "Qontract Server",
       "uid": "aD7OqdhMz",
-      "weekStart": ""
+      "weekStart": "",
+      "version": 1
     }
 kind: ConfigMap
 metadata:

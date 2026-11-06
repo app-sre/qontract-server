@@ -68,6 +68,7 @@ const buildApolloServer = async (
   bundleSha: string,
 ): Promise<ApolloServer<IContext>> => {
   const schema = generateAppSchema(app, bundleSha);
+  const allowedOperations = metrics.graphqlOperationAllowlist();
   const server = new ApolloServer<IContext>({
     schema,
     introspection: true,
@@ -79,17 +80,56 @@ const buildApolloServer = async (
       ApolloServerPluginLandingPageLocalDefault({ embed: true }),
       {
         async requestDidStart() {
+          const endOperation = metrics.graphqlOperationDuration.startTimer();
+          let labels = { operation: 'invalid', root_field: 'none' };
           return {
+            async didResolveOperation({ document, operation }) {
+              if (operation) {
+                labels = metrics.graphqlOperationLabels(
+                  document,
+                  operation,
+                  allowedOperations,
+                );
+              }
+            },
+            async executionDidStart({ operation }) {
+              if (!operation) return;
+              const endExecution =
+                metrics.graphqlExecutionDuration.startTimer(labels);
+              return {
+                async executionDidEnd() {
+                  endExecution();
+                },
+              };
+            },
             async willSendResponse(requestContext) {
               const { response, contextValue } = requestContext;
-              if (response.body.kind === 'single') {
-                response.body.singleResult.data = excludeEmptyObjectInArray(
-                  response.body.singleResult.data,
-                );
-                response.body.singleResult.extensions = {
-                  ...response.body.singleResult.extensions,
-                  schemas: contextValue.schemas,
-                };
+              let outcome = 'error';
+              try {
+                if (response.body.kind === 'single') {
+                  if (response.body.singleResult.data !== undefined) {
+                    const endPostprocess =
+                      metrics.graphqlPostprocessDuration.startTimer({
+                        operation: labels.operation,
+                      });
+                    try {
+                      response.body.singleResult.data =
+                        excludeEmptyObjectInArray(
+                          response.body.singleResult.data,
+                        );
+                    } finally {
+                      endPostprocess();
+                    }
+                  }
+                  response.body.singleResult.extensions = {
+                    ...response.body.singleResult.extensions,
+                    schemas: contextValue.schemas,
+                  };
+                }
+                outcome = requestContext.errors?.length ? 'error' : 'success';
+              } finally {
+                // Stop after post-processing, in the same hook, to avoid plugin ordering assumptions.
+                endOperation({ ...labels, outcome });
               }
             },
           };
