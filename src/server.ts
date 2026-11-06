@@ -4,6 +4,11 @@ import { expressMiddleware } from '@as-integrations/express5';
 import { ApolloServerPluginCacheControlDisabled } from '@apollo/server/plugin/disabled';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import express = require('express');
+import {
+  ApolloLifecycle,
+  RegisterApollo,
+  shutdownHttpServer,
+} from './apolloLifecycle';
 
 import promClient = require('prom-client');
 import * as db from './db';
@@ -71,6 +76,7 @@ const buildApolloServer = async (
   const server = new ApolloServer<IContext>({
     schema,
     introspection: true,
+    stopOnTerminationSignals: false,
     // qontract-server is an internal API with no cookie-based auth, so CSRF protection
     // is not needed and would break existing GET-based clients (qontract-reconcile, etc.)
     csrfPrevention: false,
@@ -107,13 +113,47 @@ const registerApolloServer = (
   app: express.Express,
   bundleSha: string,
   server: ApolloServer<IContext>,
+  own?: RegisterApollo,
 ) => {
   const middleware = expressMiddleware(server, {
     context: async (): Promise<IContext> => ({ schemas: [] }),
   });
   const expiration = Date.now() + BUNDLE_SHA_TTL;
 
-  app.get('shaRouters').set(bundleSha, middleware);
+  const lifecycle: ApolloLifecycle = app.get('apolloLifecycle');
+  const register = own ?? lifecycle.add.bind(lifecycle);
+  register(bundleSha, server, () => {
+    delete app.get('bundles')[bundleSha];
+    app.get('shaRouters').delete(bundleSha);
+    delete app.get('bundleCache')[bundleSha];
+    delete app.get('searchableFields')[bundleSha];
+    delete app.get('datafileSchemas')[bundleSha];
+    delete app.get('objectTypes')[bundleSha];
+    delete app.get('objectInterfaces')[bundleSha];
+    metrics.updateCacheMetrics(app);
+  });
+  app
+    .get('shaRouters')
+    .set(
+      bundleSha,
+      async (
+        req: express.Request,
+        res: express.Response,
+        next: express.NextFunction,
+      ) => {
+        const release = lifecycle.acquire(bundleSha);
+        if (!release) {
+          next();
+          return;
+        }
+        try {
+          // Await the integration's whole pipeline, even if the client disconnects.
+          await middleware(req, res, next);
+        } finally {
+          release();
+        }
+      },
+    );
 
   // add to the cache
 
@@ -123,6 +163,27 @@ const registerApolloServer = (
 
   // set as latest sha
   app.set('latestBundleSha', bundleSha);
+};
+
+// A started instance must have an owner, including when shutdown refuses registration.
+const buildAndRegisterApolloServer = async (
+  app: express.Express,
+  sha: string,
+  own?: RegisterApollo,
+) => {
+  const server = await buildApolloServer(app, sha);
+  try {
+    registerApolloServer(app, sha, server, own);
+  } catch (error) {
+    await server.stop().catch((stopError: unknown) => {
+      logger.error(
+        'failed to stop unregistered Apollo server for bundle %s: %s',
+        sha,
+        stopError instanceof Error ? stopError.message : 'unknown error',
+      );
+    });
+    throw error;
+  }
 };
 
 // remove expired bundles
@@ -136,25 +197,15 @@ const removeExpiredBundles = (app: express.Express) => {
     if (cacheInfo.expiration < Date.now()) {
       logger.info('removing expired bundle: %s', sha);
 
-      delete app.get('bundles')[sha];
-
-      // remove from shaRouters map
-      app.get('shaRouters').delete(sha);
-
-      // remove from bundleCache
-      delete app.get('bundleCache')[sha];
-
-      // remove from searchableFields
-      delete app.get('searchableFields')[sha];
-
-      // remove from datafileSchemas
-      delete app.get('datafileSchemas')[sha];
-
-      // remove from objectTypes
-      delete app.get('objectTypes')[sha];
-
-      // remove from objectInterfaces
-      delete app.get('objectInterfaces')[sha];
+      // Retirement runs in the background so a long query cannot block reload.
+      const lifecycle: ApolloLifecycle = app.get('apolloLifecycle');
+      void lifecycle.retire(sha).catch((error: unknown) => {
+        logger.error(
+          'failed to retire Apollo server for bundle %s: %s',
+          sha,
+          error instanceof Error ? error.message : 'unknown error',
+        );
+      });
     }
   }
 };
@@ -162,6 +213,8 @@ const removeExpiredBundles = (app: express.Express) => {
 // Create application
 export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   const app: express.Express = express();
+  const lifecycle = new ApolloLifecycle();
+  app.set('apolloLifecycle', lifecycle);
 
   // Create the initial `bundles` object. This object will have this shape:
   // bundles:
@@ -172,7 +225,7 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   app.set('bundleCache', {});
 
   // Per-SHA router map: sha -> Apollo expressMiddleware
-  app.set('shaRouters', new Map<string, express.Router>());
+  app.set('shaRouters', new Map<string, express.RequestHandler>());
 
   // Middleware for prom metrics
   app.use(metrics.metricsMiddleware);
@@ -238,55 +291,65 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
         const sha = match[1];
         const handler = app.get('shaRouters').get(sha);
         if (handler) {
-          handler(req, res, next);
-          return;
+          return handler(req, res, next);
         }
       }
       next();
     },
   );
 
-  for (const bp of bundlePromises) {
-    const bundle = await bp;
-    const sha = bundle.fileHash;
-    app.get('bundles')[sha] = bundle;
-    logger.info('loading initial bundle %s', sha);
-    const server = await buildApolloServer(app, sha);
-    registerApolloServer(app, sha, server);
+  try {
+    for (const bp of bundlePromises) {
+      const bundle = await bp;
+      const sha = bundle.fileHash;
+      if (app.get('shaRouters').has(sha)) continue;
+      app.get('bundles')[sha] = bundle;
+      logger.info('loading initial bundle %s', sha);
+      await buildAndRegisterApolloServer(app, sha);
+    }
+  } catch (error) {
+    await lifecycle.stopAll().catch((stopError: unknown) => {
+      logger.error(
+        'failed to stop Apollo servers after startup failure: %s',
+        stopError instanceof Error ? stopError.message : 'unknown error',
+      );
+    });
+    throw error;
   }
 
   app.post('/reload', async (req: express.Request, res: express.Response) => {
-    let bundle: db.Bundle;
+    await lifecycle.trackLoad(async (own) => {
+      let bundle: db.Bundle;
 
-    try {
-      // fetch the new bundle
-      bundle = await db.bundleFromEnvironment();
-    } catch (e) {
-      res.status(503).send('error parsing bundle, not replacing');
-      return;
-    }
+      try {
+        // fetch the new bundle
+        bundle = await db.bundleFromEnvironment();
+      } catch (e) {
+        res.status(503).send('error parsing bundle, not replacing');
+        return;
+      }
 
-    // store it in the `bundles` object
-    const bundleSha = bundle.fileHash;
+      // store it in the `bundles` object
+      const bundleSha = bundle.fileHash;
 
-    if (app.get('bundles')[bundleSha]) {
-      logger.info('skipping reload, data already loaded');
+      if (app.get('bundles')[bundleSha]) {
+        logger.info('skipping reload, data already loaded');
+        res.send();
+        return;
+      }
+
+      removeExpiredBundles(app);
+
+      app.get('bundles')[bundleSha] = bundle;
+      // register a new server exposing this bundle
+      await buildAndRegisterApolloServer(app, bundleSha, own);
+
+      metrics.updateResourceMetrics(bundle);
+      metrics.updateCacheMetrics(app);
+
+      logger.info('bundle loaded: %s', bundleSha);
       res.send();
-      return;
-    }
-
-    removeExpiredBundles(app);
-
-    app.get('bundles')[bundleSha] = bundle;
-    // register a new server exposing this bundle
-    const server = await buildApolloServer(app, bundleSha);
-    registerApolloServer(app, bundleSha, server);
-
-    metrics.updateResourceMetrics(bundle);
-    metrics.updateCacheMetrics(app);
-
-    logger.info('bundle loaded: %s', bundleSha);
-    res.send();
+    });
   });
 
   app.get('/sha256', (req: express.Request, res: express.Response) => {
@@ -499,22 +562,38 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
   return app;
 };
 
+// One owner for HTTP draining and every per-bundle Apollo instance.
+export const startHttpServer = (app: express.Express, port = 4000) => {
+  const server = app.listen({ port }, () => {
+    logger.info('Running at http://localhost:%s/graphql', port);
+  });
+  let shutdown: Promise<void> | undefined;
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.on(signal, () => {
+      if (shutdown) return;
+      logger.info('%s received, draining HTTP and Apollo servers', signal);
+      shutdown = shutdownHttpServer(server, app.get('apolloLifecycle'));
+      void shutdown.then(
+        () => {
+          logger.info('HTTP and Apollo servers stopped');
+        },
+        (error: unknown) => {
+          logger.error(
+            'server shutdown failed: %s',
+            error instanceof Error ? error.message : 'unknown error',
+          );
+          process.exit(1);
+        },
+      );
+    });
+  }
+  return server;
+};
+
 // If this is main, load an app from the environment and run the server.
 if (require.main === module) {
   appFromBundle(db.getInitialBundles()).then((app) => {
-    const server = app.listen({ port: 4000 }, () => {
-      logger.info('Running at http://localhost:4000/graphql');
-    });
-
-    for (const signal of ['SIGINT', 'SIGTERM']) {
-      process.on(signal, () => {
-        logger.info(`${signal} received, shutting down HTTP server`);
-        server.close(() => {
-          logger.info('HTTP server closed');
-        });
-      });
-    }
-
+    startHttpServer(app);
     metrics.updateCacheMetrics(app);
     metrics.updateResourceMetrics(
       app.get('bundles')[app.get('latestBundleSha')],
