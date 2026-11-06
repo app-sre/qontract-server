@@ -1,10 +1,8 @@
 import 'dotenv/config';
-import { performance } from 'perf_hooks';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@as-integrations/express5';
 import { ApolloServerPluginCacheControlDisabled } from '@apollo/server/plugin/disabled';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
-import { FieldNode } from 'graphql';
 import express = require('express');
 
 import promClient = require('prom-client');
@@ -28,28 +26,40 @@ interface ICacheInfo {
 }
 
 const isEmptyObject = (obj: any): boolean => {
-  if (obj === null || typeof obj !== 'object') {
+  if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
     return false;
   }
-  if (Array.isArray(obj)) {
-    return false;
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      return false;
+    }
   }
-  return Object.keys(obj).length === 0;
+  return true;
 };
 
-function excludeEmptyObjectInArray(data: any): any {
-  if (data == null || typeof data !== 'object') {
+// Strips empty `{}` elements from arrays (produced when GraphQL inline fragments
+// do not match an interface implementation's concrete type) in a single pass
+// while returning new arrays and objects so the input is never mutated.
+export function excludeEmptyObjectInArray(data: any): any {
+  if (data === null || typeof data !== 'object') {
     return data;
   }
   if (Array.isArray(data)) {
-    return data
-      .filter((i) => !isEmptyObject(i))
-      .map((i) => excludeEmptyObjectInArray(i));
+    const result = [];
+    for (const item of data) {
+      if (!isEmptyObject(item)) {
+        result.push(excludeEmptyObjectInArray(item));
+      }
+    }
+    return result;
   }
-  return Object.entries(data).reduce((acc: any, [key, value]) => {
-    acc[key] = excludeEmptyObjectInArray(value);
-    return acc;
-  }, {});
+  const result: Record<string, any> = {};
+  for (const key in data) {
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
+      result[key] = excludeEmptyObjectInArray(data[key]);
+    }
+  }
+  return result;
 }
 
 // builds and starts the ApolloServer for the specific bundleSha
@@ -58,6 +68,7 @@ const buildApolloServer = async (
   bundleSha: string,
 ): Promise<ApolloServer<IContext>> => {
   const schema = generateAppSchema(app, bundleSha);
+  const allowedOperations = metrics.graphqlOperationAllowlist();
   const server = new ApolloServer<IContext>({
     schema,
     introspection: true,
@@ -69,37 +80,56 @@ const buildApolloServer = async (
       ApolloServerPluginLandingPageLocalDefault({ embed: true }),
       {
         async requestDidStart() {
-          const execStart = performance.now();
+          const endOperation = metrics.graphqlOperationDuration.startTimer();
+          let labels = { operation: 'invalid', root_field: 'none' };
           return {
+            async didResolveOperation({ document, operation }) {
+              if (operation) {
+                labels = metrics.graphqlOperationLabels(
+                  document,
+                  operation,
+                  allowedOperations,
+                );
+              }
+            },
+            async executionDidStart({ operation }) {
+              if (!operation) return;
+              const endExecution =
+                metrics.graphqlExecutionDuration.startTimer(labels);
+              return {
+                async executionDidEnd() {
+                  endExecution();
+                },
+              };
+            },
             async willSendResponse(requestContext) {
-              const { response, contextValue, operationName, operation } =
-                requestContext;
-              const opLabel = operationName || 'anonymous';
-              const rootField =
-                operation?.selectionSet.selections.find(
-                  (s): s is FieldNode => s.kind === 'Field',
-                )?.name.value || 'unknown';
-
-              if (response.body.kind === 'single') {
-                const postStart = performance.now();
-                response.body.singleResult.data = excludeEmptyObjectInArray(
-                  response.body.singleResult.data,
-                );
-                const postEnd = performance.now();
-
-                metrics.graphqlPostprocessDuration.observe(
-                  { operation: opLabel },
-                  (postEnd - postStart) / 1000,
-                );
-                metrics.graphqlOperationDuration.observe(
-                  { operation: opLabel, root_field: rootField },
-                  (postEnd - execStart) / 1000,
-                );
-
-                response.body.singleResult.extensions = {
-                  ...response.body.singleResult.extensions,
-                  schemas: contextValue.schemas,
-                };
+              const { response, contextValue } = requestContext;
+              let outcome = 'error';
+              try {
+                if (response.body.kind === 'single') {
+                  if (response.body.singleResult.data !== undefined) {
+                    const endPostprocess =
+                      metrics.graphqlPostprocessDuration.startTimer({
+                        operation: labels.operation,
+                      });
+                    try {
+                      response.body.singleResult.data =
+                        excludeEmptyObjectInArray(
+                          response.body.singleResult.data,
+                        );
+                    } finally {
+                      endPostprocess();
+                    }
+                  }
+                  response.body.singleResult.extensions = {
+                    ...response.body.singleResult.extensions,
+                    schemas: contextValue.schemas,
+                  };
+                }
+                outcome = requestContext.errors?.length ? 'error' : 'success';
+              } finally {
+                // Stop after post-processing, in the same hook, to avoid plugin ordering assumptions.
+                endOperation({ ...labels, outcome });
               }
             },
           };

@@ -17,6 +17,7 @@ const { expect } = chai;
 
 const responseIsNotAnError = (res: any) => {
   res.should.have.status(200);
+  res.should.not.have.header('cache-control');
   res.body.should.not.have.any.keys('errors');
   res.body.should.have.all.keys('data', 'extensions');
 };
@@ -283,11 +284,17 @@ describe('server', async () => {
   });
 
   it('GET /metrics returns valid Prometheus format', async () => {
+    const queryResponse = await chai
+      .request(srv)
+      .post('/graphql')
+      .send({ query: '{ roles_v1 { name } }' });
+    responseIsNotAnError(queryResponse);
+
     const response = await chai.request(srv).get('/metrics');
     response.should.have.status(200);
     response.text.should.match(/^# (HELP|TYPE) /m);
     response.text.should.include(
-      'qontract_server_graphql_operation_duration_seconds_count{operation="anonymous",root_field="roles_v1"}',
+      'qontract_server_graphql_operation_duration_seconds_count{operation="anonymous",root_field="roles_v1",outcome="success"}',
     );
     response.text.should.include(
       'qontract_server_graphql_postprocess_duration_seconds_count{operation="anonymous"}',
@@ -358,6 +365,91 @@ describe('server', async () => {
 
     const perm = response2.body.data.roles[0].permissions[0];
     expect(perm.org).to.equal('org-A');
+  });
+
+  it('does not emit cache-control header on /graphqlsha/:sha responses', async () => {
+    const shaResponse = await chai.request(srv).get('/sha256');
+    const query = '{ roles: roles_v1 { name } }';
+
+    const response = await chai
+      .request(srv)
+      .post(`/graphqlsha/${shaResponse.text}`)
+      .set('content-type', 'application/json')
+      .send({ query });
+
+    responseIsNotAnError(response);
+    expect(response).to.not.have.header('cache-control');
+  });
+
+  it('excludeEmptyObjectInArray removes empty objects without mutating input', () => {
+    const deepFreeze = <T>(obj: T): T => {
+      if (obj !== null && typeof obj === 'object') {
+        Object.freeze(obj);
+        for (const key of Object.keys(obj as Record<string, unknown>)) {
+          deepFreeze((obj as Record<string, unknown>)[key]);
+        }
+      }
+      return obj;
+    };
+
+    const proto = { inheritedProp: 'should-be-ignored' };
+    const inheritedEmpty = Object.create(proto);
+
+    const input = deepFreeze({
+      roles: [
+        {
+          name: 'role-a',
+          permissions: [{ service: 'github-org-team' }, {}, inheritedEmpty],
+        },
+        {},
+      ],
+      mixedArray: [null, undefined, 0, false, '', [], {}, { keep: 'value' }],
+      deeplyNested: [[{}, { deep: [{}, 'kept', { emptyObjProp: {} }] }]],
+      nonArrayEmptyObjects: {
+        emptyObj: {},
+        nestedEmptyObj: { inner: {} },
+        nullProp: null,
+        undefProp: undefined,
+      },
+      unchanged: {
+        items: [{ id: 1 }, { id: 2 }],
+      },
+    });
+
+    expect(server.excludeEmptyObjectInArray(null)).to.equal(null);
+    expect(server.excludeEmptyObjectInArray(undefined)).to.equal(undefined);
+
+    const output = server.excludeEmptyObjectInArray(input);
+
+    expect(output).to.not.equal(input);
+    expect(output.roles).to.have.lengthOf(1);
+    expect(output.roles[0].permissions).to.eql([
+      { service: 'github-org-team' },
+    ]);
+    expect(output.mixedArray).to.eql([
+      null,
+      undefined,
+      0,
+      false,
+      '',
+      [],
+      { keep: 'value' },
+    ]);
+    expect(output.deeplyNested).to.eql([
+      [{ deep: ['kept', { emptyObjProp: {} }] }],
+    ]);
+    // Empty objects in non-array contexts remain untouched
+    expect(output.nonArrayEmptyObjects).to.not.equal(
+      input.nonArrayEmptyObjects,
+    );
+    expect(output.nonArrayEmptyObjects.emptyObj).to.eql({});
+    expect(output.nonArrayEmptyObjects.nestedEmptyObj.inner).to.eql({});
+    // Fresh containers are created without mutating the original input
+    expect(output.unchanged).to.not.equal(input.unchanged);
+    expect(output.unchanged).to.eql(input.unchanged);
+    expect(input.roles).to.have.lengthOf(2);
+    expect(input.roles[0].permissions).to.have.lengthOf(3);
+    expect(input.mixedArray).to.have.lengthOf(8);
   });
 });
 
