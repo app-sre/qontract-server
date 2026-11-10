@@ -78,6 +78,63 @@ It includes some custom metrics:
 
 In addition, it also contains the metrics exposed by the [express prometheus bundle](https://github.com/jochen-schweizer/express-prom-bundle). Note that the `/graphqlsha/<sha>` path has been normalized to avoid cardinality explosion.
 
+### GraphQL operation and phase timing
+
+The following always-on histograms share the existing `/metrics` endpoint:
+
+| Metric                                                 | Labels                               | Timing boundary                                                                           |
+| ------------------------------------------------------ | ------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `qontract_server_graphql_operation_duration_seconds`   | `operation`, `root_field`, `outcome` | Apollo request start through response post-processing; `outcome` is `success` or `error`. |
+| `qontract_server_graphql_execution_duration_seconds`   | `operation`, `root_field`            | GraphQL execution start to execution end, including failed executions.                    |
+| `qontract_server_graphql_postprocess_duration_seconds` | `operation`                          | The `excludeEmptyObjectInArray` transformation, when response data exists.                |
+
+These measure elapsed seconds, not CPU time. Total Apollo processing excludes socket
+completion, network transit and requests answered by a proxy cache. Requests rejected
+before Apollo's request lifecycle starts are covered by existing HTTP metrics instead.
+Parse/validation failures are recorded as `operation="invalid",root_field="none"` and
+do not create execution observations. Phase percentiles cannot be subtracted or added.
+
+Operation names come from the selected GraphQL operation, including requests served
+from Apollo's document cache. `GRAPHQL_METRICS_OPERATIONS` is a comma-separated
+allowlist, read when each bundle's Apollo server is built. The default is
+`Rolebindings,Users,Namespaces`; an empty value groups every named operation as
+`other`. Names must match GraphQL name syntax and be at most 128 characters. Invalid
+entries are ignored, and only the first 50 valid entries are considered. Anonymous
+operations use `anonymous`; unlisted names use `other`. Keep this configuration
+consistent across pods and bundle reloads when comparing results.
+
+`root_field` uses validated schema field names rather than client aliases. Root
+fragments are expanded; nested fields are not visited. Multiple distinct roots use
+`multiple`, with a single observation for the whole operation. This describes the
+query shape, including conditionally skipped selections, not per-field execution.
+Query text, variables, bundle SHAs and file paths are not metric labels.
+
+All three histograms use finite buckets at 0.1, 0.5, 1, 2.5, 5, 10, 25, 50, 100,
+250 and 500 milliseconds, and 1, 2.5, 5 and 10 seconds. Prometheus derives approximate
+percentiles from these buckets. For example, successful Apollo processing p95:
+
+```promql
+histogram_quantile(0.95,
+  sum by (le, operation, root_field) (
+    rate(qontract_server_graphql_operation_duration_seconds_bucket{outcome="success"}[15m])
+  )
+)
+```
+
+The bundled Grafana dashboard adds p50/p95/p99 panels for each phase. Check request
+counts alongside tail latency, especially for infrequent operations. Each observed
+label combination creates 18 time series per histogram (15 finite buckets, `+Inf`,
+count and sum), so keep the operation allowlist small.
+
+Event-loop delay already comes from prom-client's default metrics, including
+`qontract_server_nodejs_eventloop_lag_p99_seconds`. The dashboard shows this per pod;
+it is a percentile of samples since the preceding collection, not a fleet-wide
+percentile. No additional event-loop monitor or per-resolver hooks are installed.
+
+CI servers require a scrape/export step before teardown to retain these measurements.
+Server metrics do not measure reconciler-local comparison work or entire pipeline
+duration. Diff caching and reload phase instrumentation are separate follow-ups.
+
 ## Development Environment
 
 ### Prerequisites

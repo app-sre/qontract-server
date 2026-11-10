@@ -1,5 +1,12 @@
 import express = require('express');
 import promClient = require('prom-client');
+import {
+  DocumentNode,
+  FragmentDefinitionNode,
+  Kind,
+  OperationDefinitionNode,
+  SelectionSetNode,
+} from 'graphql';
 import * as db from './db';
 import { Datafile } from './types';
 
@@ -21,6 +28,91 @@ export const metricsMiddleware = promBundle({
 
 // enable prom-client to expose default application metrics
 promClient.collectDefaultMetrics({ prefix: 'qontract_server_' });
+
+// Shared by every per-bundle Apollo server. Buckets include sub-millisecond work.
+const graphqlDurationBuckets = [
+  0.0001, 0.0005, 0.001, 0.0025, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1,
+  2.5, 5, 10,
+];
+
+export const graphqlOperationDuration = new promClient.Histogram({
+  name: 'qontract_server_graphql_operation_duration_seconds',
+  help: 'Apollo request duration through response post-processing, in seconds',
+  labelNames: ['operation', 'root_field', 'outcome'],
+  buckets: graphqlDurationBuckets,
+});
+
+export const graphqlExecutionDuration = new promClient.Histogram({
+  name: 'qontract_server_graphql_execution_duration_seconds',
+  help: 'GraphQL execution duration, including failed executions, in seconds',
+  labelNames: ['operation', 'root_field'],
+  buckets: graphqlDurationBuckets,
+});
+
+export const graphqlPostprocessDuration = new promClient.Histogram({
+  name: 'qontract_server_graphql_postprocess_duration_seconds',
+  help: 'Response empty-object removal duration, in seconds',
+  labelNames: ['operation'],
+  buckets: graphqlDurationBuckets,
+});
+
+// Operation names are client-controlled. Only configured names become labels.
+export const graphqlOperationAllowlist = (
+  configured = process.env.GRAPHQL_METRICS_OPERATIONS ??
+    'Rolebindings,Users,Namespaces',
+): Set<string> =>
+  new Set(
+    configured
+      .split(',')
+      .map((name) => name.trim())
+      .filter((name) => /^[_A-Za-z][_0-9A-Za-z]{0,127}$/.test(name))
+      .slice(0, 50),
+  );
+
+export const graphqlOperationLabels = (
+  document: DocumentNode,
+  operation: OperationDefinitionNode,
+  allowedOperations: ReadonlySet<string>,
+): { operation: string; root_field: string } => {
+  const name = operation.name?.value;
+  const fragments = new Map<string, FragmentDefinitionNode>();
+  for (const definition of document.definitions) {
+    if (definition.kind === Kind.FRAGMENT_DEFINITION) {
+      fragments.set(definition.name.value, definition);
+    }
+  }
+  const roots = new Set<string>();
+  const visitedFragments = new Set<string>();
+  const collectRoots = (selectionSet: SelectionSetNode) => {
+    for (const selection of selectionSet.selections) {
+      if (selection.kind === Kind.FIELD) {
+        roots.add(selection.name.value);
+      } else if (selection.kind === Kind.INLINE_FRAGMENT) {
+        collectRoots(selection.selectionSet);
+      } else if (!visitedFragments.has(selection.name.value)) {
+        visitedFragments.add(selection.name.value);
+        const fragment = fragments.get(selection.name.value);
+        if (fragment) collectRoots(fragment.selectionSet);
+      }
+    }
+  };
+  // Called after validation: field names belong to the schema, never aliases.
+  // This describes the operation shape, including conditionally skipped roots.
+  collectRoots(operation.selectionSet);
+  return {
+    operation: name
+      ? allowedOperations.has(name)
+        ? name
+        : 'other'
+      : 'anonymous',
+    root_field:
+      roots.size === 1
+        ? roots.values().next().value
+        : roots.size
+          ? 'multiple'
+          : 'none',
+  };
+};
 
 // Create metric stores
 const reloadCounter = new promClient.Counter({
