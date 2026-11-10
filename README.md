@@ -65,6 +65,21 @@ The shas will expire after a certain amount of time:
 - `GET /diff/:sha/:another_sha`: return the difference between two bundles
 - `GET /diff/:sha/:another_sha/:filetype/:path`: return the difference for a single `datafile` or `resourcefile`
 
+## Bundle lifecycle and shutdown
+
+Each retained bundle has its own Apollo server. When a historical bundle expires,
+new queries for that version return 404. Queries already running keep their bundle
+until execution finishes, even if the client disconnects. The Apollo server is
+then stopped and its bundle state removed. Retirement runs in the background so
+it does not delay loading a new bundle. Failed retirement is logged and ownership
+is retained for a later cleanup attempt.
+
+One process-level handler manages `SIGINT` and `SIGTERM`. It stops accepting HTTP
+connections, drains requests and pending reload work, then stops all owned Apollo
+servers. Shutdown has a 15-second deadline; if draining fails or times out, the
+process logs the failure and exits with status 1. Individual Apollo instances do
+not install their own process signal handlers.
+
 ## Metrics
 
 This server exposes prometheus metrics under `/metrics`.
