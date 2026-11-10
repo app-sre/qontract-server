@@ -149,23 +149,21 @@ const resolveValue = (
   }
 
   if (isNonEmptyArray(val)) {
-    // are all the elements of this array references?
-    const checkRefs = val.map(isRef);
-
-    // if there are elements that aren't references return the array as is
-    if (checkRefs.includes(false)) {
-      return val;
-    }
-
-    // resolve all the elements of the array
-    let arrayResolve = val.map((x: db.Referencing) =>
-      db.resolveRef(app.get('bundles')[bundleSha], x),
-    );
-
     // `info.returnType` has information about what the GraphQL schema expects
     // as a return type. If it starts with `[` it means that we need to return
     // an array.
-    if (String(info.returnType)[0] === '[') {
+    const expectsArray = String(info.returnType)[0] === '[';
+
+    // resolve all the elements of the array
+    let arrayResolve = val.map((item: any) => {
+      if (isRef(item)) {
+        return db.resolveRef(app.get('bundles')[bundleSha], item);
+      }
+      // Protect inline arrays from the reference-list flattening below.
+      return expectsArray && Array.isArray(item) ? [item] : item;
+    });
+
+    if (expectsArray) {
       arrayResolve = arrayResolve.flat(1);
     }
 
