@@ -153,21 +153,25 @@ const resolveValue = (
     // as a return type. If it starts with `[` it means that we need to return
     // an array.
     const expectsArray = String(info.returnType)[0] === '[';
+    const bundle = app.get('bundles')[bundleSha];
+    const resolved: any[] = [];
 
     // resolve all the elements of the array
-    let arrayResolve = val.map((item: any) => {
-      if (isRef(item)) {
-        return db.resolveRef(app.get('bundles')[bundleSha], item);
+    for (const item of val) {
+      if (!isRef(item)) {
+        resolved.push(item);
+        continue;
       }
-      // Protect inline arrays from the reference-list flattening below.
-      return expectsArray && Array.isArray(item) ? [item] : item;
-    });
 
-    if (expectsArray) {
-      arrayResolve = arrayResolve.flat(1);
+      const refResult = db.resolveRef(bundle, item);
+      if (expectsArray && Array.isArray(refResult)) {
+        resolved.push(...refResult);
+      } else {
+        resolved.push(refResult);
+      }
     }
 
-    return arrayResolve;
+    return resolved;
   }
 
   if (isRef(val)) return db.resolveRef(app.get('bundles')[bundleSha], val);
