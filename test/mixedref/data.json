@@ -1,0 +1,57 @@
+{
+  "data": {
+    "/collection.yml": {
+      "$schema": "/collection-1.yml",
+      "mixed": [
+        { "$ref": "/first.yml" },
+        { "name": "inline" },
+        { "$ref": "/second.yml" }
+      ],
+      "refs": [{ "$ref": "/first.yml" }, { "$ref": "/second.yml" }],
+      "inline": [{ "name": "inline-first" }, { "name": "inline-second" }],
+      "broken": [
+        { "$ref": "/first.yml" },
+        { "$ref": "/missing.yml" },
+        { "name": "inline" }
+      ]
+    },
+    "/first.yml": {
+      "$schema": "/entry-1.yml",
+      "name": "first"
+    },
+    "/second.yml": {
+      "$schema": "/entry-1.yml",
+      "name": "second"
+    }
+  },
+  "graphql": {
+    "$schema": "/app-interface/graphql-schemas-1.yml",
+    "confs": [
+      {
+        "name": "Entry_v1",
+        "fields": [{ "name": "name", "type": "string" }]
+      },
+      {
+        "name": "Collection_v1",
+        "fields": [
+          { "name": "mixed", "type": "Entry_v1", "isList": true },
+          { "name": "refs", "type": "Entry_v1", "isList": true },
+          { "name": "inline", "type": "Entry_v1", "isList": true },
+          { "name": "broken", "type": "Entry_v1", "isList": true }
+        ]
+      },
+      {
+        "name": "Query",
+        "fields": [
+          {
+            "name": "collections",
+            "type": "Collection_v1",
+            "isList": true,
+            "datafileSchema": "/collection-1.yml"
+          }
+        ]
+      }
+    ]
+  },
+  "resources": {}
+}
