@@ -302,7 +302,10 @@ export const appFromBundle = async (bundlePromises: Promise<db.Bundle>[]) => {
     for (const bp of bundlePromises) {
       const bundle = await bp;
       const sha = bundle.fileHash;
-      if (app.get('shaRouters').has(sha)) continue;
+      if (app.get('shaRouters').has(sha)) {
+        app.set('latestBundleSha', sha);
+        continue;
+      }
       app.get('bundles')[sha] = bundle;
       logger.info('loading initial bundle %s', sha);
       await buildAndRegisterApolloServer(app, sha);

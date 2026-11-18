@@ -52,6 +52,33 @@ describe('Apollo bundle lifecycle', () => {
     }
   });
 
+  it('serves the last initial bundle while starting Apollo once per SHA', async () => {
+    const first = bundleFromDisk('test/multishas/multishas1.data.json');
+    const second = bundleFromDisk('test/multishas/multishas2.data.json');
+    const originalStart = ApolloServer.prototype.start;
+    let starts = 0;
+    ApolloServer.prototype.start = async function () {
+      starts++;
+      await originalStart.call(this);
+    };
+    try {
+      app = await appFromBundle([first, second, first]);
+    } finally {
+      ApolloServer.prototype.start = originalStart;
+    }
+
+    expect(starts).to.equal(2);
+    client = chai.request(app).keepOpen();
+    const sha = await client.get('/sha256');
+    expect(sha).to.have.status(200);
+    expect(sha.text).to.equal((await first).fileHash);
+    const result = await client
+      .post('/graphql')
+      .send({ query: '{ resources_v1 { name } }' });
+    expect(result).to.have.status(200);
+    expect(result.body.data.resources_v1[0].name).to.equal('sha1');
+  });
+
   it('does not add per-bundle process signal listeners across reloads', async () => {
     const before = ['SIGINT', 'SIGTERM'].map((signal) =>
       process.listenerCount(signal),
