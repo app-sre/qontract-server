@@ -25,7 +25,7 @@
     "@aws-sdk/client-s3": "^3.1033.0",
     "dotenv": "^16.6.1",
     "express": "5.2.1",
-    "express-prom-bundle": "^8.0.0",
+    "express-prom-bundle": "^9.0.0",
     "graphql": "^16.13.2",
     "jsonpointer": "^5.0.1",
     "microdiff": "1.5.0",
